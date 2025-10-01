@@ -47,12 +47,12 @@ export default function Header({
   const [mobileOpen, setMobileOpen] = useState(false)
 
   return (
-    <header className="bg-[#0056C6] sticky top-0 z-50">
+    <header className="bg-[#004166] sticky top-0 z-50">
       <div className="max-w-[1110px] mx-auto px-4">
         <div className="flex items-center justify-between h-16">
           {/* Mobile - Logo a la izquierda */}
           <div className="md:hidden flex items-center">
-            <Link href="/home">
+            <Link href="/menu">
               <img src="/DINE LINE.svg" alt="DINE LINE" className="h-12 w-auto" />
             </Link>
           </div>
@@ -60,8 +60,8 @@ export default function Header({
           {/* Desktop Header - FLEX en lugar de GRID */}
           <div className="hidden md:flex items-center justify-between w-full h-16">
             {/* Left side - Navigation links */}
-            <div className="flex items-center space-x-8">
-              <Link href="/home" className="text-sm font-medium text-white hover:text-[#5CEFFA]">
+            <div className="flex items-center space-x-40">
+              <Link href="/menu" className="text-sm font-medium text-white hover:text-[#5CEFFA]">
                 Menú
               </Link>
               <Link href="/about" className="text-sm font-medium text-white hover:text-[#5CEFFA]">
@@ -71,13 +71,13 @@ export default function Header({
 
             {/* Logo al centro - ABSOLUTO */}
             <div className="absolute left-1/2 transform -translate-x-1/2">
-              <Link href="/home">
+              <Link href="/menu">
                 <img src="/DINE LINE.svg" alt="DINE LINE" className="h-16 w-auto transform translate-y-7" />
               </Link>
             </div>
 
             {/* Right side - Navigation links + acciones */}
-            <div className="flex items-center space-x-8">
+            <div className="flex items-center space-x-40">
               <Link href="/order" className="text-sm font-medium text-white hover:text-[#5CEFFA]">
                 Mi Orden
               </Link>
@@ -127,7 +127,7 @@ export default function Header({
       {/* Menú Mobile alineado a la derecha */}
       {mobileOpen && (
         <div className="md:hidden bg-[#0056C6] text-white px-6 pb-4 space-y-3 text-right">
-          <Link href="/home" className="block hover:text-[#5CEFFA]">Menú</Link>
+          <Link href="/menu" className="block hover:text-[#5CEFFA]">Menú</Link>
           <Link href="/about" className="block hover:text-[#5CEFFA]">Nosotros</Link>
           <Link href="/order" className="block hover:text-[#5CEFFA]">Mi Orden</Link>
           <Link href="/contact" className="block hover:text-[#5CEFFA]">Contáctanos</Link>

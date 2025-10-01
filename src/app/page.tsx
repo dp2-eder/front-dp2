@@ -20,7 +20,7 @@ export default function Home() {
             </p>
           </div>
 
-          <Link href="/home" className="block">
+          <Link href="/menu" className="block">
             <div className="bg-white p-6 rounded-lg shadow-lg hover:shadow-xl transition-shadow cursor-pointer">
               <h2 className="text-xl font-semibold mb-4 text-primary-600">
                 Menú Digital

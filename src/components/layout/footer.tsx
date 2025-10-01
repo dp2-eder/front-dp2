@@ -6,10 +6,11 @@ import { Button } from "@/components/ui/button"
 
 export default function Footer() {
   return (
-    <footer className="bg-[#0056C6] text-white">
-      <div className="max-w-[1110px] mx-auto px-4 py-8">
+    <footer className="bg-[url('/Footer.png')] bg-cover bg-center bg-no-repeat text-white relative">
+      <div className="absolute inset-0"></div>
+      <div className="max-w-[1110px] mx-auto px-4 py-8 relative z-10">
         {/* Logo */}
-<div className="flex justify-center mb-8 relative">
+        <div className="flex justify-center mb-8 relative">
           <img
             src="/dineline2.svg"
             alt="DINE LINE"

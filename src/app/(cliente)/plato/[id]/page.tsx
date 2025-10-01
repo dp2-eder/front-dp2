@@ -265,7 +265,7 @@ export default function PlatoDetailPage() {
                   className="w-full h-12 bg-[#0056C6] hover:bg-[#004299] text-white text-lg font-semibold rounded-xl"
                   onClick={() => {
                     // Navegar a la página de detalle del pedido con el ID del plato
-                    router.push(`/plato/${dish.id}/detalle-pedido`)
+                    router.push(`/plato/${dish.id}/personalizar`)
                   }}
                 >
                   Ordene Ahora
