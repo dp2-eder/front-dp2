@@ -422,8 +422,8 @@ export default function MenuPage() {
                 <Loader2 className="w-8 h-8 text-white animate-spin" />
               </div>
               <div>
-                <h3 className="text-xl font-bold text-gray-800 mb-2">Actualizando Sistema</h3>
-                <p className="text-gray-600 text-sm">{loadingStep}</p>
+                <h3 className="text-xl font-bold text-foreground mb-2">Actualizando Sistema</h3>
+                <p className="text-foreground text-sm">{loadingStep}</p>
               </div>
               <div className="w-full bg-gray-200 rounded-full h-3">
                 <div className="bg-gradient-to-r from-cyan-500 to-blue-500 h-3 rounded-full animate-pulse transition-all duration-500"
@@ -448,25 +448,25 @@ export default function MenuPage() {
       />
 
       {/* Main Content */}
-      <main className="container mx-auto px-8 py-8">
+      <main className="container mx-auto px-8 py-20">
         {/* Title */}
-        <h1 className="text-4xl font-bold text-center text-gray-800 mb-8">Nuestro Menú</h1>
+        <h1 className="text-4xl font-bold text-center text-foreground mb-8">Nuestro Menú</h1>
 
         {/* Search and Filters */}
         <div className="mb-8">
-          <div className="flex justify-center mb-4">
-            <div className="relative w-full max-w-md">
-              <Search className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-5 w-5" />
+          <div className="flex justify-center md:justify-center lg:justify-start mb-4">
+            <div className="relative w-full md:w-full lg:w-1/2">
+              <Search className="absolute right-3 top-1/2 transform -translate-y-1/2 text-black-50 h-5 w-5" />
               <Input
                 placeholder="Buscar platos..."
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
-                className="w-full h-12 text-lg rounded-md"
+                className="w-full h-12 text-lg rounded-[10px] shadow-[0_4px_4px_rgba(0,0,0,0.25)]"
               />
             </div>
           </div>
 
-          <div className="flex gap-2 flex-wrap justify-center">
+          <div className="flex gap-2 flex-wrap justify-center md:justify-center lg:justify-start">
             {visibleCategories.map((category) => (
               <Button
                 key={category}
@@ -474,8 +474,8 @@ export default function MenuPage() {
                 size="sm"
                 onClick={() => setSelectedCategory(category)}
                 className={`rounded-full px-4 py-2 ${selectedCategory === category
-                  ? "bg-[#5CEFFA] text-white"
-                  : "bg-gray-200 text-gray-700 hover:bg-gray-300"
+                  ? "bg-secondary text-white hover:bg-secondary "
+                  : "bg-white text-black hover:bg-gray-300"
                   }`}
               >
                 {category}
@@ -484,7 +484,7 @@ export default function MenuPage() {
             <Button
               variant="outline"
               size="sm"
-              className="rounded-full px-4 py-2 bg-gray-200 text-gray-700 hover:bg-gray-300"
+              className="rounded-full px-4 py-2 bg-gray-200 text-foreground hover:bg-gray-300"
               onClick={() => setIsCategoryModalOpen(true)}
               aria-label="Ver todas las categorías"
               title="Ver todas las categorías"
@@ -523,35 +523,35 @@ export default function MenuPage() {
           Object.entries(dishesByCategory).map(([category, dishes]) => (
             <div key={category} className="mb-8">
               {/* Category Section */}
-              <div className="bg-gray-200 rounded-lg p-6">
+              <div className="bg-gray-200 rounded-lg p-6 shadow-[0_4px_4px_rgba(0,0,0,0.25)]">
                 {/* Category Header */}
                 <div
                   className="flex items-center cursor-pointer mb-4"
                   onClick={() => toggleCategory(category)}
                 >
-                  <h2 className="text-xl font-bold text-gray-800 flex-1 text-center">{category}</h2>
+                  <h2 className="flex-1 text-[30px] md:text-[30px] lg:text-[40px] text-foreground text-center font-extrabold">{category}</h2>
 
                   {expandedCategories[category] ? (
-                    <ChevronUp className="w-5 h-5 text-gray-600" />
+                    <ChevronUp className="w-5 h-5 text-primary" />
                   ) : (
-                    <ChevronDown className="w-5 h-5 text-gray-600" />
+                    <ChevronDown className="w-5 h-5 text-primary" />
                   )}
                 </div>
                 {/* Mostrar <hr> solo si está expandido */}
-                {expandedCategories[category] && <hr className="border-blue-700" />}
+                {expandedCategories[category] && <hr className="border-primary" />}
 
                 {/* Dishes Grid */}
                 {expandedCategories[category] && (
                   <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-20 py-5">
                     {dishes.map((dish) => (
                       <Link key={dish.id} href={`/plato/${dish.id}`}>
-                        <article className="text-center cursor-pointer hover:scale-105 transition-transform duration-200">
+                        <article className="text-center cursor-pointer hover:scale-105 transition-transform duration-200 rounded-3xl border border-[#EFEFFD] shadow-[0_4px_4px_rgba(0,0,0,0.25)] overflow-hidden">
                           {/* Image Placeholder */}
                           <div className="relative">
                             <img
                               src={dish.image || "/placeholder.svg"}
                               alt={dish.name || "Imagen no disponible"}
-                              className="object-cover rounded-t-3xl bg-gray-300 aspect-[16/9]"
+                              className="object-cover bg-gray-300 aspect-[16/9]"
                               onError={(e) => {
                                 const target = e.target as HTMLImageElement
                                 target.src = "/placeholder.jpg"
@@ -563,14 +563,16 @@ export default function MenuPage() {
                           </div>
 
                           {/* Dish Name */}
-                          <h3 className="bg-[#0056C6] text-white px-2 py-2 rounded-b-3xl text-sm font-medium">
+                          <h3 className="bg-primary text-white px-2 py-2 text-sm font-medium">
                             {dish.name || "Nombre no disponible"}
                           </h3>
 
                           {/* Price */}
+                          {/*
                           <p className="mt-1 text-sm font-bold text-gray-800">
-                            {/* {isApiData ? `$${dish.price.toFixed(2)}` : `S/ ${dish.price.toFixed(2)}`} */}
+                            {isApiData ? `$${dish.price.toFixed(2)}` : `S/ ${dish.price.toFixed(2)}`} 
                           </p>
+                          */}
                         </article>
                       </Link>
                     ))}
@@ -596,7 +598,7 @@ export default function MenuPage() {
 
         {/* MODAL */}
         <Dialog open={isCategoryModalOpen} onOpenChange={setIsCategoryModalOpen}>
-          <DialogContent className="sm:max-w-md">
+          <DialogContent className="w-[95vw] max-w-sm sm:max-w-md md:max-w-lg lg:max-w-xl xl:max-w-2xl mx-auto rounded-lg">
             <DialogHeader>
               <DialogTitle>Selección de filtros</DialogTitle>
             </DialogHeader>
