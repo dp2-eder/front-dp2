@@ -407,15 +407,45 @@ export default function DetallePedidoPage() {
                     }`}
                     disabled={!isAddToCartEnabled}
                     onClick={() => {
-                      console.log(`Agregando al carrito:`, {
-                        product: product.name,
-                        quantity,
-                        selectedSide,
-                        selectedExtras,
-                        extraQuantities,
-                        comments,
+                      if (!product) return
+
+                      // Obtener el nombre del acompañamiento seleccionado
+                      const selectedSideOption = sideOptions.find(side => side.id === selectedSide)
+                      const sideDisplayName = selectedSideOption ? selectedSideOption.name : ""
+
+                      // Obtener los nombres de los extras seleccionados
+                      const extraDisplayNames = selectedExtras.map(extraId => {
+                        const extra = extraOptions.find(e => e.id === extraId)
+                        return extra ? extra.name : ""
+                      }).filter(name => name !== "")
+
+                      // Crear el item del carrito con la estructura correcta
+                      const cartItem = {
+                        id: `${product.id}-${Date.now()}`,
+                        name: product.name,
+                        description: product.description,
+                        price: product.price,
+                        quantity: quantity,
+                        image: product.image,
+                        selectedSide: sideDisplayName,  // Nombre legible, no ID
+                        selectedExtras: extraDisplayNames,  // Array de nombres legibles
+                        comments: comments,
                         total: calculateTotal()
-                      })
+                      }
+
+                      // Obtener carrito actual del localStorage
+                      const existingCart = localStorage.getItem("cart")
+                      const currentCart = existingCart ? JSON.parse(existingCart) : []
+
+                      // Agregar el nuevo item
+                      const updatedCart = [...currentCart, cartItem]
+
+                      // Guardar en localStorage
+                      localStorage.setItem("cart", JSON.stringify(updatedCart))
+
+                      console.log(`Producto agregado al carrito:`, cartItem)
+
+                      // Redirigir al carrito
                       router.push('/carrito')
                     }}
                   >
