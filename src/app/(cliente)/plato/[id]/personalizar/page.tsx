@@ -14,6 +14,7 @@ import { Checkbox } from "@/components/ui/checkbox"
 import { Label } from "@/components/ui/label"
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group"
 import { Textarea } from "@/components/ui/textarea"
+import SafeImage from "@/components/ui/safe-image"
 import { useMenu } from "@/hooks/use-menu"
 import { useCart, CartItem } from '@/hooks/use-cart'
 import { Root2 } from "@/types/menu"
@@ -162,6 +163,16 @@ export default function PersonalizarPage() {
 
     const personalizationGroup = product.grupo_personalizacion?.[0]
 
+    // Función para validar URL de imagen (para usar en el carrito)
+    const getValidImageSrc = (imageUrl: string | undefined): string => {
+      if (!imageUrl) return "/placeholder-image.png"
+      
+      const invalidDomains = ['example.com', 'placeholder.com', 'test.com', 'dummy.com']
+      const hasInvalidDomain = invalidDomains.some(domain => imageUrl.includes(domain))
+      
+      return hasInvalidDomain ? "/placeholder-image.png" : imageUrl
+    }
+
     const cartItem: CartItem = {
       id: `${product.id}-${Date.now()}`,
       dishId: product.id,
@@ -169,7 +180,7 @@ export default function PersonalizarPage() {
       description: product.descripcion,
       basePrice: product.precio,
       quantity: quantity,
-      image: product.imagen,
+      image: getValidImageSrc(product.imagen), // Usar imagen validada
       selectedOptions: [
         ...(selectedSide ? [{
           type: personalizationGroup?.tipo || 'acompanamiento',
@@ -209,14 +220,11 @@ export default function PersonalizarPage() {
               {/* Product Summary Card */}
               <Card className="p-6 bg-white border border-[#ECF1F4] rounded-xl shadow-sm">
                 <div className="flex items-start space-x-4">
-                  <img
-                    src={product.imagen || "/placeholder.svg"}
+                  <SafeImage
+                    src={product.imagen}
                     alt={product.nombre}
                     className="w-20 h-20 rounded-[30px] object-cover flex-shrink-0"
-                    onError={(e) => {
-                      const target = e.target as HTMLImageElement
-                      target.src = "/placeholder.jpg"
-                    }}
+                    showIndicator={true}
                   />
                   <div className="flex-1">
                     <h2 className="text-base font-semibold text-gray-900 mb-1">{product.nombre}</h2>

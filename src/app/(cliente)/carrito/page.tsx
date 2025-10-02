@@ -9,6 +9,7 @@ import Header from "@/components/layout/header"
 import BackButton from "@/components/ui/back-button"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
+import SafeImage from "@/components/ui/safe-image"
 import { useCart } from "@/hooks/use-cart"
 import Loading from "@/app/loading"
 
@@ -69,17 +70,15 @@ export default function CarritoPage() {
                 <Card key={item.id} className="p-4 bg-white border border-gray-200 rounded-xl shadow-sm">
                   <div className="flex gap-4">
                     {/* Imagen del producto */}
-                    <div className="w-20 h-20 bg-gray-200 rounded-lg flex items-center justify-center flex-shrink-0">
-                      <img
-                        src={item.image}
-                        alt={item.name}
-                        className="w-full h-full object-cover rounded-lg"
-                        onError={(e) => {
-                          const target = e.target as HTMLImageElement
-                          target.src = "/placeholder.jpg"
-                        }}
-                      />
-                    </div>
+                    <div className="w-20 h-20 flex-shrink-0">
+  <SafeImage
+    src={item.image}
+    alt={item.name}
+    className="w-full h-full object-cover rounded-lg"
+    showIndicator={true}
+  />
+</div>
+
 
                     {/* Detalles del producto */}
                     <div className="flex-1">

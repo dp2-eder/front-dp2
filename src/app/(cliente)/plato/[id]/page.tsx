@@ -8,6 +8,7 @@ import Footer from "@/components/layout/footer"
 import Header from "@/components/layout/header"
 import { Button } from "@/components/ui/button"
 import BackButton from "@/components/ui/back-button"
+import SafeImage from "@/components/ui/safe-image"
 import { useMenu } from "@/hooks/use-menu"
 import { Root2 } from "@/types/menu"
 import Loading from "@/app/loading"
@@ -17,8 +18,6 @@ export default function PlatoDetailPage() {
   const router = useRouter()
   const [dish, setDish] = useState<Root2 | null>(null)
   const [loading, setLoading] = useState(true)
-  const [imageError, setImageError] = useState(false)
-  const [validImageSrc, setValidImageSrc] = useState<string>("/placeholder-image.png") // Nuevo estado
   // Usar el hook de la API
   const { menuItems, loading: apiLoading, error } = useMenu()
 
@@ -31,13 +30,6 @@ export default function PlatoDetailPage() {
     }
   }, [params.id, menuItems, apiLoading])
 
-  const handleImageError = (e: React.SyntheticEvent<HTMLImageElement, Event>) => {
-    const target = e.target as HTMLImageElement
-    if (!imageError) { // Evitar bucle infinito
-      setImageError(true)
-      target.src = "/placeholder-image.png"
-    }
-  }
   if (apiLoading || loading) {
     return <Loading />
   }
@@ -158,15 +150,13 @@ export default function PlatoDetailPage() {
             {/* Mobile: Text second, Desktop: Image second */}
             <div className="order-1 lg:order-2 space-y-6">
               <div className="relative">
-                <img
+                <SafeImage
                   src={dish.imagen}
                   alt={dish.nombre}
                   className="w-full h-64 lg:h-96 object-cover rounded-2xl bg-gray-300"
-                  onError={(e) => {
-                    const target = e.target as HTMLImageElement
-                    target.src = "/placeholder.jpg"
-                  }}
+                  showIndicator={true}
                 />
+                
                 {!dish.disponible && (
                   <div className="absolute inset-0 bg-black/50 flex items-center justify-center rounded-2xl">
                     <span className="bg-red-500 text-white px-4 py-2 rounded-lg font-semibold">

@@ -78,7 +78,7 @@ export default function Header({
 
             {/* Right side - Navigation links + acciones */}
             <div className="flex items-center space-x-40">
-              <Link href="/order" className="text-sm font-medium text-white hover:text-[#5CEFFA]">
+              <Link href="/carrito" className="text-sm font-medium text-white hover:text-[#5CEFFA]">
                 Mi Orden
               </Link>
               <Link href="/contact" className="text-sm font-medium text-white hover:text-[#5CEFFA]">
@@ -155,7 +155,7 @@ export default function Header({
               Nosotros
             </Link>
             <Link
-              href="/order"
+              href="/carrito"
               className="block hover:text-[#5CEFFA] border-b-2 border-white/30 pb-2"
             >
               Mi Orden
