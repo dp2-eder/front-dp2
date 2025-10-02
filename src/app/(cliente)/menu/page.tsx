@@ -35,6 +35,7 @@ import {
   Dialog, DialogContent, DialogHeader, DialogTitle
 } from '@/components/ui/dialog'
 import { Input } from '@/components/ui/input'
+import DishCard from '@/components/custom/dish-card'
 
 
 // Tipo para la API
@@ -466,7 +467,7 @@ export default function MenuPage() {
             </div>
           </div>
 
-          <div className="flex gap-2 flex-wrap justify-center md:justify-center lg:justify-start">
+          <div className="flex gap-2 flex-wrap justify-start">
             {visibleCategories.map((category) => (
               <Button
                 key={category}
@@ -474,8 +475,8 @@ export default function MenuPage() {
                 size="sm"
                 onClick={() => setSelectedCategory(category)}
                 className={`rounded-full px-4 py-2 ${selectedCategory === category
-                  ? "bg-secondary text-white hover:bg-secondary "
-                  : "bg-white text-black hover:bg-gray-300"
+                  ? "bg-[#0056C6] text-white"
+                  : "bg-gray-200 text-gray-700 hover:bg-gray-300"
                   }`}
               >
                 {category}
@@ -484,7 +485,7 @@ export default function MenuPage() {
             <Button
               variant="outline"
               size="sm"
-              className="rounded-full px-4 py-2 bg-gray-200 text-foreground hover:bg-gray-300"
+              className="rounded-full px-4 py-2 bg-gray-200 text-gray-700 hover:bg-gray-300"
               onClick={() => setIsCategoryModalOpen(true)}
               aria-label="Ver todas las categorías"
               title="Ver todas las categorías"
@@ -520,74 +521,115 @@ export default function MenuPage() {
 
         {/* Menu Sections */}
         {filteredDishes.length > 0 ? (
-          Object.entries(dishesByCategory).map(([category, dishes]) => (
-            <div key={category} className="mb-8">
-              {/* Category Section */}
-              <div className="bg-gray-200 rounded-lg p-6 shadow-[0_4px_4px_rgba(0,0,0,0.25)]">
-                {/* Category Header */}
-                <div
-                  className="flex items-center cursor-pointer mb-4"
-                  onClick={() => toggleCategory(category)}
-                >
-                  <h2 className="flex-1 text-[30px] md:text-[30px] lg:text-[40px] text-foreground text-center font-extrabold">{category}</h2>
-
-                  {expandedCategories[category] ? (
-                    <ChevronUp className="w-5 h-5 text-primary" />
-                  ) : (
-                    <ChevronDown className="w-5 h-5 text-primary" />
-                  )}
+          <>
+            {/* VISTA MOBILE */}
+            <div className="md:hidden">
+              {/* Si está en "Todos" o sin categoría → mostrar categorías */}
+              {!selectedCategory || selectedCategory === "Todos" ? (
+                <div className="grid grid-cols-1 gap-6">
+                  {Object.entries(dishesByCategory).map(([category, dishes]) => (
+                    <div
+                      key={category}
+                      onClick={() => setSelectedCategory(category)}
+                      className="cursor-pointer"
+                    >
+                      <DishCard
+                        dish={{
+                          id: dishes[0]?.id ?? 0,
+                          name: category, // usamos el nombre de la categoría
+                          description: "",
+                          price: 0,
+                          rating: 0,
+                          prepTime: "",
+                          image: dishes[0]?.image || "/placeholder.svg",
+                          category,
+                          popular: false,
+                        }}
+                        className="pointer-events-none" // desactiva link interno del DishCard
+                      />
+                    </div>
+                  ))}
                 </div>
-                {/* Mostrar <hr> solo si está expandido */}
-                {expandedCategories[category] && <hr className="border-primary" />}
-
-                {/* Dishes Grid */}
-                {expandedCategories[category] && (
-                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-20 py-5">
-                    {dishes.map((dish) => (
-                      <Link key={dish.id} href={`/plato/${dish.id}`}>
-                        <article className="text-center cursor-pointer hover:scale-105 transition-transform duration-200 rounded-3xl border border-[#EFEFFD] shadow-[0_4px_4px_rgba(0,0,0,0.25)] overflow-hidden">
-                          {/* Image Placeholder */}
-                          <div className="relative">
-                            <img
-                              src={dish.image || "/placeholder.svg"}
-                              alt={dish.name || "Imagen no disponible"}
-                              className="object-cover bg-gray-300 aspect-[16/9]"
-                              onError={(e) => {
-                                const target = e.target as HTMLImageElement
-                                target.src = "/placeholder.jpg"
-                              }}
-                            />
-                            {dish.popular && (
-                              <Badge className="absolute top-1 left-1 bg-yellow-500 text-white text-xs">Popular</Badge>
-                            )}
-                          </div>
-
-                          {/* Dish Name */}
-                          <h3 className="bg-primary text-white px-2 py-2 text-sm font-medium">
-                            {dish.name || "Nombre no disponible"}
-                          </h3>
-
-                          {/* Price */}
-                          {/*
-                          <p className="mt-1 text-sm font-bold text-gray-800">
-                            {isApiData ? `$${dish.price.toFixed(2)}` : `S/ ${dish.price.toFixed(2)}`} 
-                          </p>
-                          */}
-                        </article>
-                      </Link>
-                    ))}
-                  </div>
-                )}
-              </div>
+              ) : (
+                // Si hay categoría seleccionada → mostrar platos
+                <div className="grid grid-cols-2 gap-4">
+                  {dishesByCategory[selectedCategory]?.map((dish) => (
+                    <DishCard
+                      key={dish.id}
+                      dish={dish}
+                      showPrice={false}
+                      isApiData={true}
+                    />
+                  ))}
+                </div>
+              )}
             </div>
-          ))
+
+            {/* VISTA DESKTOP */}
+            <div className="hidden md:block">
+              {Object.entries(dishesByCategory).map(([category, dishes]) => (
+                <div key={category} className="mb-8">
+                  <div className="bg-gray-200 rounded-lg p-6">
+                    {/* Header categoría */}
+                    <div
+                      className="flex items-center cursor-pointer mb-4"
+                      onClick={() => toggleCategory(category)}
+                    >
+                      <h2 className="text-xl font-bold text-gray-800 flex-1 text-center">
+                        {category}
+                      </h2>
+                      {expandedCategories[category] ? (
+                        <ChevronUp className="w-5 h-5 text-gray-600" />
+                      ) : (
+                        <ChevronDown className="w-5 h-5 text-gray-600" />
+                      )}
+                    </div>
+
+                    {/* Línea solo expandido */}
+                    {expandedCategories[category] && <hr className="border-blue-700" />}
+
+                    {/* Platos */}
+                    {expandedCategories[category] && (
+                      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-20 py-5">
+                        {dishes.map((dish) => (
+                          <Link key={dish.id} href={`/plato/${dish.id}`}>
+                            <article className="text-center cursor-pointer hover:scale-105 transition-transform duration-200">
+                              <div className="relative">
+                                <img
+                                  src={dish.image || "/placeholder.svg"}
+                                  alt={dish.name || "Imagen no disponible"}
+                                  className="object-cover rounded-t-3xl bg-gray-300 aspect-[16/9]"
+                                  onError={(e) => {
+                                    const target = e.target as HTMLImageElement
+                                    target.src = "/placeholder.jpg"
+                                  }}
+                                />
+                                {dish.popular && (
+                                  <Badge className="absolute top-1 left-1 bg-yellow-500 text-white text-xs">
+                                    Popular
+                                  </Badge>
+                                )}
+                              </div>
+                              <h3 className="bg-[#0056C6] text-white px-2 py-2 rounded-b-3xl text-sm font-medium">
+                                {dish.name || "Nombre no disponible"}
+                              </h3>
+                            </article>
+                          </Link>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+                </div>
+              ))}
+            </div>
+          </>
         ) : (
           <Card className="p-8 text-center bg-[#F5F7FA] shadow-sm rounded-xl">
             <div className="flex flex-col items-center">
               <Search className="w-10 h-10 text-gray-500 mb-4" />
               <h2 className="text-xl font-bold mb-2">No Tenemos El Producto</h2>
               <p className="text-gray-600 mb-2">Ingrese Otro</p>
-              <p className="text-[#0056C6] font-semibold">"{searchTerm}"</p>
+              <p className="text-[#004166] font-semibold">"{searchTerm}"</p>
               <p className="text-gray-500 mt-2 text-sm">
                 No encontramos ningún producto con tu búsqueda.<br />
                 Revisa ortografía o prueba con términos más generales.
@@ -595,7 +637,6 @@ export default function MenuPage() {
             </div>
           </Card>
         )}
-
         {/* MODAL */}
         <Dialog open={isCategoryModalOpen} onOpenChange={setIsCategoryModalOpen}>
           <DialogContent className="w-[95vw] max-w-sm sm:max-w-md md:max-w-lg lg:max-w-xl xl:max-w-2xl mx-auto rounded-lg">
