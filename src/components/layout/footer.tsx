@@ -20,10 +20,10 @@ export default function Footer() {
 
         {/* Desktop Navigation */}
         <nav className="hidden md:flex items-center justify-center space-x-12 mb-6">
-          <a href="#" className="text-sm font-medium hover:text-[#5CEFFA]">
+          <a href="/about" className="text-sm font-medium hover:text-[#5CEFFA]">
             Nosotros
           </a>
-          <a href="#" className="text-sm font-medium hover:text-[#5CEFFA]">
+          <a href="/menu" className="text-sm font-medium hover:text-[#5CEFFA]">
             Menú
           </a>
           <a href="#" className="text-sm font-medium hover:text-[#5CEFFA]">
