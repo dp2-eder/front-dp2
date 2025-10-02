@@ -1,5 +1,5 @@
 'use client'
-
+import { useSearchParams } from "next/navigation"
 import {
   Shrimp,
   User,
@@ -45,6 +45,17 @@ const categories = ["Todos", "Plato principal", "Entrada", "Bebida", "Postre", "
 
 export default function MenuPage() {
   const router = useRouter()
+  const searchParams = useSearchParams()
+  const categoria = searchParams.get("categoria")
+  console.log("Categoría recibida por query param:", categoria)
+
+  useEffect(() => {
+    console.log("Categoría recibida por query param:", categoria)
+    if (categoria && categoria !== selectedCategory) {
+      setSelectedCategory(categoria)
+    }
+  }, [categoria])
+
   const [isLoading, setIsLoading] = useState(false)
   const [isAuthenticated, setIsAuthenticated] = useState(true)
   const [selectedCategory, setSelectedCategory] = useState("Plato principal") // Filtro por defecto

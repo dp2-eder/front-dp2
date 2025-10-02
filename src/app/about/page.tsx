@@ -1,11 +1,69 @@
+"use client"
 import Image from "next/image"
 import Link from "next/link"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent } from "@/components/ui/card"
 import Header from "@/components/layout/header"
-import Footer from "@/components/layout/footer"
+import { useEffect, useState } from "react"
+import { useRouter } from "next/navigation"
+import {
+  Carousel,
+  CarouselContent,
+  CarouselItem,
+  CarouselNext,
+  CarouselPrevious,
+} from "@/components/ui/carousel"
+
+interface MenuItem {
+  id: number
+  nombre: string
+  imagen: string
+  precio: number
+  stock: number
+  disponible: true
+  categoria: string
+  alergenos: string
+  tiempo_preparacion: number
+  descripcion: string
+}
+
+const categoryImages: Record<string, string> = {
+  Entrada: "/causa-limena-with-yellow-potato-and-avocado.jpg",
+  'Bebida Alcoholica': "/mixed-seafood-ceviche-with-shrimp-and-octopus.jpg",
+  'Bebidas Sin Alcohol': "/peruvian-seafood-rice-with-cilantro.jpg",
+  'Plato Principal': "/chaudfa-de-mariscos-500x450.jpg",
+  'Bebidas': "/6143e231d4bfcf3c4448e32e.jpg",
+  // Puedes agregar más categorías e imágenes genéricas aquí
+}
 
 export default function AboutPage() {
+  const [categories, setCategories] = useState<string[]>([])
+  const router = useRouter()
+  useEffect(() => {
+  setCategories(["Bebida Alcohólica", "Bebida Sin Alcohol", "Plato Principal", "Postre", "Entrada"]);
+}, []);
+  /*useEffect(() => {
+    const fetchCategories = async () => {
+      try {
+        const res = await fetch("https://backend-mockup.onrender.com/api/menu/items");
+        if (!res.ok) throw new Error("Error en la respuesta del servidor");
+        const data: MenuItem[] = await res.json();
+        console.log("DATA DEL API:", data);
+        const uniqueCategories = Array.from(
+          new Set(data.map(item => item.categoria.toLowerCase()))
+        );
+        setCategories(uniqueCategories);
+      } catch (error) {
+        console.error("Error al obtener datos del API:", error);
+
+        setCategories(["Todos", "Criollo", "Pescados", "Bebidas", "Entradas"]);
+        //console.log("No se extrajo data");
+      }
+    };
+    fetchCategories();
+  }, []);*/
+  console.log("CATEGORIAS REGISTRADAS: " + categories);
+
   return (
     <div className="min-h-screen bg-background">
       <Header showFullNavigation={true} />
@@ -20,19 +78,19 @@ export default function AboutPage() {
                 Bienvenido a Dine Line
               </h1>
               <p className="text-xl text-primary-foreground/90 mb-6 md:mb-8 leading-7">
-                "Reconocido por su innovadora modalidad para brindarte 
+                "Reconocido por su innovadora modalidad para brindarte
                 una experiencia única y personalizada."
               </p>
               <Link href="/menu">
-                <Button 
-                  size="lg" 
+                <Button
+                  size="lg"
                   className="bg-background text-foreground hover:bg-background/90 shadow-lg"
                 >
                   Ordene Ahora
                 </Button>
               </Link>
             </div>
-            
+
             <div className="flex-1 flex justify-center">
               <div className="relative">
                 <Image
@@ -49,118 +107,77 @@ export default function AboutPage() {
       </section>
 
       {/* Categories Section */}
-      <section className="py-12 md:py-16 bg-muted/50">
-        <div className="container mx-auto px-4">
-          <h2 className="scroll-m-20 text-3xl font-bold tracking-tight text-center text-primary mb-8 md:mb-12">
-            Nuestras Categorías
-          </h2>
-          
-          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-4 md:gap-6 max-w-6xl mx-auto">
-            {/* Entradas */}
-            <Link href="/menu/entradas" className="group">
-              <Card className="overflow-hidden border-0 shadow-lg hover:shadow-xl transition-all duration-300 group-hover:scale-105">
-                <CardContent className="p-0">
-                  <div className="relative h-32 md:h-40 lg:h-48">
-                    <Image
-                      src="/causa-limena-with-yellow-potato-and-avocado.jpg"
-                      alt="Entradas"
-                      fill
-                      className="object-cover group-hover:scale-110 transition-transform duration-300"
-                    />
-                    <div className="absolute inset-0 bg-black/40 group-hover:bg-black/20 transition-all duration-300"></div>
-                    <div className="absolute bottom-2 md:bottom-4 left-2 md:left-4">
-                      <h3 className="text-lg font-semibold text-white">Entradas</h3>
-                    </div>
-                  </div>
-                </CardContent>
-              </Card>
-            </Link>
+<section className="py-12 md:py-16 bg-muted/50">
+  <div className="container mx-auto px-4">
+    <h2 className="scroll-m-20 text-3xl font-bold tracking-tight text-center text-primary mb-8 md:mb-12">
+      Nuestras Categorías
+    </h2>
 
-            {/* Ceviches */}
-            <Link href="/menu/ceviches" className="group">
+    <Carousel
+      opts={{
+        align: "start",
+        loop: true,
+      }}
+      className="w-full max-w-6xl mx-auto"
+    >
+      <CarouselContent className="-ml-2 md:-ml-4">
+        {categories.map((cat) => (
+          <CarouselItem
+            key={cat}
+            className="pl-2 md:pl-4 basis-1/2 md:basis-1/3 lg:basis-1/5"
+          >
+            <div
+              className="group block cursor-pointer"
+              onClick={() =>
+                router.push(`/menu?categoria=${encodeURIComponent(cat)}`)
+              }
+            >
               <Card className="overflow-hidden border-0 shadow-lg hover:shadow-xl transition-all duration-300 group-hover:scale-105">
                 <CardContent className="p-0">
                   <div className="relative h-32 md:h-40 lg:h-48">
                     <Image
-                      src="/mixed-seafood-ceviche-with-shrimp-and-octopus.jpg"
-                      alt="Ceviches"
+                      src={categoryImages[cat] || "/categoria-generica.jpg"}
+                      alt={cat}
                       fill
                       className="object-cover group-hover:scale-110 transition-transform duration-300"
                     />
                     <div className="absolute inset-0 bg-black/40 group-hover:bg-black/20 transition-all duration-300"></div>
                     <div className="absolute bottom-2 md:bottom-4 left-2 md:left-4">
-                      <h3 className="text-lg font-semibold text-white">Ceviches</h3>
+                      <h3 className="text-lg font-semibold text-white capitalize">
+                        {cat}
+                      </h3>
                     </div>
                   </div>
                 </CardContent>
               </Card>
-            </Link>
+            </div>
+          </CarouselItem>
+        ))}
+      </CarouselContent>
 
-            {/* Arroces */}
-            <Link href="/menu/arroces" className="group">
-              <Card className="overflow-hidden border-0 shadow-lg hover:shadow-xl transition-all duration-300 group-hover:scale-105">
-                <CardContent className="p-0">
-                  <div className="relative h-32 md:h-40 lg:h-48">
-                    <Image
-                      src="/peruvian-seafood-rice-with-cilantro.jpg"
-                      alt="Arroces"
-                      fill
-                      className="object-cover group-hover:scale-110 transition-transform duration-300"
-                    />
-                    <div className="absolute inset-0 bg-black/40 group-hover:bg-black/20 transition-all duration-300"></div>
-                    <div className="absolute bottom-2 md:bottom-4 left-2 md:left-4">
-                      <h3 className="text-lg font-semibold text-white">Arroces</h3>
-                    </div>
-                  </div>
-                </CardContent>
-              </Card>
-            </Link>
-
-            {/* Sopas */}
-            <Link href="/menu/sopas" className="group">
-              <Card className="overflow-hidden border-0 shadow-lg hover:shadow-xl transition-all duration-300 group-hover:scale-105">
-                <CardContent className="p-0">
-                  <div className="relative h-32 md:h-40 lg:h-48">
-                    <Image
-                      src="/chaudfa-de-mariscos-500x450.jpg"
-                      alt="Sopas"
-                      fill
-                      className="object-cover group-hover:scale-110 transition-transform duration-300"
-                    />
-                    <div className="absolute inset-0 bg-black/40 group-hover:bg-black/20 transition-all duration-300"></div>
-                    <div className="absolute bottom-2 md:bottom-4 left-2 md:left-4">
-                      <h3 className="text-lg font-semibold text-white">Sopas</h3>
-                    </div>
-                  </div>
-                </CardContent>
-              </Card>
-            </Link>
-
-            {/* Otros */}
-            <Link href="/menu/otros" className="group col-span-2 md:col-span-1">
-              <Card className="overflow-hidden border-0 shadow-lg hover:shadow-xl transition-all duration-300 group-hover:scale-105">
-                <CardContent className="p-0">
-                  <div className="relative h-32 md:h-40 lg:h-48">
-                    <Image
-                      src="/6143e231d4bfcf3c4448e32e.jpg"
-                      alt="Otros"
-                      fill
-                      className="object-cover group-hover:scale-110 transition-transform duration-300"
-                    />
-                    <div className="absolute inset-0 bg-black/40 group-hover:bg-black/20 transition-all duration-300"></div>
-                    <div className="absolute bottom-2 md:bottom-4 left-2 md:left-4">
-                      <h3 className="text-lg font-semibold text-white">Otros</h3>
-                    </div>
-                  </div>
-                </CardContent>
-              </Card>
-            </Link>
+      {/* Botones de navegación */}
+      <CarouselPrevious className="hidden md:flex" />
+      <CarouselNext className="hidden md:flex" />
+    </Carousel>
+  </div>
+</section>
+      {/* Footer decorativo */}
+      <footer className="bg-gradient-to-r from-primary to-primary/80 py-6 md:py-8">
+        <div className="container mx-auto px-4 text-center">
+          <div className="flex flex-col md:flex-row justify-center items-center space-y-2 md:space-y-0 md:space-x-4">
+            <Image
+              src="/DINE LINE.svg"
+              alt="Dine Line Logo"
+              width={40}
+              height={40}
+              className="w-8 h-8 md:w-10 md:h-10"
+            />
+            <p className="text-primary-foreground text-sm md:text-base leading-7">
+              Dine Line - Experiencia culinaria única
+            </p>
           </div>
         </div>
-      </section>
-
-      {/* Footer decorativo */}
-      <Footer />
+      </footer>
     </div>
   )
 }
