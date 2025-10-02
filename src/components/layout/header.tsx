@@ -50,10 +50,10 @@ export default function Header({
     <header className="bg-[#004166] sticky top-0 z-50">
       <div className="max-w-[1110px] mx-auto px-4">
         <div className="flex items-center justify-between h-16">
-          {/* Mobile - Logo a la izquierda */}
-          <div className="md:hidden flex items-center">
+          {/* Mobile - Logo al centro con posición absoluta */}
+          <div className="md:hidden absolute left-1/2 transform -translate-x-1/2 mt-16">
             <Link href="/menu">
-              <img src="/DINE LINE.svg" alt="DINE LINE" className="h-12 w-auto" />
+              <img src="/DINE LINE.svg" alt="DINE LINE" className="h-14 w-auto" />
             </Link>
           </div>
 
@@ -124,13 +124,49 @@ export default function Header({
         </div>
       </div>
 
-      {/* Menú Mobile alineado a la derecha */}
+      {/* Overlay + Menú Mobile */}
       {mobileOpen && (
-        <div className="md:hidden bg-[#0056C6] text-white px-6 pb-4 space-y-3 text-right">
-          <Link href="/menu" className="block hover:text-[#5CEFFA]">Menú</Link>
-          <Link href="/about" className="block hover:text-[#5CEFFA]">Nosotros</Link>
-          <Link href="/order" className="block hover:text-[#5CEFFA]">Mi Orden</Link>
-          <Link href="/contact" className="block hover:text-[#5CEFFA]">Contáctanos</Link>
+        <div className="fixed inset-0 z-40">
+          {/* Fondo translúcido con blur (cierra al hacer clic) */}
+          <div
+            className="absolute inset-0 bg-[#ECF1F4]/50 backdrop-blur-sm"
+            onClick={() => setMobileOpen(false)}
+          ></div>
+
+          {/* Menú desplegable debajo del header */}
+          <div className="relative md:hidden bg-[#0056C6] text-white px-6 py-4 space-y-3 text-center z-50">
+            {/* Botón X para cerrar */}
+            <div className="flex justify-end">
+              <button onClick={() => setMobileOpen(false)}>
+                <X className="w-6 h-6 text-white hover:text-[#5CEFFA]" />
+              </button>
+            </div>
+
+            <Link
+              href="/menu"
+              className="block hover:text-[#5CEFFA] border-b-2 border-white/30 pb-2"
+            >
+              Menú
+            </Link>
+            <Link
+              href="/about"
+              className="block hover:text-[#5CEFFA] border-b-2 border-white/30 pb-2"
+            >
+              Nosotros
+            </Link>
+            <Link
+              href="/order"
+              className="block hover:text-[#5CEFFA] border-b-2 border-white/30 pb-2"
+            >
+              Mi Orden
+            </Link>
+            <Link
+              href="/contact"
+              className="block hover:text-[#5CEFFA] pb-2"
+            >
+              Contáctanos
+            </Link>
+          </div>
         </div>
       )}
     </header>

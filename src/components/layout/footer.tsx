@@ -9,14 +9,6 @@ export default function Footer() {
     <footer className="bg-[url('/Footer.png')] bg-cover bg-center bg-no-repeat text-white relative">
       <div className="absolute inset-0"></div>
       <div className="max-w-[1110px] mx-auto px-4 py-8 relative z-10">
-        {/* Logo */}
-        <div className="flex justify-center mb-8 relative">
-          <img
-            src="/dineline2.svg"
-            alt="DINE LINE"
-            className="h-16 w-auto transform -translate-y-16 bg-white rounded-lg px-2 py-1 shadow-lg"
-          />
-        </div>
 
         {/* Desktop Navigation */}
         <nav className="hidden md:flex items-center justify-center space-x-12 mb-6">
@@ -35,25 +27,25 @@ export default function Footer() {
         </nav>
 
         {/* Mobile Navigation */}
-        <div className="md:hidden space-y-3 mb-6">
-          <div className="border-b border-white/20 pb-4">
+        <div className="md:hidden space-y-3 mb-5">
+          <div className="border-b-2 border-white/20 pb-4">
             <button className="flex justify-center w-full">
-              <span className="text-sm font-bold">Nosotros</span>
+              <span className="text-lg font-bold">Nosotros</span>
             </button>
           </div>
-          <div className="border-b border-white/20 pb-4">
+          <div className="border-b-2 border-white/20 pb-4">
             <button className="flex justify-center w-full">
-              <span className="text-sm font-bold">Menú</span>
+              <span className="text-lg font-bold">Menú</span>
             </button>
           </div>
-          <div className="border-b border-white/20 pb-4">
+          <div className="border-b-2 border-white/20 pb-4">
             <button className="flex justify-center w-full">
-              <span className="text-sm font-bold">Mi Orden</span>
+              <span className="text-lg font-bold">Mi Orden</span>
             </button>
           </div>
-          <div className="border-b border-white/20 pb-4">
+          <div className="border-b-2 border-white/20 pb-4">
             <button className="flex justify-center w-full">
-              <span className="text-sm font-bold">Contáctanos</span>
+              <span className="text-lg font-bold">Contáctanos</span>
             </button>
           </div>
         </div>

@@ -48,10 +48,12 @@ export function DishCard({
         </div>
 
         {/* Dish Name */}
-        <h3 className="bg-[#0056C6] text-white px-3 py-2 rounded-b-3xl text-sm font-medium">
+        <h3
+          className="bg-[#004166] text-white px-3 py-2 rounded-b-3xl text-sm font-medium truncate whitespace-nowrap overflow-hidden"
+          title={dish.name} // tooltip con nombre completo
+        >
           {dish.name || "Nombre no disponible"}
         </h3>
-
         {/* Price - Optional */}
         {showPrice && (
           <p className="mt-2 text-sm font-bold text-gray-800">
