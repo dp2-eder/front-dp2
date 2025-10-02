@@ -14,101 +14,9 @@ import { Checkbox } from "@/components/ui/checkbox"
 import { Label } from "@/components/ui/label"
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group"
 import { Textarea } from "@/components/ui/textarea"
-
-interface SideOption {
-  id: string
-  name: string
-  price: number
-  label?: string
-}
-
-interface ExtraOption {
-  id: string
-  name: string
-  price: number
-}
-
-interface MenuItem {
-  id: number
-  name: string
-  description: string
-  price: number
-  rating: number
-  prepTime: string
-  image: string
-  category: string
-  popular: boolean
-}
-
-// Menú estático de cevichería (mismo que en home)
-const localMenuItems: MenuItem[] = [
-  {
-    id: 1,
-    name: "Ceviche de pescado",
-    description: "Trozos de pescado con jugo de limón, cebolla, ají limo y sal, acompañados de choclo, camote y yuyo.",
-    price: 39.90,
-    rating: 4.9,
-    prepTime: "15 min",
-    image: "/fresh-ceviche-with-red-onions-and-sweet-potato.jpg",
-    category: "Entradas",
-    popular: true
-  },
-  {
-    id: 2,
-    name: "Ceviche Mixto",
-    description: "Pescado, pulpo, camarones y conchas negras en leche de tigre especial",
-    price: 32.00,
-    rating: 4.8,
-    prepTime: "18 min",
-    image: "/mixed-seafood-ceviche-with-shrimp-and-octopus.jpg",
-    category: "Entradas",
-    popular: true
-  },
-  {
-    id: 3,
-    name: "Tiradito Nikkei",
-    description: "Cortes finos de pescado con salsa nikkei, palta y ajonjolí",
-    price: 28.00,
-    rating: 4.7,
-    prepTime: "12 min",
-    image: "/tiradito-nikkei-with-thin-fish-slices-and-sesame.jpg",
-    category: "Entradas",
-    popular: false
-  },
-  {
-    id: 4,
-    name: "Arroz con Mariscos",
-    description: "Arroz amarillo con mariscos frescos, culantro y ají amarillo",
-    price: 35.00,
-    rating: 4.6,
-    prepTime: "25 min",
-    image: "/peruvian-seafood-rice-with-cilantro.jpg",
-    category: "Criollo",
-    popular: false
-  },
-  {
-    id: 5,
-    name: "Causa Limeña",
-    description: "Papa amarilla con pollo, palta y mayonesa casera",
-    price: 24.00,
-    rating: 4.5,
-    prepTime: "10 min",
-    image: "/causa-limena-with-yellow-potato-and-avocado.jpg",
-    category: "Entradas",
-    popular: false
-  },
-  {
-    id: 6,
-    name: "Leche de Tigre",
-    description: "El jugo concentrado del ceviche con mariscos y cancha",
-    price: 18.00,
-    rating: 4.8,
-    prepTime: "5 min",
-    image: "/leche-de-tigre-with-seafood-and-corn-nuts.jpg",
-    category: "Bebidas",
-    popular: true
-  }
-]
+import { useMenu } from "@/hooks/use-menu"
+import { useCart, CartItem } from '@/hooks/use-cart'
+import { Root2 } from "@/types/menu"
 
 export default function DetallePedidoPage() {
   const params = useParams()
@@ -118,32 +26,31 @@ export default function DetallePedidoPage() {
   const [quantity, setQuantity] = useState(1)
   const [comments, setComments] = useState("")
   const [showMaxExtrasWarning, setShowMaxExtrasWarning] = useState(false)
-  const [product, setProduct] = useState<MenuItem | null>(null)
+  const [product, setProduct] = useState<Root2 | null>(null)
   const [extraQuantities, setExtraQuantities] = useState<{[key: string]: number}>({})
+  const [loading, setLoading] = useState(true)
+
+  const { addToCart } = useCart()
+
+  // Usar el hook de la API
+  const { menuItems, loading: apiLoading, error } = useMenu()
 
   useEffect(() => {
-    const productId = parseInt(params.id as string)
-    const foundProduct = localMenuItems.find(item => item.id === productId)
-    setProduct(foundProduct || null)
-  }, [params.id])
-
-  // Opciones de acompañamiento - ACTUALIZADAS según imagen
-  const sideOptions: SideOption[] = [
-    { id: "chicharron-pescado", name: "Chicharrón de pescado", price: 0, label: "Gratis" },
-    { id: "arroz-mariscos", name: "Arroz con mariscos", price: 22.00 },
-    { id: "chicharron-pescado-2", name: "Chicharrón de pescado", price: 19.00 }
-  ]
-
-  // Opciones extra - ACTUALIZADAS según imagen
-  const extraOptions: ExtraOption[] = [
-    { id: "inca-kola", name: "Inca Kola Sabor Original 600ml", price: 5.00 },
-    { id: "san-mateo", name: "San Mateo Sin Gas 600 ml", price: 3.00 },
-    { id: "jarra-chicha", name: "Jarra chicha morada 1L", price: 20.00 }
-  ]
+    if (!apiLoading && menuItems.length > 0) {
+      const productId = parseInt(params.id as string)
+      const foundProduct = menuItems.find(item => item.id === productId)
+      setProduct(foundProduct || null)
+      setLoading(false)
+    }
+  }, [params.id, menuItems, apiLoading])
 
   const handleExtraChange = (extraId: string, checked: boolean) => {
+    if (!product?.grupo_personalizacion) return
+
+    const maxSelections = product.grupo_personalizacion.max_selecciones
+
     if (checked) {
-      if (selectedExtras.length >= 3) {
+      if (selectedExtras.length >= maxSelections) {
         setShowMaxExtrasWarning(true)
         setTimeout(() => setShowMaxExtrasWarning(false), 3000)
         return
@@ -170,22 +77,26 @@ export default function DetallePedidoPage() {
   const calculateTotal = () => {
     if (!product) return 0
 
-    let total = product.price
+    let total = product.precio
 
-    // Add side price
-    const selectedSideOption = sideOptions.find((side) => side.id === selectedSide)
-    if (selectedSideOption) {
-      total += selectedSideOption.price
+    // Add side price (if it's a radio selection)
+    if (product.grupo_personalizacion?.tipo === "acompanamiento" || product.grupo_personalizacion?.tipo === "tamaño") {
+      const selectedOption = product.grupo_personalizacion.opciones.find(opt => opt.etiqueta === selectedSide)
+      if (selectedOption) {
+        total += selectedOption.precio_adicional
+      }
     }
 
-    // Add extras prices with quantities
-    selectedExtras.forEach((extraId) => {
-      const extra = extraOptions.find((e) => e.id === extraId)
-      const quantity = extraQuantities[extraId] || 1
-      if (extra) {
-        total += extra.price * quantity
-      }
-    })
+    // Add extras prices with quantities (if it's a checkbox selection)
+    if (product.grupo_personalizacion?.tipo === "salsa" || product.grupo_personalizacion?.tipo === "checkbox") {
+      selectedExtras.forEach((extraId) => {
+        const extra = product.grupo_personalizacion?.opciones.find(opt => opt.etiqueta === extraId)
+        const quantity = extraQuantities[extraId] || 1
+        if (extra) {
+          total += extra.precio_adicional * quantity
+        }
+      })
+    }
 
     return total * quantity
   }
@@ -194,7 +105,38 @@ export default function DetallePedidoPage() {
     return `S/${price.toFixed(2)}`
   }
 
-  const isAddToCartEnabled = selectedSide !== ""
+  // Determinar si es obligatorio seleccionar opciones
+  const isRequired = product?.grupo_personalizacion?.tipo === "acompanamiento" || 
+                     product?.grupo_personalizacion?.tipo === "tamaño"
+  
+  const isAddToCartEnabled = !isRequired || selectedSide !== ""
+
+  if (apiLoading || loading) {
+    return (
+      <div className="min-h-screen bg-gray-100 flex items-center justify-center">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-[#0056C6] mx-auto mb-4"></div>
+          <p className="text-gray-600">Cargando producto...</p>
+        </div>
+      </div>
+    )
+  }
+
+  if (error) {
+    return (
+      <div className="min-h-screen bg-gray-100 flex items-center justify-center">
+        <div className="text-center">
+          <h2 className="text-2xl font-bold text-gray-800 mb-4">Error al cargar el producto</h2>
+          <p className="text-gray-600 mb-4">{error}</p>
+          <Link href="/menu">
+            <Button className="bg-[#0056C6] hover:bg-[#004299] text-white">
+              Volver al menú
+            </Button>
+          </Link>
+        </div>
+      </div>
+    )
+  }
 
   if (!product) {
     return (
@@ -211,6 +153,43 @@ export default function DetallePedidoPage() {
     )
   }
 
+  const handleAddToCart = () => {
+    if (!product) return
+
+    const cartItem: CartItem = {
+      id: `${product.id}-${Date.now()}`,
+      dishId: product.id,
+      name: product.nombre,
+      description: product.descripcion,
+      basePrice: product.precio,
+      quantity: quantity,
+      image: product.imagen,
+      selectedOptions: [
+        ...(selectedSide ? [{
+          type: product.grupo_personalizacion?.tipo || 'acompanamiento',
+          name: selectedSide,
+          price: product.grupo_personalizacion?.opciones.find(opt => opt.etiqueta === selectedSide)?.precio_adicional || 0
+        }] : []),
+        ...selectedExtras.map(extraId => {
+          const extra = product.grupo_personalizacion?.opciones.find(opt => opt.etiqueta === extraId)
+          return {
+            type: 'extra',
+            name: extraId,
+            price: (extra?.precio_adicional || 0) * (extraQuantities[extraId] || 1)
+          }
+        })
+      ],
+      totalPrice: calculateTotal(),
+      comments: comments
+    }
+
+    console.log('Adding item to cart:', cartItem)
+    addToCart(cartItem)
+    
+    alert('¡Producto agregado al carrito!')
+    router.push('/carrito')
+  }
+
   return (
     <div className="min-h-screen bg-[#FAFCFE] flex flex-col">
       {/* Header */}
@@ -225,113 +204,114 @@ export default function DetallePedidoPage() {
               <Card className="p-6 bg-white border border-[#ECF1F4] rounded-xl shadow-sm">
                 <div className="flex items-start space-x-4">
                   <img
-                    src={product.image || "/placeholder.svg"}
-                    alt={product.name}
+                    src={product.imagen || "/placeholder.svg"}
+                    alt={product.nombre}
                     className="w-20 h-20 rounded-[30px] object-cover flex-shrink-0"
+                    onError={(e) => {
+                      const target = e.target as HTMLImageElement
+                      target.src = "/placeholder.jpg"
+                    }}
                   />
                   <div className="flex-1">
-                    <h2 className="text-base font-semibold text-gray-900 mb-1">{product.name}</h2>
-                    <p className="text-sm text-[#8C8CA1] mb-2">{product.description}</p>
-                    <p className="text-base font-semibold text-gray-900">{formatPrice(product.price)}</p>
+                    <h2 className="text-base font-semibold text-gray-900 mb-1">{product.nombre}</h2>
+                    <p className="text-sm text-[#8C8CA1] mb-2">{product.descripcion}</p>
+                    <p className="text-base font-semibold text-gray-900">{formatPrice(product.precio)}</p>
                   </div>
                 </div>
               </Card>
 
-              {/* Side Selection Card */}
-              <Card className="p-6 bg-white border border-[#ECF1F4] rounded-xl shadow-sm">
-                <div className="flex items-center gap-2 mb-4">
-                  <h3 className="text-lg font-semibold text-gray-900">Selecciona tu acompañamiento</h3>
-                  <Badge variant="secondary" className="bg-[#ECF1F4] text-[#8C8CA1] text-xs">
-                    Opcional
-                  </Badge>
-                </div>
-                <p className="text-sm text-[#8C8CA1] mb-4">Puedes elegir hasta 3 opciones.</p>
-
-                <RadioGroup value={selectedSide} onValueChange={setSelectedSide} className="space-y-3">
-                  {sideOptions.map((option, index) => (
-                    <div key={option.id}>
-                      <div className="flex items-center justify-between py-3">
-                        <div className="flex items-center space-x-3">
-                          <RadioGroupItem value={option.id} id={option.id} />
-                          <Label htmlFor={option.id} className="text-sm font-medium cursor-pointer">
-                            {option.name}
-                          </Label>
-                        </div>
-                        <div className="text-sm font-medium text-gray-900">
-                          {option.price === 0 ? "Gratis" : `+${formatPrice(option.price)}`}
-                        </div>
-                      </div>
-                      {index < sideOptions.length - 1 && <div className="border-b border-[#ECF1F4]"></div>}
-                    </div>
-                  ))}
-                </RadioGroup>
-              </Card>
-
-              {/* Extras Card */}
-              <Card className="p-6 bg-white border border-[#ECF1F4] rounded-xl shadow-sm">
-                <div className="flex items-center gap-2 mb-4">
-                  <h3 className="text-lg font-semibold text-gray-900">Agrega más sabor a tu orden</h3>
-                  <Badge variant="secondary" className="bg-[#ECF1F4] text-[#8C8CA1] text-xs">
-                    Opcional
-                  </Badge>
-                </div>
-                <p className="text-sm text-[#8C8CA1] mb-4">Puedes elegir hasta 3 opciones.</p>
-
-                {showMaxExtrasWarning && (
-                  <div className="mb-4 p-3 bg-[#ECF1F4] rounded-lg">
-                    <p className="text-sm text-[#8C8CA1]">Máximo 3 opciones</p>
+              {/* Personalization Options Card */}
+              {product.grupo_personalizacion && (
+                <Card className="p-6 bg-white border border-[#ECF1F4] rounded-xl shadow-sm">
+                  <div className="flex items-center gap-2 mb-4">
+                    <h3 className="text-lg font-semibold text-gray-900">{product.grupo_personalizacion.etiqueta}</h3>
+                    <Badge variant="secondary" className="bg-[#ECF1F4] text-[#8C8CA1] text-xs">
+                      {isRequired ? "Obligatorio" : "Opcional"}
+                    </Badge>
                   </div>
-                )}
+                  <p className="text-sm text-[#8C8CA1] mb-4">
+                    Puedes elegir hasta {product.grupo_personalizacion.max_selecciones} opciones.
+                  </p>
 
-                <div className="space-y-3">
-                  {extraOptions.map((option, index) => (
-                    <div key={option.id}>
-                      <div className="flex items-center justify-between py-3">
-                        <div className="flex items-center space-x-3 flex-1">
-                          <Checkbox
-                            id={option.id}
-                            checked={selectedExtras.includes(option.id)}
-                            onCheckedChange={(checked) => handleExtraChange(option.id, checked as boolean)}
-                          />
-                          <Label htmlFor={option.id} className="text-sm font-medium cursor-pointer flex-1">
-                            {option.name}
-                          </Label>
-                        </div>
-                        <div className="flex items-center space-x-2">
-                          <div className="text-sm font-medium text-gray-900">
-                            +{formatPrice(option.price)}
-                          </div>
-                          {/* Quantity controls for extras */}
-                          {selectedExtras.includes(option.id) && (
-                            <div className="flex items-center space-x-1">
-                              <Button
-                                variant="outline"
-                                size="sm"
-                                className="w-6 h-6 p-0 text-xs"
-                                onClick={() => updateExtraQuantity(option.id, -1)}
-                              >
-                                -
-                              </Button>
-                              <span className="w-4 text-center text-xs">
-                                {extraQuantities[option.id] || 1}
-                              </span>
-                              <Button
-                                variant="outline"
-                                size="sm"
-                                className="w-6 h-6 p-0 text-xs"
-                                onClick={() => updateExtraQuantity(option.id, 1)}
-                              >
-                                +
-                              </Button>
+                  {product.grupo_personalizacion.tipo === "acompanamiento" || product.grupo_personalizacion.tipo === "tamaño" ? (
+                    // Radio Group para selección única
+                    <RadioGroup value={selectedSide} onValueChange={setSelectedSide} className="space-y-3">
+                      {product.grupo_personalizacion.opciones?.map((option, index) => (
+                        <div key={option.etiqueta}>
+                          <div className="flex items-center justify-between py-3">
+                            <div className="flex items-center space-x-3">
+                              <RadioGroupItem value={option.etiqueta} id={option.etiqueta} />
+                              <Label htmlFor={option.etiqueta} className="text-sm font-medium cursor-pointer">
+                                {option.etiqueta}
+                              </Label>
                             </div>
-                          )}
+                            <div className="text-sm font-medium text-gray-900">
+                              {option.precio_adicional === 0 ? "Gratis" : `+${formatPrice(option.precio_adicional)}`}
+                            </div>
+                          </div>
+                          {index < (product.grupo_personalizacion?.opciones.length || 0) - 1 && <div className="border-b border-[#ECF1F4]"></div>}
                         </div>
-                      </div>
-                      {index < extraOptions.length - 1 && <div className="border-b border-[#ECF1F4]"></div>}
+                      ))}
+                    </RadioGroup>
+                  ) : (
+                    // Checkbox Group para selección múltiple
+                    <div className="space-y-3">
+                      {showMaxExtrasWarning && (
+                        <div className="mb-4 p-3 bg-[#ECF1F4] rounded-lg">
+                          <p className="text-sm text-[#8C8CA1]">Máximo {product.grupo_personalizacion.max_selecciones} opciones</p>
+                        </div>
+                      )}
+
+                      {product.grupo_personalizacion.opciones?.map((option, index) => (
+                        <div key={option.etiqueta}>
+                          <div className="flex items-center justify-between py-3">
+                            <div className="flex items-center space-x-3 flex-1">
+                              <Checkbox
+                                id={option.etiqueta}
+                                checked={selectedExtras.includes(option.etiqueta)}
+                                onCheckedChange={(checked) => handleExtraChange(option.etiqueta, checked as boolean)}
+                              />
+                              <Label htmlFor={option.etiqueta} className="text-sm font-medium cursor-pointer flex-1">
+                                {option.etiqueta}
+                              </Label>
+                            </div>
+                            <div className="flex items-center space-x-2">
+                              <div className="text-sm font-medium text-gray-900">
+                                +{formatPrice(option.precio_adicional)}
+                              </div>
+                              {/* Quantity controls for extras */}
+                              {selectedExtras.includes(option.etiqueta) && (
+                                <div className="flex items-center space-x-1">
+                                  <Button
+                                    variant="outline"
+                                    size="sm"
+                                    className="w-6 h-6 p-0 text-xs"
+                                    onClick={() => updateExtraQuantity(option.etiqueta, -1)}
+                                  >
+                                    -
+                                  </Button>
+                                  <span className="w-4 text-center text-xs">
+                                    {extraQuantities[option.etiqueta] || 1}
+                                  </span>
+                                  <Button
+                                    variant="outline"
+                                    size="sm"
+                                    className="w-6 h-6 p-0 text-xs"
+                                    onClick={() => updateExtraQuantity(option.etiqueta, 1)}
+                                  >
+                                    +
+                                  </Button>
+                                </div>
+                              )}
+                            </div>
+                          </div>
+                          {index < (product.grupo_personalizacion?.opciones.length || 0) - 1 && <div className="border-b border-[#ECF1F4]"></div>}
+                        </div>
+                      ))}
                     </div>
-                  ))}
-                </div>
-              </Card>
+                  )}
+                </Card>
+              )}
 
               {/* Comments Card */}
               <Card className="p-6 bg-white border border-[#ECF1F4] rounded-xl shadow-sm">
@@ -360,8 +340,8 @@ export default function DetallePedidoPage() {
                   <h3 className="text-lg font-semibold text-gray-900 mb-4">Resumen del pedido</h3>
 
                   <div className="flex items-center justify-between mb-4">
-                    <p className="text-sm text-gray-600">{product.name}</p>
-                    <p className="text-base font-semibold text-gray-900">{formatPrice(product.price)}</p>
+                    <p className="text-sm text-gray-600">{product.nombre}</p>
+                    <p className="text-base font-semibold text-gray-900">{formatPrice(product.precio)}</p>
                   </div>
 
                   {/* Quantity Control */}
@@ -393,7 +373,7 @@ export default function DetallePedidoPage() {
                   {!isAddToCartEnabled && (
                     <div className="mb-4 p-3 bg-[#ECF1F4] rounded-lg">
                       <p className="text-sm text-[#8C8CA1]">
-                        Faltan selecciones obligatorias: Selecciona tu acompañamiento
+                        Faltan selecciones obligatorias: {product.grupo_personalizacion?.etiqueta}
                       </p>
                     </div>
                   )}
@@ -406,48 +386,7 @@ export default function DetallePedidoPage() {
                         : "bg-gray-300 text-gray-500 cursor-not-allowed opacity-50"
                     }`}
                     disabled={!isAddToCartEnabled}
-                    onClick={() => {
-                      if (!product) return
-
-                      // Obtener el nombre del acompañamiento seleccionado
-                      const selectedSideOption = sideOptions.find(side => side.id === selectedSide)
-                      const sideDisplayName = selectedSideOption ? selectedSideOption.name : ""
-
-                      // Obtener los nombres de los extras seleccionados
-                      const extraDisplayNames = selectedExtras.map(extraId => {
-                        const extra = extraOptions.find(e => e.id === extraId)
-                        return extra ? extra.name : ""
-                      }).filter(name => name !== "")
-
-                      // Crear el item del carrito con la estructura correcta
-                      const cartItem = {
-                        id: `${product.id}-${Date.now()}`,
-                        name: product.name,
-                        description: product.description,
-                        price: product.price,
-                        quantity: quantity,
-                        image: product.image,
-                        selectedSide: sideDisplayName,  // Nombre legible, no ID
-                        selectedExtras: extraDisplayNames,  // Array de nombres legibles
-                        comments: comments,
-                        total: calculateTotal()
-                      }
-
-                      // Obtener carrito actual del localStorage
-                      const existingCart = localStorage.getItem("cart")
-                      const currentCart = existingCart ? JSON.parse(existingCart) : []
-
-                      // Agregar el nuevo item
-                      const updatedCart = [...currentCart, cartItem]
-
-                      // Guardar en localStorage
-                      localStorage.setItem("cart", JSON.stringify(updatedCart))
-
-                      console.log(`Producto agregado al carrito:`, cartItem)
-
-                      // Redirigir al carrito
-                      router.push('/carrito')
-                    }}
+                    onClick={handleAddToCart}
                   >
                     Agregar al carrito – {formatPrice(calculateTotal())}
                   </Button>
