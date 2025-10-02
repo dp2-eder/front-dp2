@@ -17,8 +17,9 @@ import { Textarea } from "@/components/ui/textarea"
 import { useMenu } from "@/hooks/use-menu"
 import { useCart, CartItem } from '@/hooks/use-cart'
 import { Root2 } from "@/types/menu"
+import Loading from "@/app/loading"
 
-export default function DetallePedidoPage() {
+export default function PersonalizarPage() {
   const params = useParams()
   const router = useRouter()
   const [selectedSide, setSelectedSide] = useState<string>("")
@@ -39,15 +40,23 @@ export default function DetallePedidoPage() {
     if (!apiLoading && menuItems.length > 0) {
       const productId = parseInt(params.id as string)
       const foundProduct = menuItems.find(item => item.id === productId)
+      
+      // LOGS DE DIAGNÓSTICO
+      console.log('Product ID buscado:', productId)
+      console.log('Producto encontrado:', foundProduct)
+      console.log('Grupo personalización:', foundProduct?.grupo_personalizacion)
+      console.log('Tipo de grupo_personalizacion:', Array.isArray(foundProduct?.grupo_personalizacion))
+      
       setProduct(foundProduct || null)
       setLoading(false)
     }
   }, [params.id, menuItems, apiLoading])
 
   const handleExtraChange = (extraId: string, checked: boolean) => {
-    if (!product?.grupo_personalizacion) return
+    const personalizationGroup = product?.grupo_personalizacion?.[0]
+    if (!personalizationGroup) return
 
-    const maxSelections = product.grupo_personalizacion.max_selecciones
+    const maxSelections = personalizationGroup.max_selecciones
 
     if (checked) {
       if (selectedExtras.length >= maxSelections) {
@@ -78,19 +87,20 @@ export default function DetallePedidoPage() {
     if (!product) return 0
 
     let total = product.precio
+    const personalizationGroup = product.grupo_personalizacion?.[0]
 
     // Add side price (if it's a radio selection)
-    if (product.grupo_personalizacion?.tipo === "acompanamiento" || product.grupo_personalizacion?.tipo === "tamaño") {
-      const selectedOption = product.grupo_personalizacion.opciones.find(opt => opt.etiqueta === selectedSide)
+    if (personalizationGroup?.tipo === "acompanamiento" || personalizationGroup?.tipo === "tamaño") {
+      const selectedOption = personalizationGroup.opciones.find(opt => opt.etiqueta === selectedSide)
       if (selectedOption) {
         total += selectedOption.precio_adicional
       }
     }
 
     // Add extras prices with quantities (if it's a checkbox selection)
-    if (product.grupo_personalizacion?.tipo === "salsa" || product.grupo_personalizacion?.tipo === "checkbox") {
+    if (personalizationGroup?.tipo === "salsa" || personalizationGroup?.tipo === "checkbox") {
       selectedExtras.forEach((extraId) => {
-        const extra = product.grupo_personalizacion?.opciones.find(opt => opt.etiqueta === extraId)
+        const extra = personalizationGroup.opciones.find(opt => opt.etiqueta === extraId)
         const quantity = extraQuantities[extraId] || 1
         if (extra) {
           total += extra.precio_adicional * quantity
@@ -106,20 +116,14 @@ export default function DetallePedidoPage() {
   }
 
   // Determinar si es obligatorio seleccionar opciones
-  const isRequired = product?.grupo_personalizacion?.tipo === "acompanamiento" || 
-                     product?.grupo_personalizacion?.tipo === "tamaño"
+  const personalizationGroup = product?.grupo_personalizacion?.[0]
+  const isRequired = personalizationGroup?.tipo === "acompanamiento" || 
+                     personalizationGroup?.tipo === "tamaño"
   
   const isAddToCartEnabled = !isRequired || selectedSide !== ""
 
   if (apiLoading || loading) {
-    return (
-      <div className="min-h-screen bg-gray-100 flex items-center justify-center">
-        <div className="text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-[#0056C6] mx-auto mb-4"></div>
-          <p className="text-gray-600">Cargando producto...</p>
-        </div>
-      </div>
-    )
+    return <Loading />
   }
 
   if (error) {
@@ -156,6 +160,8 @@ export default function DetallePedidoPage() {
   const handleAddToCart = () => {
     if (!product) return
 
+    const personalizationGroup = product.grupo_personalizacion?.[0]
+
     const cartItem: CartItem = {
       id: `${product.id}-${Date.now()}`,
       dishId: product.id,
@@ -166,12 +172,12 @@ export default function DetallePedidoPage() {
       image: product.imagen,
       selectedOptions: [
         ...(selectedSide ? [{
-          type: product.grupo_personalizacion?.tipo || 'acompanamiento',
+          type: personalizationGroup?.tipo || 'acompanamiento',
           name: selectedSide,
-          price: product.grupo_personalizacion?.opciones.find(opt => opt.etiqueta === selectedSide)?.precio_adicional || 0
+          price: personalizationGroup?.opciones.find(opt => opt.etiqueta === selectedSide)?.precio_adicional || 0
         }] : []),
         ...selectedExtras.map(extraId => {
-          const extra = product.grupo_personalizacion?.opciones.find(opt => opt.etiqueta === extraId)
+          const extra = personalizationGroup?.opciones.find(opt => opt.etiqueta === extraId)
           return {
             type: 'extra',
             name: extraId,
@@ -186,7 +192,7 @@ export default function DetallePedidoPage() {
     console.log('Adding item to cart:', cartItem)
     addToCart(cartItem)
     
-    alert('¡Producto agregado al carrito!')
+    // alert('¡Producto agregado al carrito!')
     router.push('/carrito')
   }
 
@@ -221,22 +227,22 @@ export default function DetallePedidoPage() {
               </Card>
 
               {/* Personalization Options Card */}
-              {product.grupo_personalizacion && (
+              {personalizationGroup && (
                 <Card className="p-6 bg-white border border-[#ECF1F4] rounded-xl shadow-sm">
                   <div className="flex items-center gap-2 mb-4">
-                    <h3 className="text-lg font-semibold text-gray-900">{product.grupo_personalizacion.etiqueta}</h3>
+                    <h3 className="text-lg font-semibold text-gray-900">{personalizationGroup.etiqueta}</h3>
                     <Badge variant="secondary" className="bg-[#ECF1F4] text-[#8C8CA1] text-xs">
                       {isRequired ? "Obligatorio" : "Opcional"}
                     </Badge>
                   </div>
                   <p className="text-sm text-[#8C8CA1] mb-4">
-                    Puedes elegir hasta {product.grupo_personalizacion.max_selecciones} opciones.
+                    Puedes elegir hasta {personalizationGroup.max_selecciones} opciones.
                   </p>
 
-                  {product.grupo_personalizacion.tipo === "acompanamiento" || product.grupo_personalizacion.tipo === "tamaño" ? (
+                  {personalizationGroup.tipo === "acompanamiento" || personalizationGroup.tipo === "tamaño" ? (
                     // Radio Group para selección única
                     <RadioGroup value={selectedSide} onValueChange={setSelectedSide} className="space-y-3">
-                      {product.grupo_personalizacion.opciones?.map((option, index) => (
+                      {personalizationGroup.opciones?.map((option, index) => (
                         <div key={option.etiqueta}>
                           <div className="flex items-center justify-between py-3">
                             <div className="flex items-center space-x-3">
@@ -249,7 +255,7 @@ export default function DetallePedidoPage() {
                               {option.precio_adicional === 0 ? "Gratis" : `+${formatPrice(option.precio_adicional)}`}
                             </div>
                           </div>
-                          {index < (product.grupo_personalizacion?.opciones.length || 0) - 1 && <div className="border-b border-[#ECF1F4]"></div>}
+                          {index < (personalizationGroup?.opciones.length || 0) - 1 && <div className="border-b border-[#ECF1F4]"></div>}
                         </div>
                       ))}
                     </RadioGroup>
@@ -258,11 +264,11 @@ export default function DetallePedidoPage() {
                     <div className="space-y-3">
                       {showMaxExtrasWarning && (
                         <div className="mb-4 p-3 bg-[#ECF1F4] rounded-lg">
-                          <p className="text-sm text-[#8C8CA1]">Máximo {product.grupo_personalizacion.max_selecciones} opciones</p>
+                          <p className="text-sm text-[#8C8CA1]">Máximo {personalizationGroup.max_selecciones} opciones</p>
                         </div>
                       )}
 
-                      {product.grupo_personalizacion.opciones?.map((option, index) => (
+                      {personalizationGroup.opciones?.map((option, index) => (
                         <div key={option.etiqueta}>
                           <div className="flex items-center justify-between py-3">
                             <div className="flex items-center space-x-3 flex-1">
@@ -305,7 +311,7 @@ export default function DetallePedidoPage() {
                               )}
                             </div>
                           </div>
-                          {index < (product.grupo_personalizacion?.opciones.length || 0) - 1 && <div className="border-b border-[#ECF1F4]"></div>}
+                          {index < (personalizationGroup?.opciones.length || 0) - 1 && <div className="border-b border-[#ECF1F4]"></div>}
                         </div>
                       ))}
                     </div>
@@ -373,7 +379,7 @@ export default function DetallePedidoPage() {
                   {!isAddToCartEnabled && (
                     <div className="mb-4 p-3 bg-[#ECF1F4] rounded-lg">
                       <p className="text-sm text-[#8C8CA1]">
-                        Faltan selecciones obligatorias: {product.grupo_personalizacion?.etiqueta}
+                        Faltan selecciones obligatorias: {personalizationGroup?.etiqueta}
                       </p>
                     </div>
                   )}

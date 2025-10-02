@@ -10,13 +10,15 @@ import { Button } from "@/components/ui/button"
 import BackButton from "@/components/ui/back-button"
 import { useMenu } from "@/hooks/use-menu"
 import { Root2 } from "@/types/menu"
+import Loading from "@/app/loading"
 
 export default function PlatoDetailPage() {
   const params = useParams()
   const router = useRouter()
   const [dish, setDish] = useState<Root2 | null>(null)
   const [loading, setLoading] = useState(true)
-
+  const [imageError, setImageError] = useState(false)
+  const [validImageSrc, setValidImageSrc] = useState<string>("/placeholder-image.png") // Nuevo estado
   // Usar el hook de la API
   const { menuItems, loading: apiLoading, error } = useMenu()
 
@@ -29,15 +31,15 @@ export default function PlatoDetailPage() {
     }
   }, [params.id, menuItems, apiLoading])
 
+  const handleImageError = (e: React.SyntheticEvent<HTMLImageElement, Event>) => {
+    const target = e.target as HTMLImageElement
+    if (!imageError) { // Evitar bucle infinito
+      setImageError(true)
+      target.src = "/placeholder-image.png"
+    }
+  }
   if (apiLoading || loading) {
-    return (
-      <div className="min-h-screen bg-gray-100 flex items-center justify-center">
-        <div className="text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-[#0056C6] mx-auto mb-4"></div>
-          <p className="text-gray-600">Cargando plato...</p>
-        </div>
-      </div>
-    )
+    return <Loading />
   }
 
   if (error) {
@@ -81,37 +83,67 @@ export default function PlatoDetailPage() {
             <div className="order-2 lg:order-1 space-y-6">
               <div>
                 <h1 className="text-3xl lg:text-4xl font-bold text-gray-800 mb-4">{dish.nombre}</h1>
-                
+
                 {/* Categoría */}
                 <div className="mb-4">
                   <span className="inline-block bg-[#0056C6] text-white px-3 py-1 rounded-full text-sm font-medium">
                     {dish.categoria}
                   </span>
                 </div>
-                
+
                 <p className="text-base lg:text-lg text-gray-600 leading-relaxed mb-6">
                   {dish.descripcion}
                 </p>
 
                 {/* Información adicional de la API */}
-                <div className="space-y-2 mb-6">
-                  {dish.alergenos && (
-                    <p className="text-sm text-gray-500">
-                      <span className="font-medium">Alérgenos:</span> {dish.alergenos}
-                    </p>
-                  )}
+
+              </div>
+              <div className="space-y-4 mb-6">
+                {/* Ingredientes */}
+                {dish.ingredientes && dish.ingredientes.length > 0 && (
+                  <div>
+                    <h3 className="font-semibold text-gray-800 mb-2">Ingredientes:</h3>
+                    <div className="flex flex-wrap gap-2">
+                      {dish.ingredientes.map((ingrediente, index) => (
+                        <span
+                          key={index}
+                          className="bg-gray-100 text-gray-700 px-3 py-1 rounded-full text-sm"
+                        >
+                          {ingrediente}
+                        </span>
+                      ))}
+                    </div>
+                  </div>
+                )}
+
+                {/* Alérgenos */}
+                {dish.alergenos && dish.alergenos.length > 0 && (
+                  <div>
+                    <h3 className="font-semibold text-gray-800 mb-2">Alérgenos:</h3>
+                    <div className="flex flex-wrap gap-2">
+                      {dish.alergenos.map((alergeno, index) => (
+                        <span
+                          key={index}
+                          className="bg-red-100 text-red-700 px-3 py-1 rounded-full text-sm border border-red-200"
+                        >
+                          {alergeno}
+                        </span>
+                      ))}
+                    </div>
+                  </div>
+                )}
+
+                {/* Tiempo de preparación (si quieres mostrarlo) */}
+                {dish.tiempo_preparacion > 0 && (
                   <p className="text-sm text-gray-500">
                     <span className="font-medium">Tiempo de preparación:</span> {dish.tiempo_preparacion} minutos
                   </p>
-                  <p className="text-sm text-gray-500">
-                    <span className="font-medium">Disponible:</span> {dish.disponible ? 'Sí' : 'No'}
-                  </p>
-                </div>
+                )}
               </div>
 
               {/* Solo el botón Ordene Ahora */}
               <div className="flex justify-center">
-                <Button 
+                <Button
                   className="w-full max-w-md h-12 bg-[#0056C6] hover:bg-[#004299] text-white text-lg font-semibold rounded-xl"
                   onClick={() => {
                     router.push(`/plato/${dish.id}/personalizar`)

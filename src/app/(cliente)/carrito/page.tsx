@@ -10,6 +10,7 @@ import BackButton from "@/components/ui/back-button"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { useCart } from "@/hooks/use-cart"
+import Loading from "@/app/loading"
 
 export default function CarritoPage() {
   const router = useRouter()
@@ -29,14 +30,7 @@ export default function CarritoPage() {
   }
 
   if (isLoading) {
-    return (
-      <div className="min-h-screen bg-[#FAFCFE] flex items-center justify-center">
-        <div className="text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-[#0056C6] mx-auto mb-4"></div>
-          <p className="text-gray-600">Cargando carrito...</p>
-        </div>
-      </div>
-    )
+    return <Loading />
   }
 
   if (cart.length === 0) {

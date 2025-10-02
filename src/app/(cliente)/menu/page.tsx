@@ -1,5 +1,6 @@
 'use client'
-import { useSearchParams } from "next/navigation"
+import { useSearchParams, useRouter } from "next/navigation"
+import React, { useState, useEffect } from "react"
 import {
   Shrimp,
   User,
@@ -23,9 +24,6 @@ import {
   ArrowLeft
 } from 'lucide-react'
 import Link from 'next/link'
-import { useRouter } from 'next/navigation'
-import { useState, useEffect } from 'react'
-import React from 'react'
 
 import Footer from "@/components/layout/footer"
 import Header from "@/components/layout/header"
@@ -39,6 +37,7 @@ import { Input } from '@/components/ui/input'
 import DishCard from '@/components/custom/dish-card'
 import { useMenu } from '@/hooks/use-menu'
 import { Root2 } from '@/types/menu'
+import Loading from "@/app/loading"
 
 // Categorías basadas en tu API
 const categories = ["Todos", "Plato principal", "Entrada", "Bebida", "Postre", "Sopa"]
@@ -49,16 +48,9 @@ export default function MenuPage() {
   const categoria = searchParams.get("categoria")
   console.log("Categoría recibida por query param:", categoria)
 
-  useEffect(() => {
-    console.log("Categoría recibida por query param:", categoria)
-    if (categoria && categoria !== selectedCategory) {
-      setSelectedCategory(categoria)
-    }
-  }, [categoria])
-
   const [isLoading, setIsLoading] = useState(false)
   const [isAuthenticated, setIsAuthenticated] = useState(true)
-  const [selectedCategory, setSelectedCategory] = useState("Plato principal") // Filtro por defecto
+  const [selectedCategory, setSelectedCategory] = useState("Todos") // Mostrar todos por defecto
   const [searchTerm, setSearchTerm] = useState("")
   const [cart, setCart] = useState<number[]>([])
   const [favorites, setFavorites] = useState<number[]>([])
@@ -76,6 +68,18 @@ export default function MenuPage() {
     const uniqueCategories = Array.from(new Set(menuItems.map(item => item.categoria)))
     return ["Todos", ...uniqueCategories.sort()]
   }, [menuItems])
+
+  // Manejar categoría desde URL params
+  useEffect(() => {
+    console.log("Categoría recibida por query param:", categoria)
+    if (categoria && categories.length > 0) {
+      // Verificar que la categoría existe en las categorías disponibles
+      const categoryExists = categories.includes(categoria)
+      if (categoryExists) {
+        setSelectedCategory(categoria)
+      }
+    }
+  }, [categoria, categories])
 
   // Inicializar expandedCategories con las categorías dinámicas
   React.useEffect(() => {
@@ -150,31 +154,7 @@ export default function MenuPage() {
   }
 
   if (loading) {
-    return (
-      <div className="min-h-screen bg-gradient-to-br from-cyan-400 to-teal-600 flex items-center justify-center p-4">
-        <Card className="w-full max-w-md bg-white/95 backdrop-blur-sm shadow-2xl border-0 rounded-2xl">
-          <CardContent className="p-8 text-center">
-            <div className="space-y-6">
-              <div className="w-16 h-16 bg-cyan-600 rounded-full flex items-center justify-center mx-auto">
-                <Loader2 className="w-8 h-8 text-white animate-spin" />
-              </div>
-              <div>
-                <h3 className="text-xl font-bold text-foreground mb-2">Cargando Menú</h3>
-                <p className="text-foreground text-sm">Obteniendo datos de la API...</p>
-              </div>
-              <div className="w-full bg-gray-200 rounded-full h-3">
-                <div className="bg-gradient-to-r from-cyan-500 to-blue-500 h-3 rounded-full animate-pulse transition-all duration-500"
-                  style={{ width: '75%' }}></div>
-              </div>
-              <div className="text-xs text-gray-500 flex items-center justify-center space-x-1">
-                <Wifi className="w-3 h-3" />
-                <span>Conectando con backend-mockup.onrender.com</span>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-      </div>
-    )
+    return <Loading />
   }
 
   if (error) {
@@ -273,10 +253,9 @@ export default function MenuPage() {
                           categoria: category,
                           disponible: true,
                           stock: 0,
-                          alergenos: "",
+                          alergenos: [],
                           tiempo_preparacion: 0,
                           ingredientes: [],
-                          tipo_item: "",
                           grupo_personalizacion: undefined
                         }}
                         className="pointer-events-none"

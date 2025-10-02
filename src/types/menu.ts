@@ -8,12 +8,11 @@ export interface Root2 {
   stock: number
   disponible: boolean
   categoria: string
-  alergenos: string
+  alergenos: string[]
   tiempo_preparacion: number
   descripcion: string
-  ingredientes: Ingrediente[]
-  grupo_personalizacion?: GrupoPersonalizacion
-  tipo_item: string
+  ingredientes: string[]
+  grupo_personalizacion?: GrupoPersonalizacion[] | null
 }
 
 export interface Ingrediente {

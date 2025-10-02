@@ -40,8 +40,8 @@ export default function AboutPage() {
   const [categories, setCategories] = useState<string[]>([])
   const router = useRouter()
   useEffect(() => {
-  setCategories(["Bebida Alcohólica", "Bebida Sin Alcohol", "Plato Principal", "Postre", "Entrada"]);
-}, []);
+    setCategories(["Bebida Alcohólica", "Bebida Sin Alcohol", "Plato Principal", "Postre", "Entrada"]);
+  }, []);
   /*useEffect(() => {
     const fetchCategories = async () => {
       try {
@@ -107,60 +107,60 @@ export default function AboutPage() {
       </section>
 
       {/* Categories Section */}
-<section className="py-12 md:py-16 bg-muted/50">
-  <div className="container mx-auto px-4">
-    <h2 className="scroll-m-20 text-3xl font-bold tracking-tight text-center text-primary mb-8 md:mb-12">
-      Nuestras Categorías
-    </h2>
+      <section className="py-12 md:py-16 bg-muted/50">
+        <div className="container mx-auto px-4">
+          <h2 className="scroll-m-20 text-3xl font-bold tracking-tight text-center text-primary mb-8 md:mb-12">
+            Nuestras Categorías
+          </h2>
 
-    <Carousel
-      opts={{
-        align: "start",
-        loop: true,
-      }}
-      className="w-full max-w-6xl mx-auto"
-    >
-      <CarouselContent className="-ml-2 md:-ml-4">
-        {categories.map((cat) => (
-          <CarouselItem
-            key={cat}
-            className="pl-2 md:pl-4 basis-1/2 md:basis-1/3 lg:basis-1/5"
+          <Carousel
+            opts={{
+              align: "start",
+              loop: true,
+            }}
+            className="w-full max-w-6xl mx-auto"
           >
-            <div
-              className="group block cursor-pointer"
-              onClick={() =>
-                router.push(`/menu?categoria=${encodeURIComponent(cat)}`)
-              }
-            >
-              <Card className="overflow-hidden border-0 shadow-lg hover:shadow-xl transition-all duration-300 group-hover:scale-105">
-                <CardContent className="p-0">
-                  <div className="relative h-32 md:h-40 lg:h-48">
-                    <Image
-                      src={categoryImages[cat] || "/categoria-generica.jpg"}
-                      alt={cat}
-                      fill
-                      className="object-cover group-hover:scale-110 transition-transform duration-300"
-                    />
-                    <div className="absolute inset-0 bg-black/40 group-hover:bg-black/20 transition-all duration-300"></div>
-                    <div className="absolute bottom-2 md:bottom-4 left-2 md:left-4">
-                      <h3 className="text-lg font-semibold text-white capitalize">
-                        {cat}
-                      </h3>
-                    </div>
+            <CarouselContent className="-ml-2 md:-ml-4">
+              {categories.map((cat) => (
+                <CarouselItem
+                  key={cat}
+                  className="pl-2 md:pl-4 basis-1/2 md:basis-1/3 lg:basis-1/5"
+                >
+                  <div
+                    className="group block cursor-pointer"
+                    onClick={() =>
+                      router.push(`/menu?categoria=${encodeURIComponent(cat)}`)
+                    }
+                  >
+                    <Card className="overflow-hidden border-0 shadow-lg hover:shadow-xl transition-all duration-300 group-hover:scale-105">
+                      <CardContent className="p-0">
+                        <div className="relative h-32 md:h-40 lg:h-48">
+                          <Image
+                            src={categoryImages[cat] || "/placeholder-image.png"}
+                            alt={cat}
+                            fill
+                            className="object-cover group-hover:scale-110 transition-transform duration-300"
+                          />
+                          <div className="absolute inset-0 bg-black/40 group-hover:bg-black/20 transition-all duration-300"></div>
+                          <div className="absolute bottom-2 md:bottom-4 left-2 md:left-4">
+                            <h3 className="text-lg font-semibold text-white capitalize">
+                              {cat}
+                            </h3>
+                          </div>
+                        </div>
+                      </CardContent>
+                    </Card>
                   </div>
-                </CardContent>
-              </Card>
-            </div>
-          </CarouselItem>
-        ))}
-      </CarouselContent>
+                </CarouselItem>
+              ))}
+            </CarouselContent>
 
-      {/* Botones de navegación */}
-      <CarouselPrevious className="hidden md:flex" />
-      <CarouselNext className="hidden md:flex" />
-    </Carousel>
-  </div>
-</section>
+            {/* Botones de navegación */}
+            <CarouselPrevious className="hidden md:flex" />
+            <CarouselNext className="hidden md:flex" />
+          </Carousel>
+        </div>
+      </section>
       {/* Footer decorativo */}
       <footer className="bg-gradient-to-r from-primary to-primary/80 py-6 md:py-8">
         <div className="container mx-auto px-4 text-center">
