@@ -1,6 +1,7 @@
 "use client"
 
-import { ArrowLeft, Heart, ShoppingCart, LogOut, Menu, RefreshCw, Loader2, X } from "lucide-react"
+import { Heart, ShoppingCart, Menu, X } from "lucide-react"
+import Image from "next/image"
 import Link from "next/link"
 import { useState } from "react"
 
@@ -26,22 +27,11 @@ interface HeaderProps {
 }
 
 export default function Header({
-  showBackButton = false,
-  backHref = "/home",
-  backText = "Volver al menú",
   showCart = false,
   cartItems = 0,
   showFavorite = false,
   isFavorite = false,
-  onFavoriteToggle,
-  showLogout = false,
-  onLogout,
-  userInfo,
-  showUpdateButton = false,
-  onUpdateClick,
-  isUpdating = false,
-  onHamburgerClick,
-  showFullNavigation = false
+  onFavoriteToggle
 }: HeaderProps) {
 
   const [mobileOpen, setMobileOpen] = useState(false)
@@ -53,7 +43,7 @@ export default function Header({
           {/* Mobile - Logo al centro con posición absoluta */}
           <div className="md:hidden absolute left-1/2 transform -translate-x-1/2 mt-16">
             <Link href="/menu">
-              <img src="/DINE LINE.svg" alt="DINE LINE" className="h-14 w-auto" />
+              <Image src="/DINE LINE.svg" alt="DINE LINE" width={56} height={56} className="h-14 w-auto" />
             </Link>
           </div>
 
@@ -72,7 +62,7 @@ export default function Header({
             {/* Logo al centro - ABSOLUTO */}
             <div className="absolute left-1/2 transform -translate-x-1/2">
               <Link href="/menu">
-                <img src="/DINE LINE.svg" alt="DINE LINE" className="h-16 w-auto transform translate-y-7" />
+                <Image src="/DINE LINE.svg" alt="DINE LINE" width={64} height={64} className="h-16 w-auto transform translate-y-7" />
               </Link>
             </div>
 

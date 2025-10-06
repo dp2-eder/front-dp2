@@ -1,9 +1,10 @@
 "use client"
 
+import { Minus, Plus, Trash2, ShoppingBag } from "lucide-react"
 import { useRouter } from "next/navigation"
 import { useState, useEffect } from "react"
-import { Minus, Plus, Trash2, ShoppingBag, Menu } from "lucide-react"
 
+import Loading from "@/app/loading"
 import Footer from "@/components/layout/footer"
 import Header from "@/components/layout/header"
 import BackButton from "@/components/ui/back-button"
@@ -11,7 +12,6 @@ import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import SafeImage from "@/components/ui/safe-image"
 import { useCart } from "@/hooks/use-cart"
-import Loading from "@/app/loading"
 
 export default function CarritoPage() {
   const router = useRouter()

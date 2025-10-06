@@ -131,9 +131,13 @@ export default function LoginForm() {
                 />
                 <span className="text-gray-600">Recordarme</span>
               </label>
-              <a href="#" className="text-blue-600 hover:text-blue-800 font-medium">
+              <button 
+                type="button"
+                className="text-blue-600 hover:text-blue-800 font-medium"
+                onClick={() => {/* TODO: Implementar recuperación de contraseña */}}
+              >
                 ¿Olvidaste tu contraseña?
-              </a>
+              </button>
             </div>
 
             <Button

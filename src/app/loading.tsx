@@ -1,4 +1,5 @@
 import { Fish, Droplets } from "lucide-react"
+import Image from "next/image"
 
 export default function Loading() {
   return (
@@ -8,7 +9,7 @@ export default function Loading() {
         <div className="relative mb-8">
           {/* Logo background */}
           <div className="w-24 h-24 bg-white rounded-2xl shadow-lg flex items-center justify-center mx-auto mb-4">
-            <img src="/DINE LINE.svg" alt="DINE LINE" className="h-12 w-auto" />
+            <Image src="/DINE LINE.svg" alt="DINE LINE" width={48} height={48} className="h-12 w-auto" />
           </div>
           
           {/* Floating marine elements */}

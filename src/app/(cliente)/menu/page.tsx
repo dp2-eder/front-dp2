@@ -1,62 +1,42 @@
 'use client'
+import {
+  RefreshCw,
+  Info,
+  Loader2,
+  Search,
+  ChevronDown,
+  ChevronUp
+} from 'lucide-react'
 import { useSearchParams, useRouter } from "next/navigation"
 import React, { useState, useEffect } from "react"
-import {
-  Shrimp,
-  User,
-  LogOut,
-  RefreshCw,
-  Phone,
-  CheckCircle,
-  Info,
-  Star,
-  Clock,
-  Wifi,
-  Loader2,
-  ShoppingCart,
-  Search,
-  Menu,
-  Heart,
-  ChevronDown,
-  ChevronUp,
-  Facebook,
-  Instagram,
-  ArrowLeft
-} from 'lucide-react'
-import Link from 'next/link'
 
+import Loading from "@/app/loading"
+import DishCard from '@/components/custom/dish-card'
 import Footer from "@/components/layout/footer"
 import Header from "@/components/layout/header"
-import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
-import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card'
-import {
-  Dialog, DialogContent, DialogHeader, DialogTitle
-} from '@/components/ui/dialog'
+import { Card, CardContent} from '@/components/ui/card'
 import { Input } from '@/components/ui/input'
-import DishCard from '@/components/custom/dish-card'
 import { useMenu } from '@/hooks/use-menu'
 import { Root2 } from '@/types/menu'
-import Loading from "@/app/loading"
 
 // Categorías basadas en tu API
-const categories = ["Todos", "Plato principal", "Entrada", "Bebida", "Postre", "Sopa"]
 
 export default function MenuPage() {
   const router = useRouter()
   const searchParams = useSearchParams()
   const categoria = searchParams.get("categoria")
-  console.log("Categoría recibida por query param:", categoria)
+  //console.log("Categoría recibida por query param:", categoria)
 
-  const [isLoading, setIsLoading] = useState(false)
+  //const [isLoading, setIsLoading] = useState(false)
   const [isAuthenticated, setIsAuthenticated] = useState(true)
   const [selectedCategory, setSelectedCategory] = useState("Todos") // Mostrar todos por defecto
   const [searchTerm, setSearchTerm] = useState("")
-  const [cart, setCart] = useState<number[]>([])
-  const [favorites, setFavorites] = useState<number[]>([])
+  //const [cart, setCart] = useState<number[]>([])
+  //const [favorites, setFavorites] = useState<number[]>([])
   const [expandedCategories, setExpandedCategories] = useState<{ [key: string]: boolean }>({})
-  const [isCategoryModalOpen, setIsCategoryModalOpen] = useState(false)
-  const [categorySearch, setCategorySearch] = useState("")
+  //const [isCategoryModalOpen, setIsCategoryModalOpen] = useState(false)
+  //const [categorySearch, setCategorySearch] = useState("")
 
   // Usar el hook de la API
   const { menuItems, loading, error, refetch } = useMenu()
@@ -71,7 +51,7 @@ export default function MenuPage() {
 
   // Manejar categoría desde URL params
   useEffect(() => {
-    console.log("Categoría recibida por query param:", categoria)
+    //console.log("Categoría recibida por query param:", categoria)
     if (categoria && categories.length > 0) {
       // Verificar que la categoría existe en las categorías disponibles
       const categoryExists = categories.includes(categoria)
@@ -101,20 +81,6 @@ export default function MenuPage() {
       setIsAuthenticated(true)
     }
   }, [router])
-
-  const handleLogout = () => {
-    localStorage.removeItem("isAuthenticated")
-    localStorage.removeItem("user")
-    router.push("/")
-  }
-
-  const addToCart = (dishId: number) => {
-    setCart((prev) => [...prev, dishId])
-  }
-
-  const toggleFavorite = (dishId: number) => {
-    setFavorites((prev) => (prev.includes(dishId) ? prev.filter((id) => id !== dishId) : [...prev, dishId]))
-  }
 
   const toggleCategory = (category: string) => {
     setExpandedCategories(prev => ({
@@ -322,7 +288,7 @@ export default function MenuPage() {
               <Search className="w-10 h-10 text-gray-500 mb-4" />
               <h2 className="text-xl font-bold mb-2">No Tenemos El Producto</h2>
               <p className="text-gray-600 mb-2">Ingrese Otro</p>
-              <p className="text-[#004166] font-semibold">"{searchTerm}"</p>
+              <p className="text-[#004166] font-semibold">&ldquo;{searchTerm}&rdquo;</p>
               <p className="text-gray-500 mt-2 text-sm">
                 No encontramos ningún producto con tu búsqueda.<br />
                 Revisa ortografía o prueba con términos más generales.

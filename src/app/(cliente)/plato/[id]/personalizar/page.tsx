@@ -1,10 +1,11 @@
 "use client"
 
-import { Minus, Plus, Facebook, Instagram, ChevronDown, ArrowLeft } from "lucide-react"
+import { Minus, Plus } from "lucide-react"
 import Link from "next/link"
 import { useParams, useRouter } from "next/navigation"
 import { useState, useEffect } from "react"
 
+import Loading from "@/app/loading"
 import Footer from "@/components/layout/footer"
 import Header from "@/components/layout/header"
 import { Badge } from "@/components/ui/badge"
@@ -13,12 +14,11 @@ import { Card } from "@/components/ui/card"
 import { Checkbox } from "@/components/ui/checkbox"
 import { Label } from "@/components/ui/label"
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group"
-import { Textarea } from "@/components/ui/textarea"
 import SafeImage from "@/components/ui/safe-image"
-import { useMenu } from "@/hooks/use-menu"
+import { Textarea } from "@/components/ui/textarea"
 import { useCart, CartItem } from '@/hooks/use-cart'
+import { useMenu } from "@/hooks/use-menu"
 import { Root2 } from "@/types/menu"
-import Loading from "@/app/loading"
 
 export default function PersonalizarPage() {
   const params = useParams()
@@ -41,12 +41,6 @@ export default function PersonalizarPage() {
     if (!apiLoading && menuItems.length > 0) {
       const productId = parseInt(params.id as string)
       const foundProduct = menuItems.find(item => item.id === productId)
-      
-      // LOGS DE DIAGNÓSTICO
-      console.log('Product ID buscado:', productId)
-      console.log('Producto encontrado:', foundProduct)
-      console.log('Grupo personalización:', foundProduct?.grupo_personalizacion)
-      console.log('Tipo de grupo_personalizacion:', Array.isArray(foundProduct?.grupo_personalizacion))
       
       setProduct(foundProduct || null)
       setLoading(false)
@@ -179,7 +173,7 @@ export default function PersonalizarPage() {
       name: product.nombre,
       description: product.descripcion,
       basePrice: product.precio,
-      quantity: quantity,
+      quantity,
       image: getValidImageSrc(product.imagen), // Usar imagen validada
       selectedOptions: [
         ...(selectedSide ? [{
@@ -197,10 +191,9 @@ export default function PersonalizarPage() {
         })
       ],
       totalPrice: calculateTotal(),
-      comments: comments
+      comments
     }
 
-    console.log('Adding item to cart:', cartItem)
     addToCart(cartItem)
     
     // alert('¡Producto agregado al carrito!')

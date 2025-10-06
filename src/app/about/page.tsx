@@ -1,11 +1,12 @@
 "use client"
 import Image from "next/image"
 import Link from "next/link"
+import { useRouter } from "next/navigation"
+import { useEffect, useState } from "react"
+
+import Header from "@/components/layout/header"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent } from "@/components/ui/card"
-import Header from "@/components/layout/header"
-import { useEffect, useState } from "react"
-import { useRouter } from "next/navigation"
 import {
   Carousel,
   CarouselContent,
@@ -14,18 +15,7 @@ import {
   CarouselPrevious,
 } from "@/components/ui/carousel"
 
-interface MenuItem {
-  id: number
-  nombre: string
-  imagen: string
-  precio: number
-  stock: number
-  disponible: true
-  categoria: string
-  alergenos: string
-  tiempo_preparacion: number
-  descripcion: string
-}
+
 
 const categoryImages: Record<string, string> = {
   Entrada: "/causa-limena-with-yellow-potato-and-avocado.jpg",
@@ -62,7 +52,7 @@ export default function AboutPage() {
     };
     fetchCategories();
   }, []);*/
-  console.log("CATEGORIAS REGISTRADAS: " + categories);
+  //console.log(`CATEGORIAS REGISTRADAS: ${  categories}`);
 
   return (
     <div className="min-h-screen bg-background">
@@ -78,8 +68,8 @@ export default function AboutPage() {
                 Bienvenido a Dine Line
               </h1>
               <p className="text-xl text-primary-foreground/90 mb-6 md:mb-8 leading-7">
-                "Reconocido por su innovadora modalidad para brindarte
-                una experiencia única y personalizada."
+                &ldquo;Reconocido por su innovadora modalidad para brindarte
+                una experiencia única y personalizada.&rdquo;
               </p>
               <Link href="/menu">
                 <Button

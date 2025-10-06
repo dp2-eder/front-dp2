@@ -1,4 +1,6 @@
+import Image from "next/image"
 import Link from "next/link"
+
 import { Badge } from "@/components/ui/badge"
 import { Root2 } from "@/types/menu"
 
@@ -10,7 +12,6 @@ interface DishCardProps {
 
 export function DishCard({
   dish,
-  showPrice = false,
   className = ""
 }: DishCardProps) {
   // Array de imágenes locales como fallback
@@ -40,9 +41,11 @@ export function DishCard({
       <article className="text-center cursor-pointer hover:scale-105 transition-transform duration-200">
         {/* Image Container */}
         <div className="relative">
-          <img
-            src={dish.imagen && dish.imagen !== "" ? dish.imagen : getLocalImage(dish.id)}
+          <Image
+            src={getLocalImage(dish.id)}
             alt={dish.nombre || "Imagen no disponible"}
+            width={300}
+            height={169}
             className="w-full object-cover rounded-t-3xl bg-gray-300 aspect-[16/9]"
             onError={(e) => {
               const target = e.target as HTMLImageElement

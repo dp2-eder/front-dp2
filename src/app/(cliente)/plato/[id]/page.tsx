@@ -1,17 +1,16 @@
 "use client"
 
-import Link from "next/link"
 import { useParams, useRouter } from "next/navigation"
 import { useState, useEffect } from "react"
 
+import Loading from "@/app/loading"
 import Footer from "@/components/layout/footer"
 import Header from "@/components/layout/header"
-import { Button } from "@/components/ui/button"
 import BackButton from "@/components/ui/back-button"
+import { Button } from "@/components/ui/button"
 import SafeImage from "@/components/ui/safe-image"
 import { useMenu } from "@/hooks/use-menu"
 import { Root2 } from "@/types/menu"
-import Loading from "@/app/loading"
 
 export default function PlatoDetailPage() {
   const params = useParams()
