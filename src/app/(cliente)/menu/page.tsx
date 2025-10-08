@@ -148,7 +148,7 @@ export default function MenuPage() {
   }
 
   return (
-    <div className="min-h-screen bg-gray-100">
+    <div className="min-h-screen bg-gray-100" data-cy="page-container">
       {/* Header */}
       <Header showFullNavigation={true} />
 
@@ -167,6 +167,9 @@ export default function MenuPage() {
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
                 className="w-full h-12 text-lg rounded-[10px] shadow-[0_4px_4px_rgba(0,0,0,0.25)]"
+                aria-label="Buscar platos"
+                data-testid="search-input"
+                data-cy="search-input"
               />
             </div>
           </div>
@@ -176,6 +179,8 @@ export default function MenuPage() {
             <div
               className="flex gap-2 overflow-x-auto scrollbar-hide py-2"
               style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}
+              role="group"
+              aria-label="Filtros de categoría"
             >
               {categories.map((category) => (
                 <Button
@@ -188,6 +193,9 @@ export default function MenuPage() {
                       ? "bg-[#0056C6] text-white"
                       : "bg-gray-200 text-gray-700 hover:bg-gray-300"
                   }`}
+                  aria-pressed={selectedCategory === category}
+                  data-testid={`category-${category.toLowerCase()}`}
+                  data-cy={category === "Todos" ? "all-categories-btn" : "category-button"}
                 >
                   {category}
                 </Button>
@@ -267,7 +275,7 @@ export default function MenuPage() {
 
                     {/* Platos */}
                     {expandedCategories[category] && (
-                      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 py-5">
+                      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 py-5" data-cy="plate-grid">
                         {dishes.map((dish) => (
                           <DishCard
                             key={dish.id}

@@ -61,7 +61,7 @@ export default function Header({
 
             {/* Logo al centro - ABSOLUTO */}
             <div className="absolute left-1/2 transform -translate-x-1/2">
-              <Link href="/menu">
+              <Link href="/menu" data-cy="logo">
                 <Image src="/DINE LINE.svg" alt="DINE LINE" width={64} height={64} className="h-16 w-auto transform translate-y-7" />
               </Link>
             </div>
@@ -88,10 +88,10 @@ export default function Header({
               )}
 
               {showCart && (
-                <Button variant="ghost" size="icon" className="text-white hover:bg-white/10 relative">
+                <Button variant="ghost" size="icon" className="text-white hover:bg-white/10 relative" data-cy="cart-button">
                   <ShoppingCart className="h-5 w-5" />
                   {cartItems > 0 && (
-                    <span className="absolute -top-2 -right-2 h-5 w-5 rounded-full bg-white text-[#0056C6] text-xs flex items-center justify-center font-bold">
+                    <span className="absolute -top-2 -right-2 h-5 w-5 rounded-full bg-white text-[#0056C6] text-xs flex items-center justify-center font-bold" data-cy="cart-count">
                       {cartItems}
                     </span>
                   )}
