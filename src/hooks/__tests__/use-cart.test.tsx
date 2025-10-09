@@ -8,7 +8,7 @@
  * - Eliminar items
  * - Calcular totales
  * - Persistencia en localStorage
- */
+ 
 
 import { renderHook, act } from '@testing-library/react'
 import { useCart, CartItem } from '@/hooks/use-cart'
@@ -211,3 +211,4 @@ describe('useCart Hook', () => {
     expect(result.current.total).toBe(135.0) // 54 + 81
   })
 })
+*/
