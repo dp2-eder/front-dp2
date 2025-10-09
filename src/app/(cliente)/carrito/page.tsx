@@ -1,9 +1,10 @@
 "use client"
 
+import { Minus, Plus, Trash2, ShoppingBag } from "lucide-react"
 import { useRouter } from "next/navigation"
 import { useState, useEffect } from "react"
-import { Minus, Plus, Trash2, ShoppingBag, Menu } from "lucide-react"
 
+import Loading from "@/app/loading"
 import Footer from "@/components/layout/footer"
 import Header from "@/components/layout/header"
 import BackButton from "@/components/ui/back-button"
@@ -11,7 +12,6 @@ import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import SafeImage from "@/components/ui/safe-image"
 import { useCart } from "@/hooks/use-cart"
-import Loading from "@/app/loading"
 
 export default function CarritoPage() {
   const router = useRouter()
@@ -67,7 +67,7 @@ export default function CarritoPage() {
             
             <div className="space-y-4">
               {cart.map((item) => (
-                <Card key={item.id} className="p-4 bg-white border border-gray-200 rounded-xl shadow-sm">
+                <Card key={item.id} className="p-4 bg-white border border-gray-200 rounded-xl shadow-sm" data-cy="cart-item">
                   <div className="flex gap-4">
                     {/* Imagen del producto */}
                     <div className="w-20 h-20 flex-shrink-0">
@@ -122,11 +122,13 @@ export default function CarritoPage() {
                         size="sm"
                         className="w-8 h-8 p-0 rounded-full border-2 border-gray-300 hover:border-gray-400"
                         onClick={() => updateQuantity(item.id, item.quantity + 1)}
+                        aria-label="Incrementar cantidad"
+                        data-cy="increase-quantity-btn"
                       >
                         <Plus className="w-4 h-4" />
                       </Button>
                       
-                      <span className="w-8 h-8 bg-gray-100 rounded-lg flex items-center justify-center text-sm font-medium">
+                      <span className="w-8 h-8 bg-gray-100 rounded-lg flex items-center justify-center text-sm font-medium" data-cy="item-quantity">
                         {item.quantity}
                       </span>
                       
@@ -136,6 +138,8 @@ export default function CarritoPage() {
                         className="w-8 h-8 p-0 rounded-full border-2 border-gray-300 hover:border-gray-400"
                         onClick={() => updateQuantity(item.id, item.quantity - 1)}
                         disabled={item.quantity <= 1}
+                        aria-label="Decrementar cantidad"
+                        data-cy="decrease-quantity-btn"
                       >
                         <Minus className="w-4 h-4" />
                       </Button>
@@ -146,6 +150,8 @@ export default function CarritoPage() {
                         size="sm"
                         className="w-8 h-8 p-0 rounded-full border-2 border-red-300 hover:border-red-400 text-red-600 hover:text-red-700"
                         onClick={() => removeFromCart(item.id)}
+                        aria-label="Eliminar artículo"
+                        data-cy="remove-item-btn"
                       >
                         <Trash2 className="w-4 h-4" />
                       </Button>
@@ -161,6 +167,7 @@ export default function CarritoPage() {
             <Button
               onClick={handleCheckout}
               className="w-full max-w-md h-12 bg-[#0056C6] hover:bg-[#004299] text-white text-lg font-semibold rounded-xl"
+              data-cy="checkout-btn"
             >
               Enviar Pedido
             </Button>
@@ -190,7 +197,7 @@ export default function CarritoPage() {
                 </div>
                 <div className="flex justify-between font-bold text-lg">
                   <span>Total</span>
-                  <span>S/ {total.toFixed(2)}</span>
+                  <span data-cy="cart-total">S/ {total.toFixed(2)}</span>
                 </div>
                 
                 <Button

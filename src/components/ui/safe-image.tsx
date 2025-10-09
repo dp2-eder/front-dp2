@@ -1,4 +1,5 @@
 "use client"
+import Image from "next/image"
 import { useState } from "react"
 
 interface SafeImageProps {
@@ -15,7 +16,6 @@ export default function SafeImage({
   alt, 
   className = "",
   fallbackSrc = "/placeholder-image.png",
-  showIndicator = false,
   onError
 }: SafeImageProps) {
   const [hasError, setHasError] = useState(false)
@@ -43,7 +43,6 @@ export default function SafeImage({
   }
 
   const validSrc = getValidImageSrc(src)
-  const isPlaceholder = validSrc === fallbackSrc || hasError
 
   const handleError = () => {
     if (!hasError && validSrc !== fallbackSrc) {
@@ -54,9 +53,11 @@ export default function SafeImage({
 
   return (
     <div className="relative">
-      <img
+      <Image
         src={hasError ? fallbackSrc : validSrc}
         alt={alt}
+        width={300}
+        height={200}
         className={className}
         onError={handleError}
       />

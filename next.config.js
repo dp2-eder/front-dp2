@@ -1,6 +1,27 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
-  // No need for experimental appDir in Next.js 13+
+  images: {
+    remotePatterns: [
+      {
+        protocol: 'https',
+        hostname: 'drive.google.com',
+        port: '',
+        pathname: '/**',
+      },
+      {
+        protocol: 'https',
+        hostname: 'example.com',
+        port: '',
+        pathname: '/**',
+      },
+      {
+        protocol: 'https',
+        hostname: 'backend-mockup.onrender.com',
+        port: '',
+        pathname: '/**',
+      },
+    ],
+  },
 }
 
 module.exports = nextConfig

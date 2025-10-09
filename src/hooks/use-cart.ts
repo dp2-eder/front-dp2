@@ -25,16 +25,16 @@ export function useCart() {
   useEffect(() => {
     if (typeof window !== 'undefined' && !isInitialized) {
       const savedCart = localStorage.getItem('cart')
-      console.log('Loading cart from localStorage:', savedCart)
+      //console.log('Loading cart from localStorage:', savedCart)
       if (savedCart) {
         try {
-          const parsedCart = JSON.parse(savedCart)
+          const parsedCart = JSON.parse(savedCart) as CartItem[]
           if (Array.isArray(parsedCart)) {
             setCart(parsedCart)
-            console.log('Cart loaded successfully:', parsedCart)
+            //console.log('Cart loaded successfully:', parsedCart)
           }
         } catch (error) {
-          console.error('Error loading cart:', error)
+          //console.error('Error loading cart:', error)
         }
       }
       setIsInitialized(true)
@@ -44,16 +44,16 @@ export function useCart() {
   // Guardar carrito en localStorage cuando cambie (solo después de inicializar)
   useEffect(() => {
     if (typeof window !== 'undefined' && isInitialized) {
-      console.log('Saving cart to localStorage:', cart)
+      //console.log('Saving cart to localStorage:', cart)
       localStorage.setItem('cart', JSON.stringify(cart))
     }
   }, [cart, isInitialized])
 
   const addToCart = (item: CartItem) => {
-    console.log('Adding to cart:', item)
+    //console.log('Adding to cart:', item)
     setCart(prevCart => {
       const newCart = [...prevCart, item]
-      console.log('New cart state:', newCart)
+      //console.log('New cart state:', newCart)
       return newCart
     })
   }

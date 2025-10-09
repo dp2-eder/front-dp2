@@ -1,8 +1,7 @@
 "use client"
 
-import { Facebook, Instagram, ChevronDown } from "lucide-react"
+import { Facebook, Instagram } from "lucide-react"
 
-import { Button } from "@/components/ui/button"
 
 export default function Footer() {
   return (
@@ -18,10 +17,10 @@ export default function Footer() {
           <a href="/menu" className="text-sm font-medium hover:text-[#5CEFFA]">
             Menú
           </a>
-          <a href="#" className="text-sm font-medium hover:text-[#5CEFFA]">
+          <a href="/carrito" className="text-sm font-medium hover:text-[#5CEFFA]">
             Mi Orden
           </a>
-          <a href="#" className="text-sm font-medium hover:text-[#5CEFFA]">
+          <a href="/contacto" className="text-sm font-medium hover:text-[#5CEFFA]">
             Contáctanos
           </a>
         </nav>
@@ -68,13 +67,13 @@ export default function Footer() {
         {/* Social Media */}
         <div className="flex justify-center space-x-6 mb-3">
           <a
-            href="#"
+            href="https://facebook.com"
             className="w-10 h-10 bg-white/10 rounded-full flex items-center justify-center hover:bg-white/20 transition-colors"
           >
             <Facebook className="w-5 h-5" />
           </a>
           <a
-            href="#"
+            href="https://instagram.com"
             className="w-10 h-10 bg-white/10 rounded-full flex items-center justify-center hover:bg-white/20 transition-colors"
           >
             <Instagram className="w-5 h-5" />

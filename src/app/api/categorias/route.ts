@@ -2,35 +2,30 @@ import { NextResponse } from 'next/server'
 
 export async function GET() {
   try {
-    //console.log('Calling menu API...')
+    const categoriasUrl = process.env.NEXT_PUBLIC_CATEGORIAS_URL || 'https://back-dp2.onrender.com/api/v1/categorias/productos/cards'
     
-    const menuUrl = process.env.NEXT_PUBLIC_MENU_URL || 'https://scrapper-dp2-fork.onrender.com/PizzasLitleCesar'
-    
-    const response = await fetch(menuUrl, {
+    const response = await fetch(`${categoriasUrl}?skip=0&limit=100`, {
       method: 'GET',
       headers: {
         'Content-Type': 'application/json',
-        'User-Agent': 'DP2-Cevicheria/1.0',
+        'User-Agent': 'DineLine-Frontend/1.0',
       },
+      next: { revalidate: 300 } // Cache por 5 minutos
     })
-
-    //console.log('Menu response status:', response.status)
 
     if (!response.ok) {
       throw new Error(`HTTP error! status: ${response.status}`)
     }
 
-    const data = await response.json() as unknown[]
-    //console.log('Menu data received:', data)
+    const data = await response.json() as { items: unknown[]; total: number }
     
     return NextResponse.json({ 
       success: true, 
       data,
-      count: Array.isArray(data) ? data.length : 0,
+      count: data.items?.length || 0,
       timestamp: new Date().toISOString()
     })
   } catch (error) {
-    //console.error('Error calling menu API:', error)
     return NextResponse.json(
       { 
         success: false, 

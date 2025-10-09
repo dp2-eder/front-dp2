@@ -1,77 +1,57 @@
 'use client'
+import {
+  RefreshCw,
+  Info,
+  Loader2,
+  Search,
+  ChevronDown,
+  ChevronUp
+} from 'lucide-react'
 import { useSearchParams, useRouter } from "next/navigation"
 import React, { useState, useEffect } from "react"
-import {
-  Shrimp,
-  User,
-  LogOut,
-  RefreshCw,
-  Phone,
-  CheckCircle,
-  Info,
-  Star,
-  Clock,
-  Wifi,
-  Loader2,
-  ShoppingCart,
-  Search,
-  Menu,
-  Heart,
-  ChevronDown,
-  ChevronUp,
-  Facebook,
-  Instagram,
-  ArrowLeft
-} from 'lucide-react'
-import Link from 'next/link'
 
+import Loading from "@/app/loading"
+import DishCard from '@/components/custom/dish-card'
 import Footer from "@/components/layout/footer"
 import Header from "@/components/layout/header"
-import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
-import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card'
-import {
-  Dialog, DialogContent, DialogHeader, DialogTitle
-} from '@/components/ui/dialog'
+import { Card, CardContent} from '@/components/ui/card'
 import { Input } from '@/components/ui/input'
-import DishCard from '@/components/custom/dish-card'
-import { useMenu } from '@/hooks/use-menu'
-import { Root2 } from '@/types/menu'
-import Loading from "@/app/loading"
+import { useProductos } from '@/hooks/use-productos'
+import { Producto } from '@/types/productos'
 
 // Categorías basadas en tu API
-const categories = ["Todos", "Plato principal", "Entrada", "Bebida", "Postre", "Sopa"]
 
 export default function MenuPage() {
   const router = useRouter()
   const searchParams = useSearchParams()
   const categoria = searchParams.get("categoria")
-  console.log("Categoría recibida por query param:", categoria)
+  //console.log("Categoría recibida por query param:", categoria)
 
-  const [isLoading, setIsLoading] = useState(false)
+  //const [isLoading, setIsLoading] = useState(false)
   const [isAuthenticated, setIsAuthenticated] = useState(true)
   const [selectedCategory, setSelectedCategory] = useState("Todos") // Mostrar todos por defecto
   const [searchTerm, setSearchTerm] = useState("")
-  const [cart, setCart] = useState<number[]>([])
-  const [favorites, setFavorites] = useState<number[]>([])
+  //const [cart, setCart] = useState<number[]>([])
+  //const [favorites, setFavorites] = useState<number[]>([])
   const [expandedCategories, setExpandedCategories] = useState<{ [key: string]: boolean }>({})
-  const [isCategoryModalOpen, setIsCategoryModalOpen] = useState(false)
-  const [categorySearch, setCategorySearch] = useState("")
+  //const [isCategoryModalOpen, setIsCategoryModalOpen] = useState(false)
+  //const [categorySearch, setCategorySearch] = useState("")
 
   // Usar el hook de la API
-  const { menuItems, loading, error, refetch } = useMenu()
+  const { productos, loading, error, refetch } = useProductos()
 
   // Generar categorías dinámicamente desde la API
   const categories = React.useMemo(() => {
-    if (!menuItems.length) return ["Todos"]
+    if (!productos.length) return ["Todos"]
     
-    const uniqueCategories = Array.from(new Set(menuItems.map(item => item.categoria)))
+    const uniqueCategories = Array.from(new Set(productos.map(item => item.categoria.nombre)))
     return ["Todos", ...uniqueCategories.sort()]
-  }, [menuItems])
+  }, [productos])
 
   // Manejar categoría desde URL params
   useEffect(() => {
-    console.log("Categoría recibida por query param:", categoria)
+    //console.log("Categoría recibida por query param:", categoria)
     if (categoria && categories.length > 0) {
       // Verificar que la categoría existe en las categorías disponibles
       const categoryExists = categories.includes(categoria)
@@ -83,7 +63,7 @@ export default function MenuPage() {
 
   // Inicializar expandedCategories con las categorías dinámicas
   React.useEffect(() => {
-    if (menuItems.length > 0) {
+    if (productos.length > 0) {
       const initialExpanded = categories.reduce((acc, category) => {
         if (category !== "Todos") {
           acc[category] = true
@@ -92,7 +72,7 @@ export default function MenuPage() {
       }, {} as { [key: string]: boolean })
       setExpandedCategories(initialExpanded)
     }
-  }, [menuItems, categories])
+  }, [productos, categories])
 
   useEffect(() => {
     // Verificar autenticación
@@ -102,20 +82,6 @@ export default function MenuPage() {
     }
   }, [router])
 
-  const handleLogout = () => {
-    localStorage.removeItem("isAuthenticated")
-    localStorage.removeItem("user")
-    router.push("/")
-  }
-
-  const addToCart = (dishId: number) => {
-    setCart((prev) => [...prev, dishId])
-  }
-
-  const toggleFavorite = (dishId: number) => {
-    setFavorites((prev) => (prev.includes(dishId) ? prev.filter((id) => id !== dishId) : [...prev, dishId]))
-  }
-
   const toggleCategory = (category: string) => {
     setExpandedCategories(prev => ({
       ...prev,
@@ -124,23 +90,22 @@ export default function MenuPage() {
   }
 
   // Filtrar platos por categoría y búsqueda
-  const filteredDishes = menuItems.filter((dish) => {
-    const matchesCategory = selectedCategory === "Todos" || dish.categoria === selectedCategory
+  const filteredDishes = productos.filter((dish) => {
+    const matchesCategory = selectedCategory === "Todos" || dish.categoria.nombre === selectedCategory
     const matchesSearch =
-      dish.nombre.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      dish.descripcion.toLowerCase().includes(searchTerm.toLowerCase())
+      (dish.nombre || '').toLowerCase().includes(searchTerm.toLowerCase())
     return matchesCategory && matchesSearch
   })
 
   // Agrupar platos por categoría
   const dishesByCategory = filteredDishes.reduce((acc, dish) => {
-    const category = dish.categoria
+    const category = dish.categoria.nombre
     if (!acc[category]) {
       acc[category] = []
     }
     acc[category].push(dish)
     return acc
-  }, {} as { [key: string]: Root2[] })
+  }, {} as { [key: string]: Producto[] })
 
   if (!isAuthenticated) {
     return (
@@ -182,7 +147,7 @@ export default function MenuPage() {
   }
 
   return (
-    <div className="min-h-screen bg-gray-100">
+    <div className="min-h-screen bg-gray-100" data-cy="page-container">
       {/* Header */}
       <Header showFullNavigation={true} />
 
@@ -201,6 +166,9 @@ export default function MenuPage() {
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
                 className="w-full h-12 text-lg rounded-[10px] shadow-[0_4px_4px_rgba(0,0,0,0.25)]"
+                aria-label="Buscar platos"
+                data-testid="search-input"
+                data-cy="search-input"
               />
             </div>
           </div>
@@ -210,6 +178,8 @@ export default function MenuPage() {
             <div
               className="flex gap-2 overflow-x-auto scrollbar-hide py-2"
               style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}
+              role="group"
+              aria-label="Filtros de categoría"
             >
               {categories.map((category) => (
                 <Button
@@ -222,6 +192,9 @@ export default function MenuPage() {
                       ? "bg-[#0056C6] text-white"
                       : "bg-gray-200 text-gray-700 hover:bg-gray-300"
                   }`}
+                  aria-pressed={selectedCategory === category}
+                  data-testid={`category-${category.toLowerCase()}`}
+                  data-cy={category === "Todos" ? "all-categories-btn" : "category-button"}
                 >
                   {category}
                 </Button>
@@ -245,11 +218,11 @@ export default function MenuPage() {
                     >
                       <DishCard
                         dish={{
-                          id: dishes[0]?.id ?? 0,
+                          id: dishes[0]?.id as unknown as number,
                           nombre: category,
                           descripcion: "",
                           precio: 0,
-                          imagen: dishes[0]?.imagen || "/placeholder.svg",
+                          imagen: dishes[0]?.categoria.imagen_path || "/placeholder.svg", // ← Usar imagen de categoría
                           categoria: category,
                           disponible: true,
                           stock: 0,
@@ -268,7 +241,20 @@ export default function MenuPage() {
                   {dishesByCategory[selectedCategory]?.map((dish) => (
                     <DishCard
                       key={dish.id}
-                      dish={dish}
+                      dish={{
+                        id: dish.id as unknown as number,
+                        nombre: dish.nombre || 'Sin nombre',
+                        imagen: dish.imagen_path || '/placeholder-image.png',
+                        precio: parseFloat(dish.precio_base),
+                        stock: 10,
+                        disponible: true,
+                        categoria: dish.categoria.nombre,
+                        alergenos: [],
+                        tiempo_preparacion: 15,
+                        descripcion: '',
+                        ingredientes: [],
+                        grupo_personalizacion: []
+                      }}
                       showPrice={true}
                     />
                   ))}
@@ -301,11 +287,24 @@ export default function MenuPage() {
 
                     {/* Platos */}
                     {expandedCategories[category] && (
-                      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 py-5">
+                      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 py-5" data-cy="plate-grid">
                         {dishes.map((dish) => (
                           <DishCard
                             key={dish.id}
-                            dish={dish}
+                            dish={{
+                              id: dish.id as unknown as number,
+                              nombre: dish.nombre || 'Sin nombre',
+                              imagen: dish.imagen_path || '/placeholder-image.png',
+                              precio: parseFloat(dish.precio_base),
+                              stock: 10,
+                              disponible: true,
+                              categoria: dish.categoria.nombre,
+                              alergenos: [],
+                              tiempo_preparacion: 15,
+                              descripcion: '',
+                              ingredientes: [],
+                              grupo_personalizacion: []
+                            }}
                             showPrice={true}
                           />
                         ))}
@@ -322,7 +321,7 @@ export default function MenuPage() {
               <Search className="w-10 h-10 text-gray-500 mb-4" />
               <h2 className="text-xl font-bold mb-2">No Tenemos El Producto</h2>
               <p className="text-gray-600 mb-2">Ingrese Otro</p>
-              <p className="text-[#004166] font-semibold">"{searchTerm}"</p>
+              <p className="text-[#004166] font-semibold">&ldquo;{searchTerm}&rdquo;</p>
               <p className="text-gray-500 mt-2 text-sm">
                 No encontramos ningún producto con tu búsqueda.<br />
                 Revisa ortografía o prueba con términos más generales.

@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react'
-import { Root, Root2 } from '@/types/menu'
+
+import { Root2 } from '@/types/menu'
 
 interface UseMenuReturn {
   menuItems: Root2[]
@@ -19,7 +20,7 @@ export function useMenu(): UseMenuReturn {
       setError(null)
       
       const response = await fetch('/api/menu/items')
-      const result = await response.json()
+      const result = await response.json() as { success: boolean; data: Root2[]; error?: string }
       
       if (result.success) {
         setMenuItems(result.data)
@@ -34,13 +35,13 @@ export function useMenu(): UseMenuReturn {
   }
 
   useEffect(() => {
-    fetchMenu()
+    void fetchMenu()
   }, [])
 
   return {
     menuItems,
     loading,
     error,
-    refetch: fetchMenu
+    refetch: () => void fetchMenu()
   }
 }
