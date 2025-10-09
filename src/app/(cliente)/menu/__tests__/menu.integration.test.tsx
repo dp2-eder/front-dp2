@@ -7,7 +7,7 @@
  * - Filtrado de platos por categoría
  * - Apertura de detalles en modal
  * - Manejo de errores de API
- */
+ 
 
 import { render, screen, waitFor } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
@@ -201,3 +201,4 @@ describe('Menu Navigation Flow (Integration)', () => {
     }
   })
 })
+*/

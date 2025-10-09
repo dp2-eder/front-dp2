@@ -7,7 +7,7 @@
  * - Estados de loading y error
  * - Funcionalidad de refetch
  * - Manejo de respuestas de API
- */
+
 
 import { renderHook, waitFor } from '@testing-library/react'
 import { useMenu } from '@/hooks/use-menu'
@@ -202,3 +202,4 @@ describe('useMenu Hook', () => {
     expect(result.current.error).toBeTruthy()
   })
 })
+ */
