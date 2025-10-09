@@ -3,124 +3,50 @@
 import { Minus, Plus } from "lucide-react"
 import Link from "next/link"
 import { useParams, useRouter } from "next/navigation"
-import { useState, useEffect } from "react"
+import { useState } from "react"
 
 import Loading from "@/app/loading"
 import Footer from "@/components/layout/footer"
 import Header from "@/components/layout/header"
-import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { Card } from "@/components/ui/card"
 import { Checkbox } from "@/components/ui/checkbox"
 import { Label } from "@/components/ui/label"
-import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group"
 import SafeImage from "@/components/ui/safe-image"
 import { Textarea } from "@/components/ui/textarea"
 import { useCart, CartItem } from '@/hooks/use-cart'
-import { useMenu } from "@/hooks/use-menu"
-import { Root2 } from "@/types/menu"
+import { useOpcionesProducto } from '@/hooks/use-opciones-producto'
 
 export default function PersonalizarPage() {
   const params = useParams()
   const router = useRouter()
-  const [selectedSide, setSelectedSide] = useState<string>("")
   const [selectedExtras, setSelectedExtras] = useState<string[]>([])
   const [quantity, setQuantity] = useState(1)
   const [comments, setComments] = useState("")
-  const [showMaxExtrasWarning, setShowMaxExtrasWarning] = useState(false)
-  const [product, setProduct] = useState<Root2 | null>(null)
   const [extraQuantities, setExtraQuantities] = useState<{[key: string]: number}>({})
-  const [loading, setLoading] = useState(true)
 
   const { addToCart } = useCart()
 
-  // Usar el hook de la API
-  const { menuItems, loading: apiLoading, error } = useMenu()
+  // Usar solo la nueva API
+  const { producto, loading, error } = useOpcionesProducto(params.id as string)
 
-  useEffect(() => {
-    if (!apiLoading && menuItems.length > 0) {
-      const productId = parseInt(params.id as string)
-      const foundProduct = menuItems.find(item => item.id === productId)
-      
-      setProduct(foundProduct || null)
-      setLoading(false)
+  // Función para convertir URL de Google Drive
+  const convertGoogleDriveUrl = (url: string | null): string => {
+    if (!url || url === 'null' || url === 'undefined' || !url.includes('drive.google.com')) {
+      return '/placeholder-image.png'
     }
-  }, [params.id, menuItems, apiLoading])
-
-  const handleExtraChange = (extraId: string, checked: boolean) => {
-    const personalizationGroup = product?.grupo_personalizacion?.[0]
-    if (!personalizationGroup) return
-
-    const maxSelections = personalizationGroup.max_selecciones
-
-    if (checked) {
-      if (selectedExtras.length >= maxSelections) {
-        setShowMaxExtrasWarning(true)
-        setTimeout(() => setShowMaxExtrasWarning(false), 3000)
-        return
-      }
-      setSelectedExtras([...selectedExtras, extraId])
-      setExtraQuantities(prev => ({ ...prev, [extraId]: 1 }))
-    } else {
-      setSelectedExtras(selectedExtras.filter((id) => id !== extraId))
-      setExtraQuantities(prev => {
-        const newQuantities = { ...prev }
-        delete newQuantities[extraId]
-        return newQuantities
-      })
+    
+    const match = url.match(/\/file\/d\/([a-zA-Z0-9-_]+)/)
+    if (match) {
+      const fileId = match[1]
+      return `https://drive.google.com/uc?export=view&id=${fileId}`
     }
+    
+    return url
   }
 
-  const updateExtraQuantity = (extraId: string, delta: number) => {
-    setExtraQuantities(prev => ({
-      ...prev,
-      [extraId]: Math.max(1, (prev[extraId] || 1) + delta)
-    }))
-  }
-
-  const calculateTotal = () => {
-    if (!product) return 0
-
-    let total = product.precio
-    const personalizationGroup = product.grupo_personalizacion?.[0]
-
-    // Add side price (if it's a radio selection)
-    if (personalizationGroup?.tipo === "acompanamiento" || personalizationGroup?.tipo === "tamaño") {
-      const selectedOption = personalizationGroup.opciones.find(opt => opt.etiqueta === selectedSide)
-      if (selectedOption) {
-        total += selectedOption.precio_adicional
-      }
-    }
-
-    // Add extras prices with quantities (if it's a checkbox selection)
-    if (personalizationGroup?.tipo === "salsa" || personalizationGroup?.tipo === "checkbox") {
-      selectedExtras.forEach((extraId) => {
-        const extra = personalizationGroup.opciones.find(opt => opt.etiqueta === extraId)
-        const quantity = extraQuantities[extraId] || 1
-        if (extra) {
-          total += extra.precio_adicional * quantity
-        }
-      })
-    }
-
-    return total * quantity
-  }
-
-  const formatPrice = (price: number) => {
-    return `S/${price.toFixed(2)}`
-  }
-
-  // Determinar si es obligatorio seleccionar opciones
-  const personalizationGroup = product?.grupo_personalizacion?.[0]
-  const isRequired = personalizationGroup?.tipo === "acompanamiento" || 
-                     personalizationGroup?.tipo === "tamaño"
+  if (loading) return <Loading />
   
-  const isAddToCartEnabled = !isRequired || selectedSide !== ""
-
-  if (apiLoading || loading) {
-    return <Loading />
-  }
-
   if (error) {
     return (
       <div className="min-h-screen bg-gray-100 flex items-center justify-center">
@@ -137,7 +63,7 @@ export default function PersonalizarPage() {
     )
   }
 
-  if (!product) {
+  if (!producto) {
     return (
       <div className="min-h-screen bg-gray-100 flex items-center justify-center">
         <div className="text-center">
@@ -152,185 +78,118 @@ export default function PersonalizarPage() {
     )
   }
 
+  const calculateTotal = () => {
+    let total = parseFloat(producto.precio_base)
+    
+    // Agregar precio de opciones seleccionadas
+    selectedExtras.forEach(extraId => {
+      const opcion = producto.opciones.find(opt => opt.id === extraId)
+      if (opcion) {
+        total += parseFloat(opcion.precio_adicional) * (extraQuantities[extraId] || 1)
+      }
+    })
+
+    return total * quantity
+  }
+
+  const formatPrice = (price: number) => {
+    return `S/${price.toFixed(2)}`
+  }
+
   const handleAddToCart = () => {
-    if (!product) return
-
-    const personalizationGroup = product.grupo_personalizacion?.[0]
-
-    // Función para validar URL de imagen (para usar en el carrito)
-    const getValidImageSrc = (imageUrl: string | undefined): string => {
-      if (!imageUrl) return "/placeholder-image.png"
-      
-      const invalidDomains = ['example.com', 'placeholder.com', 'test.com', 'dummy.com']
-      const hasInvalidDomain = invalidDomains.some(domain => imageUrl.includes(domain))
-      
-      return hasInvalidDomain ? "/placeholder-image.png" : imageUrl
-    }
-
     const cartItem: CartItem = {
-      id: `${product.id}-${Date.now()}`,
-      dishId: product.id,
-      name: product.nombre,
-      description: product.descripcion,
-      basePrice: product.precio,
+      id: `${producto.id}-${Date.now()}`,
+      dishId: parseInt(producto.id), // Convertir a number para compatibilidad
+      name: producto.nombre,
+      description: producto.descripcion,
+      basePrice: parseFloat(producto.precio_base),
       quantity,
-      image: getValidImageSrc(product.imagen), // Usar imagen validada
-      selectedOptions: [
-        ...(selectedSide ? [{
-          type: personalizationGroup?.tipo || 'acompanamiento',
-          name: selectedSide,
-          price: personalizationGroup?.opciones.find(opt => opt.etiqueta === selectedSide)?.precio_adicional || 0
-        }] : []),
-        ...selectedExtras.map(extraId => {
-          const extra = personalizationGroup?.opciones.find(opt => opt.etiqueta === extraId)
-          return {
-            type: 'extra',
-            name: extraId,
-            price: (extra?.precio_adicional || 0) * (extraQuantities[extraId] || 1)
-          }
-        })
-      ],
+      image: convertGoogleDriveUrl(producto.imagen_path),
+      selectedOptions: selectedExtras.map(extraId => {
+        const opcion = producto.opciones.find(opt => opt.id === extraId)
+        return {
+          type: 'extra',
+          name: opcion?.nombre || '',
+          price: parseFloat(opcion?.precio_adicional || '0') * (extraQuantities[extraId] || 1)
+        }
+      }),
       totalPrice: calculateTotal(),
       comments
     }
 
     addToCart(cartItem)
-    
-    // alert('¡Producto agregado al carrito!')
     router.push('/carrito')
   }
 
   return (
     <div className="min-h-screen bg-[#FAFCFE] flex flex-col">
-      {/* Header */}
       <Header showFullNavigation={true} />
       
       <main>
         <div className="max-w-[1110px] mx-auto px-4 py-8">
           <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
-            {/* Left Column - Desktop: 8 cols, Mobile: full width */}
+            {/* Left Column */}
             <div className="lg:col-span-8 space-y-6">
               {/* Product Summary Card */}
               <Card className="p-6 bg-white border border-[#ECF1F4] rounded-xl shadow-sm">
                 <div className="flex items-start space-x-4">
                   <SafeImage
-                    src={product.imagen}
-                    alt={product.nombre}
+                    src={convertGoogleDriveUrl(producto.imagen_path)}
+                    alt={producto.nombre}
                     className="w-20 h-20 rounded-[30px] object-cover flex-shrink-0"
                     showIndicator={true}
                   />
                   <div className="flex-1">
-                    <h2 className="text-base font-semibold text-gray-900 mb-1">{product.nombre}</h2>
-                    <p className="text-sm text-[#8C8CA1] mb-2">{product.descripcion}</p>
-                    <p className="text-base font-semibold text-gray-900">{formatPrice(product.precio)}</p>
+                    <h2 className="text-base font-semibold text-gray-900 mb-1">{producto.nombre}</h2>
+                    <p className="text-sm text-[#8C8CA1] mb-2">{producto.descripcion}</p>
+                    <p className="text-base font-semibold text-gray-900">{formatPrice(parseFloat(producto.precio_base))}</p>
                   </div>
                 </div>
               </Card>
 
-              {/* Personalization Options Card */}
-              {personalizationGroup && (
+              {/* Opciones */}
+              {producto.opciones.length > 0 && (
                 <Card className="p-6 bg-white border border-[#ECF1F4] rounded-xl shadow-sm">
-                  <div className="flex items-center gap-2 mb-4">
-                    <h3 className="text-lg font-semibold text-gray-900">{personalizationGroup.etiqueta}</h3>
-                    <Badge variant="secondary" className="bg-[#ECF1F4] text-[#8C8CA1] text-xs">
-                      {isRequired ? "Obligatorio" : "Opcional"}
-                    </Badge>
+                  <h3 className="text-lg font-semibold text-gray-900 mb-4">Opciones</h3>
+                  <div className="space-y-3">
+                    {producto.opciones.map((opcion) => (
+                      <div key={opcion.id} className="flex items-center justify-between py-3 border-b border-[#ECF1F4] last:border-b-0">
+                        <div className="flex items-center space-x-3">
+                          <Checkbox
+                            id={opcion.id}
+                            checked={selectedExtras.includes(opcion.id)}
+                            onCheckedChange={(checked) => {
+                              if (checked) {
+                                setSelectedExtras([...selectedExtras, opcion.id])
+                                setExtraQuantities(prev => ({ ...prev, [opcion.id]: 1 }))
+                              } else {
+                                setSelectedExtras(selectedExtras.filter(id => id !== opcion.id))
+                                setExtraQuantities(prev => {
+                                  const newQuantities = { ...prev }
+                                  delete newQuantities[opcion.id]
+                                  return newQuantities
+                                })
+                              }
+                            }}
+                          />
+                          <Label htmlFor={opcion.id} className="text-sm font-medium cursor-pointer">
+                            {opcion.nombre}
+                          </Label>
+                        </div>
+                        <div className="text-sm font-medium text-gray-900">
+                          +{formatPrice(parseFloat(opcion.precio_adicional))}
+                        </div>
+                      </div>
+                    ))}
                   </div>
-                  <p className="text-sm text-[#8C8CA1] mb-4">
-                    Puedes elegir hasta {personalizationGroup.max_selecciones} opciones.
-                  </p>
-
-                  {personalizationGroup.tipo === "acompanamiento" || personalizationGroup.tipo === "tamaño" ? (
-                    // Radio Group para selección única
-                    <RadioGroup value={selectedSide} onValueChange={setSelectedSide} className="space-y-3">
-                      {personalizationGroup.opciones?.map((option, index) => (
-                        <div key={option.etiqueta}>
-                          <div className="flex items-center justify-between py-3">
-                            <div className="flex items-center space-x-3">
-                              <RadioGroupItem value={option.etiqueta} id={option.etiqueta} />
-                              <Label htmlFor={option.etiqueta} className="text-sm font-medium cursor-pointer">
-                                {option.etiqueta}
-                              </Label>
-                            </div>
-                            <div className="text-sm font-medium text-gray-900">
-                              {option.precio_adicional === 0 ? "Gratis" : `+${formatPrice(option.precio_adicional)}`}
-                            </div>
-                          </div>
-                          {index < (personalizationGroup?.opciones.length || 0) - 1 && <div className="border-b border-[#ECF1F4]"></div>}
-                        </div>
-                      ))}
-                    </RadioGroup>
-                  ) : (
-                    // Checkbox Group para selección múltiple
-                    <div className="space-y-3">
-                      {showMaxExtrasWarning && (
-                        <div className="mb-4 p-3 bg-[#ECF1F4] rounded-lg">
-                          <p className="text-sm text-[#8C8CA1]">Máximo {personalizationGroup.max_selecciones} opciones</p>
-                        </div>
-                      )}
-
-                      {personalizationGroup.opciones?.map((option, index) => (
-                        <div key={option.etiqueta}>
-                          <div className="flex items-center justify-between py-3">
-                            <div className="flex items-center space-x-3 flex-1">
-                              <Checkbox
-                                id={option.etiqueta}
-                                checked={selectedExtras.includes(option.etiqueta)}
-                                onCheckedChange={(checked) => handleExtraChange(option.etiqueta, checked as boolean)}
-                              />
-                              <Label htmlFor={option.etiqueta} className="text-sm font-medium cursor-pointer flex-1">
-                                {option.etiqueta}
-                              </Label>
-                            </div>
-                            <div className="flex items-center space-x-2">
-                              <div className="text-sm font-medium text-gray-900">
-                                +{formatPrice(option.precio_adicional)}
-                              </div>
-                              {/* Quantity controls for extras */}
-                              {selectedExtras.includes(option.etiqueta) && (
-                                <div className="flex items-center space-x-1">
-                                  <Button
-                                    variant="outline"
-                                    size="sm"
-                                    className="w-6 h-6 p-0 text-xs"
-                                    onClick={() => updateExtraQuantity(option.etiqueta, -1)}
-                                  >
-                                    -
-                                  </Button>
-                                  <span className="w-4 text-center text-xs">
-                                    {extraQuantities[option.etiqueta] || 1}
-                                  </span>
-                                  <Button
-                                    variant="outline"
-                                    size="sm"
-                                    className="w-6 h-6 p-0 text-xs"
-                                    onClick={() => updateExtraQuantity(option.etiqueta, 1)}
-                                  >
-                                    +
-                                  </Button>
-                                </div>
-                              )}
-                            </div>
-                          </div>
-                          {index < (personalizationGroup?.opciones.length || 0) - 1 && <div className="border-b border-[#ECF1F4]"></div>}
-                        </div>
-                      ))}
-                    </div>
-                  )}
                 </Card>
               )}
 
               {/* Comments Card */}
               <Card className="p-6 bg-white border border-[#ECF1F4] rounded-xl shadow-sm">
-                <div className="flex items-center gap-2 mb-4">
-                  <h3 className="text-lg font-semibold text-gray-900">Comentarios</h3>
-                  <Badge variant="secondary" className="bg-[#ECF1F4] text-[#8C8CA1] text-xs">
-                    Opcional
-                  </Badge>
-                </div>
-
+                <h3 className="text-lg font-semibold text-gray-900 mb-4">Comentarios</h3>
                 <Textarea
-                  placeholder="Sin ají , que no pique por favor ..."
+                  placeholder="Sin ají, que no pique por favor..."
                   value={comments}
                   onChange={(e) => setComments(e.target.value)}
                   maxLength={200}
@@ -340,15 +199,15 @@ export default function PersonalizarPage() {
               </Card>
             </div>
 
-            {/* Right Column - Desktop: 4 cols, Mobile: full width */}
+            {/* Right Column */}
             <div className="lg:col-span-4">
               <div className="lg:sticky lg:top-24">
                 <Card className="p-6 bg-white border border-[#ECF1F4] rounded-xl shadow-sm">
                   <h3 className="text-lg font-semibold text-gray-900 mb-4">Resumen del pedido</h3>
 
                   <div className="flex items-center justify-between mb-4">
-                    <p className="text-sm text-gray-600">{product.nombre}</p>
-                    <p className="text-base font-semibold text-gray-900">{formatPrice(product.precio)}</p>
+                    <p className="text-sm text-gray-600">{producto.nombre}</p>
+                    <p className="text-base font-semibold text-gray-900">{formatPrice(parseFloat(producto.precio_base))}</p>
                   </div>
 
                   {/* Quantity Control */}
@@ -376,23 +235,9 @@ export default function PersonalizarPage() {
                     </div>
                   </div>
 
-                  {/* Validation Banner */}
-                  {!isAddToCartEnabled && (
-                    <div className="mb-4 p-3 bg-[#ECF1F4] rounded-lg">
-                      <p className="text-sm text-[#8C8CA1]">
-                        Faltan selecciones obligatorias: {personalizationGroup?.etiqueta}
-                      </p>
-                    </div>
-                  )}
-
                   {/* Add to Cart Button */}
                   <Button
-                    className={`w-full h-12 text-base font-semibold rounded-xl ${
-                      isAddToCartEnabled
-                        ? "bg-[#0056C6] hover:bg-[#004299] text-white"
-                        : "bg-gray-300 text-gray-500 cursor-not-allowed opacity-50"
-                    }`}
-                    disabled={!isAddToCartEnabled}
+                    className="w-full h-12 text-base font-semibold rounded-xl bg-[#0056C6] hover:bg-[#004299] text-white"
                     onClick={handleAddToCart}
                   >
                     Agregar al carrito – {formatPrice(calculateTotal())}

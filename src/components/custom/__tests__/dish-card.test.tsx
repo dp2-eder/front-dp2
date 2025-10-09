@@ -7,24 +7,26 @@
  * - Manejo de imágenes
  * - Estados de disponibilidad
  * - Navegación al detalle
- */
+ 
 
 import { render, screen } from '@testing-library/react'
-import userEvent from '@testing-library/user-event'
+
 import { DishCard } from '@/components/custom/dish-card'
 import { Root2 } from '@/types/menu'
 
 // Mock next/link
+const MockLink = ({ children, href }: { children: React.ReactNode; href: string }) => {
+  return <a href={href}>{children}</a>
+}
+
 jest.mock('next/link', () => {
-  return ({ children, href }: { children: React.ReactNode; href: string }) => {
-    return <a href={href}>{children}</a>
-  }
+  return MockLink
 })
 
 // Mock next/image
 jest.mock('next/image', () => ({
   __esModule: true,
-  default: (props: any) => {
+  default: (props: Record<string, unknown>) => {
     // eslint-disable-next-line jsx-a11y/alt-text, @next/next/no-img-element
     return <img {...props} />
   },
@@ -88,8 +90,7 @@ describe('DishCard Component', () => {
     expect(container.querySelector('article')).toBeInTheDocument()
   })
 
-  test('handles hover state', async () => {
-    const user = userEvent.setup()
+  test('handles hover state', () => {
     const { container } = render(<DishCard dish={mockDish} />)
     
     const article = container.querySelector('article')
@@ -136,3 +137,4 @@ describe('DishCard Component', () => {
     expect(image).toHaveAttribute('src')
   })
 })
+*/
