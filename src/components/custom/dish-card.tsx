@@ -38,7 +38,7 @@ export function DishCard({
 
   return (
     <Link href={`/plato/${dish.id}`} className={className}>
-      <article className="text-center cursor-pointer hover:scale-105 transition-transform duration-200">
+      <article className="text-center cursor-pointer hover:scale-105 transition-transform duration-200" data-cy="plate-card">
         {/* Image Container */}
         <div className="relative">
           <Image
@@ -47,6 +47,7 @@ export function DishCard({
             width={300}
             height={169}
             className="w-full object-cover rounded-t-3xl bg-gray-300 aspect-[16/9]"
+            data-cy="plate-image"
             onError={(e) => {
               const target = e.target as HTMLImageElement
               target.src = getLocalImage(dish.id)
@@ -63,6 +64,7 @@ export function DishCard({
         <h3
           className="bg-[#004166] text-white px-3 py-2 rounded-b-3xl text-sm font-medium truncate whitespace-nowrap overflow-hidden"
           title={dish.nombre}
+          data-cy="plate-name"
         >
           {dish.nombre || "Nombre no disponible"}
         </h3>
