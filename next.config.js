@@ -4,6 +4,12 @@ const nextConfig = {
     remotePatterns: [
       {
         protocol: 'https',
+        hostname: 'drive.google.com',
+        port: '',
+        pathname: '/**',
+      },
+      {
+        protocol: 'https',
         hostname: 'example.com',
         port: '',
         pathname: '/**',
@@ -14,7 +20,6 @@ const nextConfig = {
         port: '',
         pathname: '/**',
       },
-      // Agrega otros dominios que uses para imágenes
     ],
   },
 }

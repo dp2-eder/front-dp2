@@ -2,7 +2,6 @@
 import Image from "next/image"
 import Link from "next/link"
 import { useRouter } from "next/navigation"
-import { useEffect, useState } from "react"
 
 import Footer from "@/components/layout/footer"
 import Header from "@/components/layout/header"
@@ -15,49 +14,13 @@ import {
   CarouselNext,
   CarouselPrevious,
 } from "@/components/ui/carousel"
-import { useMenu } from "@/hooks/use-menu"
-
-interface Category {
-  name: string
-  image: string
-  label: string
-}
-
-// Mapeo de categorías a imágenes
-const categoryImages: Record<string, string> = {
-  "Entrada": "/causa-limena-with-yellow-potato-and-avocado.jpg",
-  "Entradas": "/causa-limena-with-yellow-potato-and-avocado.jpg",
-  "Ceviche": "/mixed-seafood-ceviche-with-shrimp-and-octopus.jpg",
-  "Ceviches": "/mixed-seafood-ceviche-with-shrimp-and-octopus.jpg",
-  "Arroz": "/peruvian-seafood-rice-with-cilantro.jpg",
-  "Arroces": "/peruvian-seafood-rice-with-cilantro.jpg",
-  "Sopa": "/chaudfa-de-mariscos-500x450.jpg",
-  "Sopas": "/chaudfa-de-mariscos-500x450.jpg",
-  "Otro": "/6143e231d4bfcf3c4448e32e.jpg",
-  "Otros": "/6143e231d4bfcf3c4448e32e.jpg",
-  "Bebida": "/6143e231d4bfcf3c4448e32e.jpg",
-  "Bebidas": "/6143e231d4bfcf3c4448e32e.jpg",
-}
+import { useCategorias } from '@/hooks/use-categorias'
 
 export default function AboutPage() {
   const router = useRouter()
   const { menuItems } = useMenu()
   const [categories, setCategories] = useState<Category[]>([])
 
-  // Generar categorías dinámicamente desde la API
-  useEffect(() => {
-    if (menuItems.length > 0) {
-      const uniqueCategoryNames = Array.from(new Set(menuItems.map(item => item.categoria)))
-      
-      const categoriesData: Category[] = uniqueCategoryNames.map(catName => ({
-        name: catName,
-        image: categoryImages[catName] || "/placeholder-image.png",
-        label: catName
-      }))
-      
-      setCategories(categoriesData)
-    }
-  }, [menuItems])
   return (
     <div className="min-h-screen bg-background">
       <Header showFullNavigation={true} />
@@ -74,6 +37,7 @@ export default function AboutPage() {
               src="/fondo-mobile-inicio.jpg"
               alt="Ceviche de bienvenida"
               fill
+              sizes="100vw"
               className="object-cover"
             />
           </div>
@@ -143,30 +107,32 @@ export default function AboutPage() {
               className="w-full max-w-full mx-auto"
             >
               <CarouselContent className="-ml-3 md:-ml-4">
-                {categories.map((category) => (
+                {categorias.map((category) => (
                   <CarouselItem
-                    key={category.name}
+                    key={category.nombre}
                     className="pl-3 md:pl-4 basis-1/2 md:basis-1/3"
                   >
                     <div
                       className="group block cursor-pointer"
                       onClick={() =>
-                        router.push(`/menu?categoria=${encodeURIComponent(category.name)}`)
+                        router.push(`/menu?categoria=${encodeURIComponent(category.nombre)}`)
                       }
                     >
                       <Card className="overflow-hidden border-0 shadow-xl hover:shadow-2xl transition-all duration-300 group-hover:scale-105 rounded-3xl">
                         <CardContent className="p-0">
                           <div className="relative h-64">
                             <Image
-                              src={category.image}
-                              alt={category.label}
+                              src={category.imagen_path}
+                              alt={category.nombre}
                               fill
+                              priority={true}
+                              sizes="(max-width: 768px) 50vw, (max-width: 1024px) 33vw, 20vw"
                               className="object-cover group-hover:scale-110 transition-transform duration-500"
                             />
                           </div>
                           <div className="bg-[#0B4F6C] py-3 px-3">
                             <h3 className="text-base font-bold text-white text-center">
-                              {category.label}
+                              {category.nombre}
                             </h3>
                           </div>
                         </CardContent>
@@ -182,27 +148,29 @@ export default function AboutPage() {
 
           {/* Grid para desktop */}
           <div className="hidden lg:grid grid-cols-5 gap-8 max-w-7xl mx-auto">
-            {categories.map((category) => (
+            {categorias.map((category) => (
               <div
-                key={category.name}
+                key={category.nombre}
                 className="group block cursor-pointer"
                 onClick={() =>
-                  router.push(`/menu?categoria=${encodeURIComponent(category.name)}`)
+                  router.push(`/menu?categoria=${encodeURIComponent(category.nombre)}`)
                 }
               >
                 <Card className="overflow-hidden border-0 shadow-xl hover:shadow-2xl transition-all duration-300 group-hover:scale-105 rounded-3xl">
                   <CardContent className="p-0">
                     <div className="relative h-72">
                       <Image
-                        src={category.image}
-                        alt={category.label}
+                        src={category.imagen_path}
+                        alt={category.nombre}
                         fill
+                        priority={true}
+                        sizes="(max-width: 1024px) 0px, 20vw"
                         className="object-cover group-hover:scale-110 transition-transform duration-500"
                       />
                     </div>
                     <div className="bg-[#0B4F6C] py-4 px-4">
                       <h3 className="text-xl font-bold text-white text-center">
-                        {category.label}
+                        {category.nombre}
                       </h3>
                     </div>
                   </CardContent>
