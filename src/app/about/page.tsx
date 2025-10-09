@@ -4,8 +4,8 @@ import Link from "next/link"
 import { useRouter } from "next/navigation"
 import { useEffect, useState } from "react"
 
-import Header from "@/components/layout/header"
 import Footer from "@/components/layout/footer"
+import Header from "@/components/layout/header"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent } from "@/components/ui/card"
 import {
@@ -41,7 +41,7 @@ const categoryImages: Record<string, string> = {
 
 export default function AboutPage() {
   const router = useRouter()
-  const { menuItems, loading } = useMenu()
+  const { menuItems } = useMenu()
   const [categories, setCategories] = useState<Category[]>([])
 
   // Generar categorías dinámicamente desde la API
