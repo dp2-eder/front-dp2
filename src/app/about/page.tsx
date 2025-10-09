@@ -18,7 +18,8 @@ import { useCategorias } from '@/hooks/use-categorias'
 
 export default function AboutPage() {
   const router = useRouter()
-  const { categorias } = useCategorias()
+  const { menuItems } = useMenu()
+  const [categories, setCategories] = useState<Category[]>([])
 
   return (
     <div className="min-h-screen bg-background">
