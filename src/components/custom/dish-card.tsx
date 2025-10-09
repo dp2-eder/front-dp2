@@ -31,7 +31,18 @@ export function DishCard({
   ]
 
   // Función para obtener una imagen local basada en el ID del plato
-  const getLocalImage = (dishId: number) => {
+  const getLocalImage = (dishId: string | number) => {
+    // Si es string (UUID), usar un hash simple
+    if (typeof dishId === 'string') {
+      const hash = dishId.split('').reduce((a, b) => {
+        a = ((a << 5) - a) + b.charCodeAt(0)
+        return a & a
+      }, 0)
+      const imageIndex = Math.abs(hash) % localImages.length
+      return localImages[imageIndex]
+    }
+    
+    // Si es número, usar la lógica original
     const imageIndex = (dishId - 1) % localImages.length
     return localImages[imageIndex]
   }
@@ -42,7 +53,7 @@ export function DishCard({
         {/* Image Container */}
         <div className="relative">
           <Image
-            src={getLocalImage(dish.id)}
+            src={dish.imagen || getLocalImage(dish.id)}
             alt={dish.nombre || "Imagen no disponible"}
             width={300}
             height={169}
