@@ -1,6 +1,7 @@
 "use client"
 
-import { ArrowLeft, Heart, ShoppingCart, LogOut, Menu, RefreshCw, Loader2, X } from "lucide-react"
+import { Heart, ShoppingCart, Menu, X } from "lucide-react"
+import Image from "next/image"
 import Link from "next/link"
 import { useState } from "react"
 
@@ -26,42 +27,31 @@ interface HeaderProps {
 }
 
 export default function Header({
-  showBackButton = false,
-  backHref = "/home",
-  backText = "Volver al menú",
   showCart = false,
   cartItems = 0,
   showFavorite = false,
   isFavorite = false,
-  onFavoriteToggle,
-  showLogout = false,
-  onLogout,
-  userInfo,
-  showUpdateButton = false,
-  onUpdateClick,
-  isUpdating = false,
-  onHamburgerClick,
-  showFullNavigation = false
+  onFavoriteToggle
 }: HeaderProps) {
 
   const [mobileOpen, setMobileOpen] = useState(false)
 
   return (
-    <header className="bg-[#0056C6] sticky top-0 z-50">
+    <header className="bg-[#004166] sticky top-0 z-50">
       <div className="max-w-[1110px] mx-auto px-4">
         <div className="flex items-center justify-between h-16">
-          {/* Mobile - Logo a la izquierda */}
-          <div className="md:hidden flex items-center">
-            <Link href="/home">
-              <img src="/DINE LINE.svg" alt="DINE LINE" className="h-12 w-auto" />
+          {/* Mobile - Logo al centro con posición absoluta */}
+          <div className="md:hidden absolute left-1/2 transform -translate-x-1/2 mt-16">
+            <Link href="/menu">
+              <Image src="/DINE LINE.svg" alt="DINE LINE" width={56} height={56} className="h-14 w-auto" />
             </Link>
           </div>
 
           {/* Desktop Header - FLEX en lugar de GRID */}
           <div className="hidden md:flex items-center justify-between w-full h-16">
             {/* Left side - Navigation links */}
-            <div className="flex items-center space-x-8">
-              <Link href="/home" className="text-sm font-medium text-white hover:text-[#5CEFFA]">
+            <div className="flex items-center space-x-40">
+              <Link href="/menu" className="text-sm font-medium text-white hover:text-[#5CEFFA]">
                 Menú
               </Link>
               <Link href="/about" className="text-sm font-medium text-white hover:text-[#5CEFFA]">
@@ -71,14 +61,14 @@ export default function Header({
 
             {/* Logo al centro - ABSOLUTO */}
             <div className="absolute left-1/2 transform -translate-x-1/2">
-              <Link href="/home">
-                <img src="/DINE LINE.svg" alt="DINE LINE" className="h-16 w-auto transform translate-y-7" />
+              <Link href="/menu" data-cy="logo">
+                <Image src="/DINE LINE.svg" alt="DINE LINE" width={64} height={64} className="h-16 w-auto transform translate-y-7" />
               </Link>
             </div>
 
             {/* Right side - Navigation links + acciones */}
-            <div className="flex items-center space-x-8">
-              <Link href="/order" className="text-sm font-medium text-white hover:text-[#5CEFFA]">
+            <div className="flex items-center space-x-40">
+              <Link href="/carrito" className="text-sm font-medium text-white hover:text-[#5CEFFA]">
                 Mi Orden
               </Link>
               <Link href="/contact" className="text-sm font-medium text-white hover:text-[#5CEFFA]">
@@ -98,10 +88,10 @@ export default function Header({
               )}
 
               {showCart && (
-                <Button variant="ghost" size="icon" className="text-white hover:bg-white/10 relative">
+                <Button variant="ghost" size="icon" className="text-white hover:bg-white/10 relative" data-cy="cart-button">
                   <ShoppingCart className="h-5 w-5" />
                   {cartItems > 0 && (
-                    <span className="absolute -top-2 -right-2 h-5 w-5 rounded-full bg-white text-[#0056C6] text-xs flex items-center justify-center font-bold">
+                    <span className="absolute -top-2 -right-2 h-5 w-5 rounded-full bg-white text-[#0056C6] text-xs flex items-center justify-center font-bold" data-cy="cart-count">
                       {cartItems}
                     </span>
                   )}
@@ -124,13 +114,49 @@ export default function Header({
         </div>
       </div>
 
-      {/* Menú Mobile alineado a la derecha */}
+      {/* Overlay + Menú Mobile */}
       {mobileOpen && (
-        <div className="md:hidden bg-[#0056C6] text-white px-6 pb-4 space-y-3 text-right">
-          <Link href="/home" className="block hover:text-[#5CEFFA]">Menú</Link>
-          <Link href="/about" className="block hover:text-[#5CEFFA]">Nosotros</Link>
-          <Link href="/order" className="block hover:text-[#5CEFFA]">Mi Orden</Link>
-          <Link href="/contact" className="block hover:text-[#5CEFFA]">Contáctanos</Link>
+        <div className="fixed inset-0 z-40">
+          {/* Fondo translúcido con blur (cierra al hacer clic) */}
+          <div
+            className="absolute inset-0 bg-[#ECF1F4]/50 backdrop-blur-sm"
+            onClick={() => setMobileOpen(false)}
+          ></div>
+
+          {/* Menú desplegable debajo del header */}
+          <div className="relative md:hidden bg-[#0056C6] text-white px-6 py-4 space-y-3 text-center z-50">
+            {/* Botón X para cerrar */}
+            <div className="flex justify-end">
+              <button onClick={() => setMobileOpen(false)}>
+                <X className="w-6 h-6 text-white hover:text-[#5CEFFA]" />
+              </button>
+            </div>
+
+            <Link
+              href="/menu"
+              className="block hover:text-[#5CEFFA] border-b-2 border-white/30 pb-2"
+            >
+              Menú
+            </Link>
+            <Link
+              href="/about"
+              className="block hover:text-[#5CEFFA] border-b-2 border-white/30 pb-2"
+            >
+              Nosotros
+            </Link>
+            <Link
+              href="/carrito"
+              className="block hover:text-[#5CEFFA] border-b-2 border-white/30 pb-2"
+            >
+              Mi Orden
+            </Link>
+            <Link
+              href="/contact"
+              className="block hover:text-[#5CEFFA] pb-2"
+            >
+              Contáctanos
+            </Link>
+          </div>
         </div>
       )}
     </header>

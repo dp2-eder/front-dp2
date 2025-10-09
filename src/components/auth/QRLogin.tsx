@@ -9,7 +9,7 @@ export default function QRLogin() {
     // Integración con backend DOMOTICA más adelante
     setTimeout(() => {
       setIsScanning(false)
-      console.log('QR escaneado exitosamente')
+      //console.log('QR escaneado exitosamente')
     }, 2000)
   }
 
