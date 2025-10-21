@@ -2,6 +2,11 @@ import { useState, useEffect } from 'react'
 
 import { ProductosResponse } from '@/types/productos'
 
+// Cache global para los productos
+let cachedProductos: ProductosResponse['items'] | null = null
+let cacheTimestamp: number | null = null
+const CACHE_DURATION = 5 * 60 * 1000 // 5 minutos en milisegundos
+
 // Función para convertir URL de Google Drive a URL directa de imagen
 const convertGoogleDriveUrl = (url: string | null | undefined): string => {
   // Si la URL es null, undefined o una cadena vacía, devuelve un placeholder
@@ -25,16 +30,34 @@ const convertGoogleDriveUrl = (url: string | null | undefined): string => {
 }
 
 export function useProductos() {
-  const [productos, setProductos] = useState<ProductosResponse['items']>([])
-  const [loading, setLoading] = useState(true)
+  const [productos, setProductos] = useState<ProductosResponse['items']>(() => {
+    // Inicializar con cache si está disponible
+    return cachedProductos || []
+  })
+  const [loading, setLoading] = useState(() => {
+    // Si hay cache válido, no empezar en loading
+    if (cachedProductos && cacheTimestamp && Date.now() - cacheTimestamp < CACHE_DURATION) {
+      return false
+    }
+    return true
+  })
   const [error, setError] = useState<string | null>(null)
 
-  const fetchProductos = async () => {
+  const fetchProductos = async (force = false) => {
     try {
+      // Si hay cache válido y no es forzado, usar cache
+      if (!force && cachedProductos && cacheTimestamp && Date.now() - cacheTimestamp < CACHE_DURATION) {
+        setProductos(cachedProductos)
+        setLoading(false)
+        return
+      }
+
       setLoading(true)
       setError(null)
       
-      const response = await fetch('/api/productos')
+      const response = await fetch('/api/productos', {
+        next: { revalidate: 300 } // Cache en el cliente también
+      })
       const result = await response.json() as { success: boolean; data: ProductosResponse; error?: string }
       
       if (result.success) {
@@ -47,6 +70,11 @@ export function useProductos() {
             imagen_path: convertGoogleDriveUrl(producto.categoria.imagen_path)
           }
         }))
+        
+        // Actualizar cache global
+        cachedProductos = productosConImagenes
+        cacheTimestamp = Date.now()
+        
         setProductos(productosConImagenes)
       } else {
         setError(result.error || 'Error al cargar los productos')
@@ -66,6 +94,6 @@ export function useProductos() {
     productos,
     loading,
     error,
-    refetch: () => void fetchProductos()
+    refetch: () => void fetchProductos(true)
   }
 }

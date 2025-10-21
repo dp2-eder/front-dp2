@@ -89,23 +89,27 @@ export default function MenuPage() {
     }))
   }
 
-  // Filtrar platos por categoría y búsqueda
-  const filteredDishes = productos.filter((dish) => {
-    const matchesCategory = selectedCategory === "Todos" || dish.categoria.nombre === selectedCategory
-    const matchesSearch =
-      (dish.nombre || '').toLowerCase().includes(searchTerm.toLowerCase())
-    return matchesCategory && matchesSearch
-  })
+  // Filtrar platos por categoría y búsqueda - Memoizado para evitar recalcular en cada render
+  const filteredDishes = React.useMemo(() => {
+    return productos.filter((dish) => {
+      const matchesCategory = selectedCategory === "Todos" || dish.categoria.nombre === selectedCategory
+      const matchesSearch =
+        (dish.nombre || '').toLowerCase().includes(searchTerm.toLowerCase())
+      return matchesCategory && matchesSearch
+    })
+  }, [productos, selectedCategory, searchTerm])
 
-  // Agrupar platos por categoría
-  const dishesByCategory = filteredDishes.reduce((acc, dish) => {
-    const category = dish.categoria.nombre
-    if (!acc[category]) {
-      acc[category] = []
-    }
-    acc[category].push(dish)
-    return acc
-  }, {} as { [key: string]: Producto[] })
+  // Agrupar platos por categoría - Memoizado
+  const dishesByCategory = React.useMemo(() => {
+    return filteredDishes.reduce((acc, dish) => {
+      const category = dish.categoria.nombre
+      if (!acc[category]) {
+        acc[category] = []
+      }
+      acc[category].push(dish)
+      return acc
+    }, {} as { [key: string]: Producto[] })
+  }, [filteredDishes])
 
   if (!isAuthenticated) {
     return (
@@ -210,7 +214,7 @@ export default function MenuPage() {
             <div className="md:hidden">
               {!selectedCategory || selectedCategory === "Todos" ? (
                 <div className="grid grid-cols-1 gap-6">
-                  {Object.entries(dishesByCategory).map(([category, dishes]) => (
+                  {Object.entries(dishesByCategory).map(([category, dishes], index) => (
                     <div
                       key={category}
                       onClick={() => setSelectedCategory(category)}
@@ -232,13 +236,14 @@ export default function MenuPage() {
                           grupo_personalizacion: undefined
                         }}
                         className="pointer-events-none"
+                        priority={index < 3}
                       />
                     </div>
                   ))}
                 </div>
               ) : (
                 <div className="grid grid-cols-2 gap-4">
-                  {dishesByCategory[selectedCategory]?.map((dish) => (
+                  {dishesByCategory[selectedCategory]?.map((dish, index) => (
                     <DishCard
                       key={dish.id}
                       dish={{
@@ -256,6 +261,7 @@ export default function MenuPage() {
                         grupo_personalizacion: []
                       }}
                       showPrice={true}
+                      priority={index < 6}
                     />
                   ))}
                 </div>
@@ -288,7 +294,7 @@ export default function MenuPage() {
                     {/* Platos */}
                     {expandedCategories[category] && (
                       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 py-5" data-cy="plate-grid">
-                        {dishes.map((dish) => (
+                        {dishes.map((dish, index) => (
                           <DishCard
                             key={dish.id}
                             dish={{
@@ -306,6 +312,7 @@ export default function MenuPage() {
                               grupo_personalizacion: []
                             }}
                             showPrice={true}
+                            priority={index < 9}
                           />
                         ))}
                       </div>

@@ -8,11 +8,13 @@ interface DishCardProps {
   dish: Root2
   showPrice?: boolean
   className?: string
+  priority?: boolean // Nuevo prop para controlar prioridad de carga
 }
 
 export function DishCard({
   dish,
-  className = ""
+  className = "",
+  priority = false
 }: DishCardProps) {
   // Array de imágenes locales como fallback
   const localImages = [
@@ -57,6 +59,7 @@ export function DishCard({
             alt={dish.nombre || "Imagen no disponible"}
             width={300}
             height={169}
+            loading={priority ? "eager" : "lazy"}
             className="w-full object-cover rounded-t-3xl bg-gray-300 aspect-[16/9]"
             data-cy="plate-image"
             onError={(e) => {
