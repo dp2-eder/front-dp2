@@ -5,7 +5,7 @@ import { Facebook, Instagram } from "lucide-react"
 
 export default function Footer() {
   return (
-    <footer className="bg-[url('/Footer.png')] bg-cover bg-center bg-no-repeat text-white relative">
+    <footer className="bg-[url('/Footer.jpg')] bg-cover bg-center bg-no-repeat text-white relative">
       <div className="absolute inset-0"></div>
       <div className="max-w-[1110px] mx-auto px-4 py-8 relative z-10">
 
@@ -17,9 +17,12 @@ export default function Footer() {
           <a href="/menu" className="text-sm font-medium hover:text-[#5CEFFA]">
             Menú
           </a>
-          <a href="/carrito" className="text-sm font-medium hover:text-[#5CEFFA]">
+          <button 
+            onClick={() => {/* Abrir sidebar */}}
+            className="text-sm font-medium hover:text-[#5CEFFA]"
+          >
             Mi Orden
-          </a>
+          </button>
           <a href="/contacto" className="text-sm font-medium hover:text-[#5CEFFA]">
             Contáctanos
           </a>

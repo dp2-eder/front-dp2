@@ -59,7 +59,8 @@ export function DishCard({
             alt={dish.nombre || "Imagen no disponible"}
             width={300}
             height={169}
-            loading={priority ? "eager" : "lazy"}
+            priority={priority} // Usar priority en lugar de loading
+            loading={priority ? "eager" : "lazy"} // Lazy loading para el resto
             className="w-full object-cover rounded-t-3xl bg-gray-300 aspect-[16/9]"
             data-cy="plate-image"
             onError={(e) => {

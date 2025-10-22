@@ -99,7 +99,7 @@ export default function PersonalizarPage() {
   const handleAddToCart = () => {
     const cartItem: CartItem = {
       id: `${producto.id}-${Date.now()}`,
-      dishId: parseInt(producto.id), // Convertir a number para compatibilidad
+      dishId: parseInt(producto.id),
       name: producto.nombre,
       description: producto.descripcion,
       basePrice: parseFloat(producto.precio_base),
@@ -118,7 +118,7 @@ export default function PersonalizarPage() {
     }
 
     addToCart(cartItem)
-    router.push('/carrito')
+    router.push('/menu') // ✅ Cambiar de '/carrito' a '/menu'
   }
 
   return (

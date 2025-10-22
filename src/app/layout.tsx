@@ -16,6 +16,13 @@ export default function RootLayout({
 }) {
   return (
     <html lang="es">
+      <head>
+        {/* Preload de imágenes críticas para mejor LCP */}
+        <link rel="preload" as="image" href="/fresh-ceviche-with-red-onions-and-sweet-potato.jpg" />
+        <link rel="preload" as="image" href="/mixed-seafood-ceviche-with-shrimp-and-octopus.jpg" />
+        <link rel="preload" as="image" href="/tiradito-nikkei-with-thin-fish-slices-and-sesame.jpg" />
+        <link rel="preload" as="image" href="/fondo-mobile-inicio.jpg" />
+      </head>
       <body className={inter.className}>
         {children}
       </body>

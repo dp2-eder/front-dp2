@@ -261,7 +261,7 @@ export default function MenuPage() {
                         grupo_personalizacion: []
                       }}
                       showPrice={true}
-                      priority={index < 6}
+                      priority={index < 5} // Solo las primeras 4 en mobile
                     />
                   ))}
                 </div>
@@ -295,25 +295,25 @@ export default function MenuPage() {
                     {expandedCategories[category] && (
                       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 py-5" data-cy="plate-grid">
                         {dishes.map((dish, index) => (
-                          <DishCard
-                            key={dish.id}
-                            dish={{
-                              id: dish.id as unknown as number,
-                              nombre: dish.nombre || 'Sin nombre',
-                              imagen: dish.imagen_path || '/placeholder-image.png',
-                              precio: parseFloat(dish.precio_base),
-                              stock: 10,
-                              disponible: true,
-                              categoria: dish.categoria.nombre,
-                              alergenos: [],
-                              tiempo_preparacion: 15,
-                              descripcion: '',
-                              ingredientes: [],
-                              grupo_personalizacion: []
-                            }}
-                            showPrice={true}
-                            priority={index < 9}
-                          />
+                      <DishCard
+                        key={dish.id}
+                        dish={{
+                          id: dish.id as unknown as number,
+                          nombre: dish.nombre || 'Sin nombre',
+                          imagen: dish.imagen_path || '/placeholder-image.png',
+                          precio: parseFloat(dish.precio_base),
+                          stock: 10,
+                          disponible: true,
+                          categoria: dish.categoria.nombre,
+                          alergenos: [],
+                          tiempo_preparacion: 15,
+                          descripcion: '',
+                          ingredientes: [],
+                          grupo_personalizacion: []
+                        }}
+                        showPrice={true}
+                        priority={index < 6} // Solo las primeras 6 por categoría
+                      />
                         ))}
                       </div>
                     )}
