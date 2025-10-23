@@ -1,6 +1,5 @@
 "use client"
 
-import { Minus, Plus } from "lucide-react"
 import Link from "next/link"
 import { useParams, useRouter } from "next/navigation"
 import { useState } from "react"
@@ -10,8 +9,6 @@ import Footer from "@/components/layout/footer"
 import Header from "@/components/layout/header"
 import { Button } from "@/components/ui/button"
 import { Card } from "@/components/ui/card"
-import { Checkbox } from "@/components/ui/checkbox"
-import { Label } from "@/components/ui/label"
 import SafeImage from "@/components/ui/safe-image"
 import { Textarea } from "@/components/ui/textarea"
 import { useCart, CartItem } from '@/hooks/use-cart'
@@ -21,7 +18,7 @@ export default function PersonalizarPage() {
   const params = useParams()
   const router = useRouter()
   const [selectedExtras, setSelectedExtras] = useState<string[]>([])
-  const [quantity, setQuantity] = useState(1)
+  const [quantity] = useState(1)
   const [comments, setComments] = useState("")
   const [extraQuantities, setExtraQuantities] = useState<{[key: string]: number}>({})
 
@@ -78,17 +75,23 @@ export default function PersonalizarPage() {
     )
   }
 
+  // Buscar opción por id en todos los tipos
+  const findOpcionById = (id: string) => {
+    for (const tipo of (producto.tipos_opciones ?? [])) {
+      const found = tipo.opciones.find((opt: import('@/hooks/use-opciones-producto').Opcion) => opt.id === id)
+      if (found) return found
+    }
+    return undefined
+  }
+
   const calculateTotal = () => {
     let total = parseFloat(producto.precio_base)
-    
-    // Agregar precio de opciones seleccionadas
     selectedExtras.forEach(extraId => {
-      const opcion = producto.opciones.find(opt => opt.id === extraId)
+      const opcion = findOpcionById(extraId)
       if (opcion) {
         total += parseFloat(opcion.precio_adicional) * (extraQuantities[extraId] || 1)
       }
     })
-
     return total * quantity
   }
 
@@ -99,14 +102,14 @@ export default function PersonalizarPage() {
   const handleAddToCart = () => {
     const cartItem: CartItem = {
       id: `${producto.id}-${Date.now()}`,
-      dishId: parseInt(producto.id), // Convertir a number para compatibilidad
+      dishId: parseInt(producto.id),
       name: producto.nombre,
       description: producto.descripcion,
       basePrice: parseFloat(producto.precio_base),
       quantity,
       image: convertGoogleDriveUrl(producto.imagen_path),
       selectedOptions: selectedExtras.map(extraId => {
-        const opcion = producto.opciones.find(opt => opt.id === extraId)
+        const opcion = findOpcionById(extraId)
         return {
           type: 'extra',
           name: opcion?.nombre || '',
@@ -116,9 +119,8 @@ export default function PersonalizarPage() {
       totalPrice: calculateTotal(),
       comments
     }
-
     addToCart(cartItem)
-    router.push('/carrito')
+    router.push('/menu')
   }
 
   return (
@@ -148,36 +150,66 @@ export default function PersonalizarPage() {
               </Card>
 
               {/* Opciones */}
-              {producto.opciones.length > 0 && (
+              {producto.tipos_opciones && producto.tipos_opciones.length > 0 && (
                 <Card className="p-6 bg-white border border-[#ECF1F4] rounded-xl shadow-sm">
                   <h3 className="text-lg font-semibold text-gray-900 mb-4">Opciones</h3>
-                  <div className="space-y-3">
-                    {producto.opciones.map((opcion) => (
-                      <div key={opcion.id} className="flex items-center justify-between py-3 border-b border-[#ECF1F4] last:border-b-0">
-                        <div className="flex items-center space-x-3">
-                          <Checkbox
-                            id={opcion.id}
-                            checked={selectedExtras.includes(opcion.id)}
-                            onCheckedChange={(checked) => {
-                              if (checked) {
-                                setSelectedExtras([...selectedExtras, opcion.id])
-                                setExtraQuantities(prev => ({ ...prev, [opcion.id]: 1 }))
-                              } else {
-                                setSelectedExtras(selectedExtras.filter(id => id !== opcion.id))
-                                setExtraQuantities(prev => {
-                                  const newQuantities = { ...prev }
-                                  delete newQuantities[opcion.id]
-                                  return newQuantities
-                                })
-                              }
-                            }}
-                          />
-                          <Label htmlFor={opcion.id} className="text-sm font-medium cursor-pointer">
-                            {opcion.nombre}
-                          </Label>
-                        </div>
-                        <div className="text-sm font-medium text-gray-900">
-                          +{formatPrice(parseFloat(opcion.precio_adicional))}
+                  <div className="space-y-6">
+                    {producto.tipos_opciones.map((tipo: import('@/hooks/use-opciones-producto').TipoOpcion) => (
+                      <div key={tipo.id_tipo_opcion}>
+                        <h4 className="font-semibold text-gray-800 mb-2">{tipo.nombre_tipo}</h4>
+                        <div className="space-y-3">
+                          {tipo.seleccion_maxima === 1 ? (
+                            // Radio buttons
+                            <div className="flex flex-col gap-2">
+                              {tipo.opciones.map((opcion: import('@/hooks/use-opciones-producto').Opcion) => (
+                                <label key={opcion.id} className="flex items-center gap-2">
+                                  <input
+                                    type="radio"
+                                    name={tipo.id_tipo_opcion}
+                                    value={opcion.id}
+                                    checked={selectedExtras.includes(opcion.id)}
+                                    onChange={() => {
+                                      // Solo uno seleccionado por tipo
+                                      setSelectedExtras(prev => [
+                                        ...prev.filter(id => !tipo.opciones.some((o: import('@/hooks/use-opciones-producto').Opcion) => o.id === id)),
+                                        opcion.id
+                                      ])
+                                      setExtraQuantities(prev => ({ ...prev, [opcion.id]: 1 }))
+                                    }}
+                                  />
+                                  <span>{opcion.nombre}</span>
+                                  <span className="text-sm text-gray-900">+{formatPrice(parseFloat(opcion.precio_adicional))}</span>
+                                </label>
+                              ))}
+                            </div>
+                          ) : (
+                            // Checkbox
+                            <div className="flex flex-col gap-2">
+                              {tipo.opciones.map((opcion: import('@/hooks/use-opciones-producto').Opcion) => (
+                                <label key={opcion.id} className="flex items-center gap-2">
+                                  <input
+                                    type="checkbox"
+                                    checked={selectedExtras.includes(opcion.id)}
+                                    onChange={(e) => {
+                                      if (e.target.checked) {
+                                        setSelectedExtras([...selectedExtras, opcion.id])
+                                        setExtraQuantities(prev => ({ ...prev, [opcion.id]: 1 }))
+                                      } else {
+                                        setSelectedExtras(selectedExtras.filter(id => id !== opcion.id))
+                                        setExtraQuantities(prev => {
+                                          const newQuantities = { ...prev }
+                                          delete newQuantities[opcion.id]
+                                          return newQuantities
+                                        })
+                                      }
+                                    }}
+                                  />
+                                  <span>{opcion.nombre}</span>
+                                  <span className="text-sm text-gray-900">+{formatPrice(parseFloat(opcion.precio_adicional))}</span>
+                                </label>
+                              ))}
+                            </div>
+                          )}
                         </div>
                       </div>
                     ))}
@@ -205,34 +237,9 @@ export default function PersonalizarPage() {
                 <Card className="p-6 bg-white border border-[#ECF1F4] rounded-xl shadow-sm">
                   <h3 className="text-lg font-semibold text-gray-900 mb-4">Resumen del pedido</h3>
 
-                  <div className="flex items-center justify-between mb-4">
+                  <div className="flex items-center justify-between mb-6">
                     <p className="text-sm text-gray-600">{producto.nombre}</p>
                     <p className="text-base font-semibold text-gray-900">{formatPrice(parseFloat(producto.precio_base))}</p>
-                  </div>
-
-                  {/* Quantity Control */}
-                  <div className="flex items-center justify-between mb-6">
-                    <span className="text-sm font-medium text-gray-900">Cantidad</span>
-                    <div className="flex items-center space-x-3">
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        className="w-8 h-8 p-0 border-[#ECF1F4] bg-transparent"
-                        onClick={() => setQuantity(Math.max(1, quantity - 1))}
-                        disabled={quantity <= 1}
-                      >
-                        <Minus className="w-4 h-4" />
-                      </Button>
-                      <span className="w-8 text-center text-sm font-medium">{quantity}</span>
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        className="w-8 h-8 p-0 border-[#ECF1F4] bg-transparent"
-                        onClick={() => setQuantity(quantity + 1)}
-                      >
-                        <Plus className="w-4 h-4" />
-                      </Button>
-                    </div>
                   </div>
 
                   {/* Add to Cart Button */}

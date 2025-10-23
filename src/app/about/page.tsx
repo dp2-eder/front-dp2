@@ -1,24 +1,18 @@
 "use client"
 import Image from "next/image"
 import Link from "next/link"
-import { useRouter } from "next/navigation"
 
+import { CategoryCarousel } from "@/components/custom/category-carousel"
+import { CategoryCarouselSkeleton } from "@/components/custom/category-skeleton"
 import Footer from "@/components/layout/footer"
 import Header from "@/components/layout/header"
 import { Button } from "@/components/ui/button"
-import { Card, CardContent } from "@/components/ui/card"
-import {
-  Carousel,
-  CarouselContent,
-  CarouselItem,
-  CarouselNext,
-  CarouselPrevious,
-} from "@/components/ui/carousel"
 import { useCategorias } from '@/hooks/use-categorias'
 
 export default function AboutPage() {
-  const router = useRouter()
-  const { categorias } = useCategorias()
+  // Para el carrusel de about, cargar todas las categorías disponibles
+  // 100 es suficiente para mostrar todas las categorías en el carrusel
+  const { categorias, loading } = useCategorias(100)
 
   return (
     <div className="min-h-screen bg-background">
@@ -96,87 +90,11 @@ export default function AboutPage() {
             Nuestras Categorías
           </h2>
 
-          {/* Carrusel para móvil y tablet */}
-          <div className="block lg:hidden">
-            <Carousel
-              opts={{
-                align: "start",
-                loop: true,
-              }}
-              className="w-full max-w-full mx-auto"
-            >
-              <CarouselContent className="-ml-3 md:-ml-4">
-                {categorias.map((category) => (
-                  <CarouselItem
-                    key={category.nombre}
-                    className="pl-3 md:pl-4 basis-1/2 md:basis-1/3"
-                  >
-                    <div
-                      className="group block cursor-pointer"
-                      onClick={() =>
-                        router.push(`/menu?categoria=${encodeURIComponent(category.nombre)}`)
-                      }
-                    >
-                      <Card className="overflow-hidden border-0 shadow-xl hover:shadow-2xl transition-all duration-300 group-hover:scale-105 rounded-3xl">
-                        <CardContent className="p-0">
-                          <div className="relative h-64">
-                            <Image
-                              src={category.imagen_path}
-                              alt={category.nombre}
-                              fill
-                              priority={true}
-                              sizes="(max-width: 768px) 50vw, (max-width: 1024px) 33vw, 20vw"
-                              className="object-cover group-hover:scale-110 transition-transform duration-500"
-                            />
-                          </div>
-                          <div className="bg-[#0B4F6C] py-3 px-3">
-                            <h3 className="text-base font-bold text-white text-center">
-                              {category.nombre}
-                            </h3>
-                          </div>
-                        </CardContent>
-                      </Card>
-                    </div>
-                  </CarouselItem>
-                ))}
-              </CarouselContent>
-              <CarouselPrevious className="hidden md:flex -left-4" />
-              <CarouselNext className="hidden md:flex -right-4" />
-            </Carousel>
-          </div>
-
-          {/* Grid para desktop */}
-          <div className="hidden lg:grid grid-cols-5 gap-8 max-w-7xl mx-auto">
-            {categorias.map((category) => (
-              <div
-                key={category.nombre}
-                className="group block cursor-pointer"
-                onClick={() =>
-                  router.push(`/menu?categoria=${encodeURIComponent(category.nombre)}`)
-                }
-              >
-                <Card className="overflow-hidden border-0 shadow-xl hover:shadow-2xl transition-all duration-300 group-hover:scale-105 rounded-3xl">
-                  <CardContent className="p-0">
-                    <div className="relative h-72">
-                      <Image
-                        src={category.imagen_path}
-                        alt={category.nombre}
-                        fill
-                        priority={true}
-                        sizes="(max-width: 1024px) 0px, 20vw"
-                        className="object-cover group-hover:scale-110 transition-transform duration-500"
-                      />
-                    </div>
-                    <div className="bg-[#0B4F6C] py-4 px-4">
-                      <h3 className="text-xl font-bold text-white text-center">
-                        {category.nombre}
-                      </h3>
-                    </div>
-                  </CardContent>
-                </Card>
-              </div>
-            ))}
-          </div>
+          {loading && categorias.length === 0 ? (
+            <CategoryCarouselSkeleton />
+          ) : (
+            <CategoryCarousel categories={categorias} />
+          )}
         </div>
       </section>
       
