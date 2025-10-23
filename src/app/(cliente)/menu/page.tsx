@@ -12,6 +12,7 @@ import React, { useState, useEffect } from "react"
 
 import Loading from "@/app/loading"
 import DishCard from '@/components/custom/dish-card'
+import { DishGridSkeleton } from '@/components/custom/dish-card-skeleton'
 import Footer from "@/components/layout/footer"
 import Header from "@/components/layout/header"
 import { Button } from '@/components/ui/button'
@@ -35,6 +36,10 @@ export default function MenuPage() {
   //const [cart, setCart] = useState<number[]>([])
   //const [favorites, setFavorites] = useState<number[]>([])
   const [expandedCategories, setExpandedCategories] = useState<{ [key: string]: boolean }>({})
+  // Track de categorías que ya se expandieron al menos una vez (para optimizar carga de imágenes)
+  const [loadedCategories, setLoadedCategories] = useState<Set<string>>(new Set())
+  // Track de categorías que están cargando actualmente
+  const [loadingCategories, setLoadingCategories] = useState<Set<string>>(new Set())
   //const [isCategoryModalOpen, setIsCategoryModalOpen] = useState(false)
   //const [categorySearch, setCategorySearch] = useState("")
 
@@ -57,16 +62,24 @@ export default function MenuPage() {
       const categoryExists = categories.includes(categoria)
       if (categoryExists) {
         setSelectedCategory(categoria)
+        // OPTIMIZACIÓN: Si viene de una categoría específica, solo expandir esa
+        setExpandedCategories(prev => ({
+          ...prev,
+          [categoria]: true
+        }))
+        // Marcar como cargada
+        setLoadedCategories(prev => new Set([...prev, categoria]))
       }
     }
   }, [categoria, categories])
 
   // Inicializar expandedCategories con las categorías dinámicas
+  // OPTIMIZACIÓN: Todas colapsadas por defecto para carga más rápida
   React.useEffect(() => {
     if (productos.length > 0) {
       const initialExpanded = categories.reduce((acc, category) => {
         if (category !== "Todos") {
-          acc[category] = true
+          acc[category] = false // ← Todas colapsadas por defecto
         }
         return acc
       }, {} as { [key: string]: boolean })
@@ -83,10 +96,42 @@ export default function MenuPage() {
   }, [router])
 
   const toggleCategory = (category: string) => {
+    const isExpanding = !expandedCategories[category]
+    
     setExpandedCategories(prev => ({
       ...prev,
       [category]: !prev[category]
     }))
+    
+    // Si se está expandiendo por primera vez, marcar como cargando
+    if (isExpanding && !loadedCategories.has(category)) {
+      setLoadingCategories(prev => new Set([...prev, category]))
+      
+      // Reducir tiempo de skeleton - solo 300ms ahora
+      // Si las imágenes están en cache, se verá aún más rápido
+      setTimeout(() => {
+        setLoadedCategories(prev => new Set([...prev, category]))
+        setLoadingCategories(prev => {
+          const newSet = new Set(prev)
+          newSet.delete(category)
+          return newSet
+        })
+      }, 300) // Reducido de 400ms a 300ms para ser más instantáneo
+    }
+  }
+  
+  // Función para precargar imágenes al hacer hover (mejorada)
+  const handleCategoryHover = (category: string, dishes: typeof productos) => {
+    // Solo precargar si no está ya cargada
+    if (!loadedCategories.has(category) && !loadingCategories.has(category)) {
+      // Precargar las primeras 6 imágenes (aumentado de 3 a 6)
+      dishes.slice(0, 6).forEach(dish => {
+        if (dish.imagen_path) {
+          const img = new Image()
+          img.src = dish.imagen_path
+        }
+      })
+    }
   }
 
   // Filtrar platos por categoría y búsqueda - Memoizado para evitar recalcular en cada render
@@ -110,6 +155,23 @@ export default function MenuPage() {
       return acc
     }, {} as { [key: string]: Producto[] })
   }, [filteredDishes])
+
+  // OPTIMIZACIÓN: Precargar automáticamente las primeras 2 categorías
+  useEffect(() => {
+    if (Object.keys(dishesByCategory).length > 0 && !loading) {
+      const firstCategories = Object.entries(dishesByCategory).slice(0, 2)
+      
+      // Precargar las primeras 6 imágenes de cada una de las primeras 2 categorías
+      firstCategories.forEach(([_, dishes]) => {
+        dishes.slice(0, 6).forEach(dish => {
+          if (dish.imagen_path) {
+            const img = new Image()
+            img.src = dish.imagen_path
+          }
+        })
+      })
+    }
+  }, [dishesByCategory, loading])
 
   if (!isAuthenticated) {
     return (
@@ -272,50 +334,66 @@ export default function MenuPage() {
             <div className="hidden md:block">
               {Object.entries(dishesByCategory).map(([category, dishes]) => (
                 <div key={category} className="mb-8">
-                  <div className="bg-gray-200 rounded-lg p-6">
+                  <div className="bg-gray-200 rounded-lg p-6 transition-all duration-200 hover:shadow-md">
                     {/* Header categoría */}
                     <div
-                      className="flex items-center cursor-pointer mb-4"
+                      className="flex items-center cursor-pointer mb-4 group"
                       onClick={() => toggleCategory(category)}
+                      onMouseEnter={() => handleCategoryHover(category, dishes)}
                     >
-                      <h2 className="text-xl font-bold text-gray-800 flex-1 text-center">
+                      <h2 className="text-xl font-bold text-gray-800 flex-1 text-center group-hover:text-[#0056C6] transition-colors">
                         {category}
+                        {/*<span className="ml-2 text-sm font-normal text-gray-600">
+                          ({dishes.length} {dishes.length === 1 ? 'plato' : 'platos'})
+                        </span>*/}
                       </h2>
                       {expandedCategories[category] ? (
-                        <ChevronUp className="w-5 h-5 text-gray-600" />
+                        <ChevronUp className="w-6 h-6 text-gray-600 group-hover:text-[#0056C6] transition-colors" />
                       ) : (
-                        <ChevronDown className="w-5 h-5 text-gray-600" />
+                        <ChevronDown className="w-6 h-6 text-gray-600 group-hover:text-[#0056C6] transition-colors" />
                       )}
                     </div>
 
                     {/* Línea solo expandido */}
                     {expandedCategories[category] && <hr className="border-blue-700" />}
 
-                    {/* Platos */}
+                    {/* Platos o Skeleton */}
                     {expandedCategories[category] && (
-                      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 py-5" data-cy="plate-grid">
-                        {dishes.map((dish, index) => (
-                      <DishCard
-                        key={dish.id}
-                        dish={{
-                          id: dish.id as unknown as number,
-                          nombre: dish.nombre || 'Sin nombre',
-                          imagen: dish.imagen_path || '/placeholder-image.png',
-                          precio: parseFloat(dish.precio_base),
-                          stock: 10,
-                          disponible: true,
-                          categoria: dish.categoria.nombre,
-                          alergenos: [],
-                          tiempo_preparacion: 15,
-                          descripcion: '',
-                          ingredientes: [],
-                          grupo_personalizacion: []
-                        }}
-                        showPrice={true}
-                        priority={index < 6} // Solo las primeras 6 por categoría
-                      />
-                        ))}
-                      </div>
+                      <>
+                        {loadingCategories.has(category) ? (
+                          <DishGridSkeleton count={Math.min(dishes.length, 6)} />
+                        ) : (
+                          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 py-5" data-cy="plate-grid">
+                            {dishes.map((dish, index) => {
+                              // Solo las primeras 6 imágenes de la primera categoría expandida tienen prioridad
+                              const isFirstLoad = !loadedCategories.has(category)
+                              const shouldPrioritize = isFirstLoad && index < 6
+                              
+                              return (
+                                <DishCard
+                                  key={dish.id}
+                                  dish={{
+                                    id: dish.id as unknown as number,
+                                    nombre: dish.nombre || 'Sin nombre',
+                                    imagen: dish.imagen_path || '/placeholder-image.png',
+                                    precio: parseFloat(dish.precio_base),
+                                    stock: 10,
+                                    disponible: true,
+                                    categoria: dish.categoria.nombre,
+                                    alergenos: [],
+                                    tiempo_preparacion: 15,
+                                    descripcion: '',
+                                    ingredientes: [],
+                                    grupo_personalizacion: []
+                                  }}
+                                  showPrice={true}
+                                  priority={shouldPrioritize}
+                                />
+                              )
+                            })}
+                          </div>
+                        )}
+                      </>
                     )}
                   </div>
                 </div>

@@ -61,15 +61,33 @@ export function useProductos() {
       const result = await response.json() as { success: boolean; data: ProductosResponse; error?: string }
       
       if (result.success) {
-        // Convertir URLs de Google Drive a URLs directas
-        const productosConImagenes = result.data.items.map(producto => ({
-          ...producto,
-          imagen_path: convertGoogleDriveUrl(producto.imagen_path),
-          categoria: {
-            ...producto.categoria,
-            imagen_path: convertGoogleDriveUrl(producto.categoria.imagen_path)
+        // Convertir URLs de Google Drive a URLs directas usando el proxy
+        const productosConImagenes = result.data.items.map(producto => {
+          const productoImagenUrl = convertGoogleDriveUrl(producto.imagen_path)
+          const categoriaImagenUrl = convertGoogleDriveUrl(producto.categoria.imagen_path)
+          
+          // Solo usar el proxy para URLs externas (Google Drive, http/https)
+          const shouldUseProxyProducto = productoImagenUrl.startsWith('http://') || 
+                                        productoImagenUrl.startsWith('https://') ||
+                                        productoImagenUrl.includes('drive.google.com')
+          
+          const shouldUseProxyCategoria = categoriaImagenUrl.startsWith('http://') || 
+                                         categoriaImagenUrl.startsWith('https://') ||
+                                         categoriaImagenUrl.includes('drive.google.com')
+          
+          return {
+            ...producto,
+            imagen_path: shouldUseProxyProducto 
+              ? `/api/image-proxy?url=${encodeURIComponent(productoImagenUrl)}`
+              : productoImagenUrl,
+            categoria: {
+              ...producto.categoria,
+              imagen_path: shouldUseProxyCategoria 
+                ? `/api/image-proxy?url=${encodeURIComponent(categoriaImagenUrl)}`
+                : categoriaImagenUrl
+            }
           }
-        }))
+        })
         
         // Actualizar cache global
         cachedProductos = productosConImagenes

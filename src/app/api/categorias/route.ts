@@ -4,11 +4,15 @@ import { NextResponse } from 'next/server'
 export const revalidate = 300 // Revalidar cada 5 minutos
 export const dynamic = 'force-static' // Forzar generación estática con cache
 
-export async function GET() {
+export async function GET(request: Request) {
   try {
+    const { searchParams } = new URL(request.url)
+    const limit = searchParams.get('limit') || '12' // Limitar a 12 categorías por defecto para carga inicial rápida
+    const skip = searchParams.get('skip') || '0'
+    
     const categoriasUrl = process.env.NEXT_PUBLIC_CATEGORIAS_URL || 'https://back-dp2.onrender.com/api/v1/categorias/productos/cards'
     
-    const response = await fetch(`${categoriasUrl}?skip=0&limit=100`, {
+    const response = await fetch(`${categoriasUrl}?skip=${skip}&limit=${limit}`, {
       method: 'GET',
       headers: {
         'Content-Type': 'application/json',

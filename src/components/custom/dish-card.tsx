@@ -1,5 +1,6 @@
 import Image from "next/image"
 import Link from "next/link"
+import { useState } from "react"
 
 import { Badge } from "@/components/ui/badge"
 import { Root2 } from "@/types/menu"
@@ -16,6 +17,8 @@ export function DishCard({
   className = "",
   priority = false
 }: DishCardProps) {
+  const [imageLoaded, setImageLoaded] = useState(false)
+  
   // Array de imágenes locales como fallback
   const localImages = [
     "/fresh-ceviche-with-red-onions-and-sweet-potato.jpg",
@@ -54,6 +57,13 @@ export function DishCard({
       <article className="text-center cursor-pointer hover:scale-105 transition-transform duration-200" data-cy="plate-card">
         {/* Image Container */}
         <div className="relative">
+          {/* Loading Skeleton */}
+          {!imageLoaded && (
+            <div className="absolute inset-0 bg-gradient-to-br from-gray-200 to-gray-300 animate-pulse rounded-t-3xl flex items-center justify-center">
+              <div className="w-12 h-12 border-4 border-gray-400 border-t-transparent rounded-full animate-spin"></div>
+            </div>
+          )}
+          
           <Image
             src={dish.imagen || getLocalImage(dish.id)}
             alt={dish.nombre || "Imagen no disponible"}
@@ -61,11 +71,15 @@ export function DishCard({
             height={169}
             priority={priority} // Usar priority en lugar de loading
             loading={priority ? "eager" : "lazy"} // Lazy loading para el resto
-            className="w-full object-cover rounded-t-3xl bg-gray-300 aspect-[16/9]"
+            className={`w-full object-cover rounded-t-3xl bg-gray-300 aspect-[16/9] transition-opacity duration-300 ${
+              imageLoaded ? 'opacity-100' : 'opacity-0'
+            }`}
             data-cy="plate-image"
+            onLoad={() => setImageLoaded(true)}
             onError={(e) => {
               const target = e.target as HTMLImageElement
               target.src = getLocalImage(dish.id)
+              setImageLoaded(true)
             }}
           />
           {!dish.disponible && (

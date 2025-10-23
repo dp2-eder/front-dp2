@@ -29,7 +29,7 @@ const convertGoogleDriveUrl = (url: string | null | undefined): string => {
   return url
 }
 
-export function useCategorias() {
+export function useCategorias(limit = 12) {
   const [categorias, setCategorias] = useState<CategoriasResponse['items']>(() => {
     // Inicializar con cache si está disponible
     return cachedCategorias || []
@@ -54,18 +54,32 @@ export function useCategorias() {
 
       setLoading(true)
       setError(null)
-      
-      const response = await fetch('/api/categorias', {
+
+      const response = await fetch(`/api/categorias?limit=${limit}`, {
         next: { revalidate: 300 } // Cache en el cliente también
       })
       const result = await response.json() as { success: boolean; data: CategoriasResponse; error?: string }
       
       if (result.success) {
-        // Convertir URLs de Google Drive a URLs directas
-        const categoriasConImagenes = result.data.items.map(categoria => ({
-          ...categoria,
-          imagen_path: convertGoogleDriveUrl(categoria.imagen_path)
-        }))
+        // Convertir URLs de Google Drive a URLs directas usando el proxy
+        const categoriasConImagenes = result.data.items.map(categoria => {
+          const originalUrl = convertGoogleDriveUrl(categoria.imagen_path)
+          
+          // Solo usar el proxy para URLs externas (Google Drive, http/https)
+          // No usar el proxy para URLs locales o placeholders
+          const shouldUseProxy = originalUrl.startsWith('http://') || 
+                                originalUrl.startsWith('https://') ||
+                                originalUrl.includes('drive.google.com')
+          
+          const finalUrl = shouldUseProxy 
+            ? `/api/image-proxy?url=${encodeURIComponent(originalUrl)}`
+            : originalUrl
+          
+          return {
+            ...categoria,
+            imagen_path: finalUrl
+          }
+        })
         
         // Actualizar cache global
         cachedCategorias = categoriasConImagenes
