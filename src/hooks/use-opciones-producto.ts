@@ -20,6 +20,14 @@ export interface ProductoConOpciones {
   imagen_path: string | null
   disponible: boolean
   opciones: Opcion[]
+  tipos_opciones?: TipoOpcion[]
+}
+
+export interface TipoOpcion {
+  id_tipo_opcion: string
+  nombre_tipo: string
+  seleccion_maxima: number
+  opciones: Opcion[]
 }
 
 export function useOpcionesProducto(id: string) {
