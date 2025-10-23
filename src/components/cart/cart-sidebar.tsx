@@ -1,6 +1,6 @@
 "use client"
 
-import { X, Plus, Minus, Trash2 } from "lucide-react"
+import { X, Plus, Minus, Trash2, AlertTriangle } from "lucide-react"
 import Image from "next/image"
 
 import { Button } from "@/components/ui/button"
@@ -14,6 +14,12 @@ interface CartSidebarProps {
 
 export default function CartSidebar({ isOpen, onClose }: CartSidebarProps) {
   const { cart, updateQuantity, removeFromCart, total } = useCart()
+
+  // Función para verificar si se puede incrementar (límite por plato individual)
+  const canIncrement = (itemId: string) => {
+    const item = cart.find(item => item.id === itemId)
+    return item ? item.quantity < 50 : true
+  }
 
   // Función para convertir URL de Google Drive
   const convertGoogleDriveUrl = (url: string): string => {
@@ -84,10 +90,27 @@ export default function CartSidebar({ isOpen, onClose }: CartSidebarProps) {
                           />
                         </div>
                         <div className="flex-1">
-                          <h3 className="font-medium text-sm">{item.name}</h3>
+                          <div className="flex items-center gap-2">
+                            <h3 className="font-medium text-sm">{item.name}</h3>
+                            {!canIncrement(item.id) && (
+                              <div className="flex items-center gap-1">
+                                <AlertTriangle className="w-4 h-4 text-orange-500" />
+                                <span className="text-xs text-orange-600 font-medium">Límite alcanzado</span>
+                              </div>
+                            )}
+                          </div>
+                          
+                          {/* Mostrar comentarios si existen */}
+                          {item.comments && item.comments.trim() && (
+                            <p className="text-xs text-gray-500 mt-1">
+                              <span className="font-medium">Comentarios:</span> {item.comments.length > 50 ? `${item.comments.substring(0, 35)}...` : item.comments}
+                            </p>
+                          )}
+                          
+                          {/* Mostrar opciones adicionales si existen */}
                           {item.selectedOptions.length > 0 && (
                             <p className="text-xs text-gray-500 mt-1">
-                              {item.selectedOptions.map(opt => opt.name).join(', ')}
+                              <span className="font-medium">Adicionales:</span> {item.selectedOptions.map(opt => opt.name).join(', ')}
                             </p>
                           )}
                           <div className="flex items-center justify-between mt-2">
@@ -106,7 +129,9 @@ export default function CartSidebar({ isOpen, onClose }: CartSidebarProps) {
                               <Button
                                 size="sm"
                                 variant="outline"
-                                onClick={() => updateQuantity(item.id, item.quantity + 1)}
+                                onClick={() => canIncrement(item.id) && updateQuantity(item.id, item.quantity + 1)}
+                                disabled={!canIncrement(item.id)}
+                                className={!canIncrement(item.id) ? "opacity-50 cursor-not-allowed" : ""}
                               >
                                 <Plus className="w-3 h-3" />
                               </Button>

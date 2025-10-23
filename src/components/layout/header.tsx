@@ -93,7 +93,7 @@ export default function Header({
             {/* Mobile Header - SOLO ESTO */}
             <div className="md:hidden flex items-center justify-between w-full">
               {/* Menú más a la derecha */}
-              <div className="flex-1 flex justify-start pl-4">
+              <div className="flex-1 flex justify-center ml-3">
                 <Link href="/menu" className="text-sm font-medium text-white hover:text-[#5CEFFA]">
                   Menú
                 </Link>
@@ -102,17 +102,24 @@ export default function Header({
               {/* Logo al centro - SOLO UNO */}
               <div className="absolute left-1/2 transform -translate-x-1/2">
                 <Link href="/menu">
-                  <Image src="/DINE LINE.svg" alt="DINE LINE" width={56} height={56} className="h-14 w-auto" />
+                  <Image 
+                    src="/DINE LINE.svg" 
+                    alt="DINE LINE" 
+                    width={56} 
+                    height={56} 
+                    className="h-14 w-auto transform translate-y-7" 
+                  />
                 </Link>
               </div>
-              
-              {/* Nosotros y Hamburguesa más a la derecha */}
-              <div className="flex-1 flex justify-end items-center space-x-4 pr-4">
+              {/* Nosotros */}
+              <div className="flex-1 flex justify-end items-center pr-16">
                 <Link href="/about" className="text-sm font-medium text-white hover:text-[#5CEFFA]">
                   Nosotros
                 </Link>
-                
-                {/* Hamburguesa a la derecha */}
+              </div>
+              
+              {/* Hamburguesa en esquina derecha absoluta */}
+              <div className="absolute right-4 top-1/2 transform -translate-y-1/2">
                 <Button
                   variant="ghost"
                   size="icon"

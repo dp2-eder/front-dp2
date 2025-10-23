@@ -1,6 +1,5 @@
 "use client"
 
-import { Minus, Plus } from "lucide-react"
 import Link from "next/link"
 import { useParams, useRouter } from "next/navigation"
 import { useState } from "react"
@@ -10,8 +9,6 @@ import Footer from "@/components/layout/footer"
 import Header from "@/components/layout/header"
 import { Button } from "@/components/ui/button"
 import { Card } from "@/components/ui/card"
-import { Checkbox } from "@/components/ui/checkbox"
-import { Label } from "@/components/ui/label"
 import SafeImage from "@/components/ui/safe-image"
 import { Textarea } from "@/components/ui/textarea"
 import { useCart, CartItem } from '@/hooks/use-cart'
@@ -21,7 +18,7 @@ export default function PersonalizarPage() {
   const params = useParams()
   const router = useRouter()
   const [selectedExtras, setSelectedExtras] = useState<string[]>([])
-  const [quantity, setQuantity] = useState(1)
+  const [quantity] = useState(1)
   const [comments, setComments] = useState("")
   const [extraQuantities, setExtraQuantities] = useState<{[key: string]: number}>({})
 
@@ -123,7 +120,7 @@ export default function PersonalizarPage() {
       comments
     }
     addToCart(cartItem)
-    router.push('/carrito')
+    router.push('/menu')
   }
 
   return (
@@ -240,34 +237,9 @@ export default function PersonalizarPage() {
                 <Card className="p-6 bg-white border border-[#ECF1F4] rounded-xl shadow-sm">
                   <h3 className="text-lg font-semibold text-gray-900 mb-4">Resumen del pedido</h3>
 
-                  <div className="flex items-center justify-between mb-4">
+                  <div className="flex items-center justify-between mb-6">
                     <p className="text-sm text-gray-600">{producto.nombre}</p>
                     <p className="text-base font-semibold text-gray-900">{formatPrice(parseFloat(producto.precio_base))}</p>
-                  </div>
-
-                  {/* Quantity Control */}
-                  <div className="flex items-center justify-between mb-6">
-                    <span className="text-sm font-medium text-gray-900">Cantidad</span>
-                    <div className="flex items-center space-x-3">
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        className="w-8 h-8 p-0 border-[#ECF1F4] bg-transparent"
-                        onClick={() => setQuantity(Math.max(1, quantity - 1))}
-                        disabled={quantity <= 1}
-                      >
-                        <Minus className="w-4 h-4" />
-                      </Button>
-                      <span className="w-8 text-center text-sm font-medium">{quantity}</span>
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        className="w-8 h-8 p-0 border-[#ECF1F4] bg-transparent"
-                        onClick={() => setQuantity(quantity + 1)}
-                      >
-                        <Plus className="w-4 h-4" />
-                      </Button>
-                    </div>
                   </div>
 
                   {/* Add to Cart Button */}

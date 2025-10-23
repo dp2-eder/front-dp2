@@ -2,11 +2,11 @@
 import Image from "next/image"
 import Link from "next/link"
 
+import { CategoryCarousel } from "@/components/custom/category-carousel"
+import { CategoryCarouselSkeleton } from "@/components/custom/category-skeleton"
 import Footer from "@/components/layout/footer"
 import Header from "@/components/layout/header"
 import { Button } from "@/components/ui/button"
-import { CategoryCarousel } from "@/components/custom/category-carousel"
-import { CategoryCarouselSkeleton } from "@/components/custom/category-skeleton"
 import { useCategorias } from '@/hooks/use-categorias'
 
 export default function AboutPage() {

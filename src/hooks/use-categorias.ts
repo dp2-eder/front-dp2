@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useCallback } from 'react'
 
 import { CategoriasResponse } from '@/types/categorias'
 
@@ -43,7 +43,7 @@ export function useCategorias(limit = 12) {
   })
   const [error, setError] = useState<string | null>(null)
 
-  const fetchCategorias = async (force = false) => {
+  const fetchCategorias = useCallback(async (force = false) => {
     try {
       // Si hay cache válido y no es forzado, usar cache
       if (!force && cachedCategorias && cacheTimestamp && Date.now() - cacheTimestamp < CACHE_DURATION) {
@@ -94,11 +94,11 @@ export function useCategorias(limit = 12) {
     } finally {
       setLoading(false)
     }
-  }
+  }, [limit])
 
   useEffect(() => {
     void fetchCategorias()
-  }, [])
+  }, [fetchCategorias])
 
   return {
     categorias,
