@@ -38,16 +38,16 @@ export default function CartSidebar({ isOpen, onClose }: CartSidebarProps) {
 
   return (
     <>
-      {/* Overlay */}
+      {/* Overlay con efecto blur blanquecino */}
       {isOpen && (
         <div 
-          className="fixed inset-0 bg-black/50 z-40"
+          className="fixed inset-0 bg-white/30 backdrop-blur-sm z-[60]"
           onClick={onClose}
         />
       )}
       
       {/* Sidebar */}
-      <div className={`fixed top-0 right-0 h-full w-96 bg-white shadow-2xl z-50 transform transition-transform duration-300 ${
+      <div className={`fixed top-0 right-0 h-full w-96 bg-white shadow-2xl z-[70] transform transition-transform duration-300 ${
         isOpen ? 'translate-x-0' : 'translate-x-full'
       }`}>
         <div className="flex flex-col h-full">
