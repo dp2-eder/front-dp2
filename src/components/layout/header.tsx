@@ -3,6 +3,7 @@
 import { Heart, Menu } from "lucide-react"
 import Image from "next/image"
 import Link from "next/link"
+import { usePathname } from "next/navigation"
 import { useState } from "react"
 
 import CartSidebar from "@/components/cart/cart-sidebar"
@@ -34,6 +35,7 @@ export default function Header({
   //const [mobileOpen, setMobileOpen] = useState(false)
   const [cartOpen, setCartOpen] = useState(false)
   const { itemCount } = useCart()
+  const pathname = usePathname()
 
   return (
     <>
@@ -44,10 +46,20 @@ export default function Header({
             <div className="hidden md:flex items-center justify-between w-full h-16">
               {/* Left side - Navigation links */}
               <div className="flex items-center space-x-40">
-                <Link href="/menu" className="text-sm font-medium text-white hover:text-[#5CEFFA]">
+                <Link 
+                  href="/menu" 
+                  className={`text-sm font-medium hover:text-[#5CEFFA] ${
+                    pathname?.startsWith('/menu') ? 'text-[#5CEFFA]' : 'text-white'
+                  }`}
+                >
                   Menú
                 </Link>
-                <Link href="/about" className="text-sm font-medium text-white hover:text-[#5CEFFA]">
+                <Link 
+                  href="/about" 
+                  className={`text-sm font-medium hover:text-[#5CEFFA] ${
+                    pathname?.startsWith('/about') ? 'text-[#5CEFFA]' : 'text-white'
+                  }`}
+                >
                   Nosotros
                 </Link>
               </div>
@@ -72,7 +84,12 @@ export default function Header({
                     </span>
                   )}
                 </button>
-                <Link href="/contact" className="text-sm font-medium text-white hover:text-[#5CEFFA]">
+                <Link 
+                  href="/contact" 
+                  className={`text-sm font-medium hover:text-[#5CEFFA] ${
+                    pathname?.startsWith('/contact') ? 'text-[#5CEFFA]' : 'text-white'
+                  }`}
+                >
                   Contáctanos
                 </Link>
 
@@ -94,7 +111,12 @@ export default function Header({
             <div className="md:hidden flex items-center justify-between w-full">
               {/* Menú más a la derecha */}
               <div className="flex-1 flex justify-center ml-3">
-                <Link href="/menu" className="text-sm font-medium text-white hover:text-[#5CEFFA]">
+                <Link 
+                  href="/menu" 
+                  className={`text-sm font-medium hover:text-[#5CEFFA] ${
+                    pathname?.startsWith('/menu') ? 'text-[#5CEFFA]' : 'text-white'
+                  }`}
+                >
                   Menú
                 </Link>
               </div>
@@ -113,7 +135,12 @@ export default function Header({
               </div>
               {/* Nosotros */}
               <div className="flex-1 flex justify-end items-center pr-16">
-                <Link href="/about" className="text-sm font-medium text-white hover:text-[#5CEFFA]">
+                <Link 
+                  href="/about" 
+                  className={`text-sm font-medium hover:text-[#5CEFFA] ${
+                    pathname?.startsWith('/about') ? 'text-[#5CEFFA]' : 'text-white'
+                  }`}
+                >
                   Nosotros
                 </Link>
               </div>
