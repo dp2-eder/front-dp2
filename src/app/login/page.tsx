@@ -40,7 +40,7 @@ export default function LoginPage() {
       return false
     }
     if (!regex.test(value)) {
-      setEmailError("Ingrese un correo electrónico válido")
+      setEmailError("Ingrese un correo en formato válido. Ejm: hola@ejemplo.com")
       return false
     }
     setEmailError("")
