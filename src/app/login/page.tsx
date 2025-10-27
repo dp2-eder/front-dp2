@@ -15,18 +15,9 @@ export default function LoginPage() {
   const [emailError, setEmailError] = useState("")
 
   const validateNombre = (value: string): boolean => {
-    // Solo letras y espacios
-    const regex = /^[a-zA-ZáéíóúÁÉÍÓÚñÑ\s]+$/
+    // Sin validaciones, acepta cualquier valor
     if (!value.trim()) {
       setNombreError("El nombre es requerido")
-      return false
-    }
-    if (!regex.test(value)) {
-      setNombreError("Solo se permiten letras en el nombre")
-      return false
-    }
-    if (value.trim().length < 2) {
-      setNombreError("El nombre debe tener al menos 2 caracteres")
       return false
     }
     setNombreError("")
@@ -50,8 +41,9 @@ export default function LoginPage() {
   const handleNombreChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const value = e.target.value
     setNombre(value)
-    if (nombreError) {
-      validateNombre(value)
+    // Limpiar error si hay texto
+    if (nombreError && value.trim()) {
+      setNombreError("")
     }
   }
 
@@ -134,7 +126,6 @@ export default function LoginPage() {
                 placeholder="Nombre"
                 value={nombre}
                 onChange={handleNombreChange}
-                onBlur={() => nombre && validateNombre(nombre)}
                 className={`w-full h-12 md:h-14 pl-4 pr-12 text-base md:text-lg rounded-xl border-2 ${
                   nombreError 
                     ? 'border-red-500 focus:ring-red-500 focus:border-red-500' 
