@@ -286,6 +286,11 @@ export default function MenuPage() {
           <>
             {/* VISTA MOBILE */}
             <div className="md:hidden">
+              {/* Título dinámico según categoría seleccionada */}
+              <h2 className="text-2xl font-bold text-gray-800 mb-6 text-center">
+                {!selectedCategory || selectedCategory === "Todos" ? "Categorías" : selectedCategory}
+              </h2>
+
               {!selectedCategory || selectedCategory === "Todos" ? (
                 <div className="grid grid-cols-1 gap-6">
                   {Object.entries(dishesByCategory).map(([category, dishes], index) => (
@@ -344,72 +349,120 @@ export default function MenuPage() {
 
             {/* VISTA DESKTOP */}
             <div className="hidden md:block">
-              {Object.entries(dishesByCategory).map(([category, dishes]) => (
-                <div key={category} className="mb-8">
-                  <div className="bg-gray-200 rounded-lg p-6 transition-all duration-200 hover:shadow-md">
-                    {/* Header categoría */}
-                    <div
-                      className="flex items-center cursor-pointer mb-4 group"
-                      onClick={() => toggleCategory(category)}
-                      onMouseEnter={() => handleCategoryHover(category, dishes)}
-                    >
-                      <h2 className="text-xl font-bold text-gray-800 flex-1 text-center group-hover:text-[#0056C6] transition-colors">
-                        {category}
-                        {/*<span className="ml-2 text-sm font-normal text-gray-600">
-                          ({dishes.length} {dishes.length === 1 ? 'plato' : 'platos'})
-                        </span>*/}
-                      </h2>
-                      {expandedCategories[category] ? (
-                        <ChevronUp className="w-6 h-6 text-gray-600 group-hover:text-[#0056C6] transition-colors" />
-                      ) : (
-                        <ChevronDown className="w-6 h-6 text-gray-600 group-hover:text-[#0056C6] transition-colors" />
+              {selectedCategory === "Todos" ? (
+                // Vista con contenedores expandibles cuando está en "Todos"
+                Object.entries(dishesByCategory).map(([category, dishes]) => (
+                  <div key={category} className="mb-8">
+                    <div className="bg-gray-200 rounded-lg p-6 transition-all duration-200 hover:shadow-md">
+                      {/* Header categoría */}
+                      <div
+                        className="flex items-center cursor-pointer mb-4 group"
+                        onClick={() => toggleCategory(category)}
+                        onMouseEnter={() => handleCategoryHover(category, dishes)}
+                      >
+                        <h2 className="text-xl font-bold text-gray-800 flex-1 text-center group-hover:text-[#0056C6] transition-colors">
+                          {category}
+                        </h2>
+                        {expandedCategories[category] ? (
+                          <ChevronUp className="w-6 h-6 text-gray-600 group-hover:text-[#0056C6] transition-colors" />
+                        ) : (
+                          <ChevronDown className="w-6 h-6 text-gray-600 group-hover:text-[#0056C6] transition-colors" />
+                        )}
+                      </div>
+
+                      {/* Línea solo expandido */}
+                      {expandedCategories[category] && <hr className="border-blue-700" />}
+
+                      {/* Platos o Skeleton */}
+                      {expandedCategories[category] && (
+                        <>
+                          {loadingCategories.has(category) ? (
+                            <DishGridSkeleton count={Math.min(dishes.length, 6)} />
+                          ) : (
+                            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 py-5" data-cy="plate-grid">
+                              {/* Mostrar solo las primeras 8 cards */}
+                              {dishes.slice(0, 8).map((dish, index) => {
+                                const isFirstLoad = !loadedCategories.has(category)
+                                const shouldPrioritize = isFirstLoad && index < 6
+
+                                return (
+                                  <DishCard
+                                    key={dish.id}
+                                    dish={{
+                                      id: dish.id as unknown as number,
+                                      nombre: dish.nombre || 'Sin nombre',
+                                      imagen: dish.imagen_path || '/placeholder-image.png',
+                                      precio: parseFloat(dish.precio_base),
+                                      stock: 10,
+                                      disponible: true,
+                                      categoria: dish.categoria.nombre,
+                                      alergenos: [],
+                                      tiempo_preparacion: 15,
+                                      descripcion: '',
+                                      ingredientes: [],
+                                      grupo_personalizacion: []
+                                    }}
+                                    showPrice={true}
+                                    priority={shouldPrioritize}
+                                  />
+                                )
+                              })}
+                              
+                              {/* Card "Más opciones..." si hay más de 8 platos */}
+                              {dishes.length > 8 && (
+                                <div
+                                  onClick={() => setSelectedCategory(category)}
+                                  className="cursor-pointer rounded-2xl overflow-hidden shadow-lg hover:shadow-2xl transition-all duration-300 hover:scale-105 flex items-center justify-center bg-[#004166] text-white"
+                                  style={{ minHeight: '300px' }}
+                                >
+                                  <div className="text-center p-6">
+                                    <h3 className="text-2xl font-bold">Más opciones...</h3>
+                                  </div>
+                                </div>
+                              )}
+                            </div>
+                          )}
+                        </>
                       )}
                     </div>
-
-                    {/* Línea solo expandido */}
-                    {expandedCategories[category] && <hr className="border-blue-700" />}
-
-                    {/* Platos o Skeleton */}
-                    {expandedCategories[category] && (
-                      <>
-                        {loadingCategories.has(category) ? (
-                          <DishGridSkeleton count={Math.min(dishes.length, 6)} />
-                        ) : (
-                          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 py-5" data-cy="plate-grid">
-                            {dishes.map((dish, index) => {
-                              // Solo las primeras 6 imágenes de la primera categoría expandida tienen prioridad
-                              const isFirstLoad = !loadedCategories.has(category)
-                              const shouldPrioritize = isFirstLoad && index < 6
-
-                              return (
-                                <DishCard
-                                  key={dish.id}
-                                  dish={{
-                                    id: dish.id as unknown as number,
-                                    nombre: dish.nombre || 'Sin nombre',
-                                    imagen: dish.imagen_path || '/placeholder-image.png',
-                                    precio: parseFloat(dish.precio_base),
-                                    stock: 10,
-                                    disponible: true,
-                                    categoria: dish.categoria.nombre,
-                                    alergenos: [],
-                                    tiempo_preparacion: 15,
-                                    descripcion: '',
-                                    ingredientes: [],
-                                    grupo_personalizacion: []
-                                  }}
-                                  showPrice={true}
-                                  priority={shouldPrioritize}
-                                />
-                              )
-                            })}
-                          </div>
-                        )}
-                      </>
-                    )}
                   </div>
-                </div>
-              ))}
+                ))
+              ) : (
+                // Vista sin contenedor cuando hay una categoría específica seleccionada
+                Object.entries(dishesByCategory).map(([category, dishes]) => (
+                  <div key={category} className="mb-8">
+                    {/* Solo el título de la categoría */}
+                    <h2 className="text-2xl font-bold text-gray-800 mb-6 text-center">
+                      {category}
+                    </h2>
+                    
+                    {/* Cards directamente sin contenedor */}
+                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6" data-cy="plate-grid">
+                      {dishes.map((dish, index) => (
+                        <DishCard
+                          key={dish.id}
+                          dish={{
+                            id: dish.id as unknown as number,
+                            nombre: dish.nombre || 'Sin nombre',
+                            imagen: dish.imagen_path || '/placeholder-image.png',
+                            precio: parseFloat(dish.precio_base),
+                            stock: 10,
+                            disponible: true,
+                            categoria: dish.categoria.nombre,
+                            alergenos: [],
+                            tiempo_preparacion: 15,
+                            descripcion: '',
+                            ingredientes: [],
+                            grupo_personalizacion: []
+                          }}
+                          showPrice={true}
+                          priority={index < 6}
+                        />
+                      ))}
+                    </div>
+                  </div>
+                ))
+              )}
             </div>
           </>
         ) : (

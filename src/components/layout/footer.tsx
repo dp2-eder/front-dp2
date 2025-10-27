@@ -16,14 +16,16 @@ export default function Footer() {
         <div className="h-px bg-white/30 w-36 md:w-48 lg:w-64" />
 
         {/* Logo */}
-        <div className="mx-3 bg-white rounded-[25px] p-1.5 shadow-sm">
+        <div className="mx-3 bg-white rounded-[25px] p-1.5 overflow-hidden" style={{
+          boxShadow: '0 15px 35px rgba(0,0,0,0.25), 0 5px 15px rgba(0,0,0,0.15)'
+        }}>
           <Link href="/about" data-cy="logo">
             <Image
               src="/dineline2.svg"
               alt="DINE LINE"
               width={90}
               height={90}
-              className="h-16 w-auto rounded-[25px]"
+              className="h-16 w-auto"
               priority
             />
           </Link>
