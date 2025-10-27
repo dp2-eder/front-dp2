@@ -169,14 +169,10 @@ export default function CartSidebar({ isOpen, onClose }: CartSidebarProps) {
                 </Button>
               </div>
                 
-                {/* Imagen decorativa del pescado - rotado 45 grados hacia arriba */}
+                {/* Imagen decorativa del pescado */}
                 <div className="flex justify-end mt-4 opacity-50">
                   <div 
                     className="w-[75%] h-48 bg-[url('/pescado-inicio.jpg')] bg-no-repeat bg-right bg-contain"
-                    style={{
-                      transform: 'rotate(-45deg)',
-                      transformOrigin: 'center right'
-                    }}
                   />
                 </div>
 
