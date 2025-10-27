@@ -47,20 +47,20 @@ export default function Header({
               {/* Left side - Navigation links */}
               <div className="flex items-center space-x-40">
                 <Link 
-                  href="/menu" 
-                  className={`text-sm font-medium hover:text-[#5CEFFA] ${
-                    pathname?.startsWith('/menu') ? 'text-[#5CEFFA]' : 'text-white'
-                  }`}
-                >
-                  Menú
-                </Link>
-                <Link 
                   href="/about" 
                   className={`text-sm font-medium hover:text-[#5CEFFA] ${
                     pathname?.startsWith('/about') ? 'text-[#5CEFFA]' : 'text-white'
                   }`}
                 >
                   Nosotros
+                </Link>
+                <Link 
+                  href="/menu" 
+                  className={`text-sm font-medium hover:text-[#5CEFFA] ${
+                    pathname?.startsWith('/menu') ? 'text-[#5CEFFA]' : 'text-white'
+                  }`}
+                >
+                  Menú
                 </Link>
               </div>
 
@@ -109,15 +109,15 @@ export default function Header({
 
             {/* Mobile Header - SOLO ESTO */}
             <div className="md:hidden flex items-center justify-between w-full">
-              {/* Menú más a la derecha */}
+              {/* Nosotros más a la izquierda */}
               <div className="flex-1 flex justify-center ml-3">
                 <Link 
-                  href="/menu" 
+                  href="/about" 
                   className={`text-sm font-medium hover:text-[#5CEFFA] ${
-                    pathname?.startsWith('/menu') ? 'text-[#5CEFFA]' : 'text-white'
+                    pathname?.startsWith('/about') ? 'text-[#5CEFFA]' : 'text-white'
                   }`}
                 >
-                  Menú
+                  Nosotros
                 </Link>
               </div>
               
@@ -133,15 +133,15 @@ export default function Header({
                   />
                 </Link>
               </div>
-              {/* Nosotros */}
+              {/* Menú */}
               <div className="flex-1 flex justify-end items-center pr-16">
                 <Link 
-                  href="/about" 
+                  href="/menu" 
                   className={`text-sm font-medium hover:text-[#5CEFFA] ${
-                    pathname?.startsWith('/about') ? 'text-[#5CEFFA]' : 'text-white'
+                    pathname?.startsWith('/menu') ? 'text-[#5CEFFA]' : 'text-white'
                   }`}
                 >
-                  Nosotros
+                  Menú
                 </Link>
               </div>
               
