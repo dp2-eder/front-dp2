@@ -1,5 +1,6 @@
 "use client"
 
+import { useState, useEffect } from "react"
 import { Menu, AlertTriangle } from "lucide-react"
 import Image from "next/image"
 
@@ -11,8 +12,99 @@ interface CartSidebarProps {
   onClose: () => void
 }
 
+interface HistoryItem {
+  id: string
+  name: string
+  quantity: number
+  subtotal: number
+  comments?: string
+  additionals?: string[]
+  date: string
+}
+
 export default function CartSidebar({ isOpen, onClose }: CartSidebarProps) {
-  const { cart, updateQuantity, removeFromCart, total } = useCart()
+  const { cart, updateQuantity, removeFromCart, total, clearCart } = useCart()
+  const [history, setHistory] = useState<HistoryItem[]>([])
+  const [totalAccumulated, setTotalAccumulated] = useState(0)
+
+  // Cargar historial desde localStorage al montar el componente
+  useEffect(() => {
+    const savedHistory = localStorage.getItem('orderHistory')
+    if (savedHistory) {
+      const parsedHistory = JSON.parse(savedHistory)
+      setHistory(parsedHistory)
+      
+      // Calcular monto acumulado
+      const accumulated = parsedHistory.reduce((sum: number, item: HistoryItem) => sum + item.subtotal, 0)
+      setTotalAccumulated(accumulated)
+    }
+  }, [])
+
+  // Función para enviar el pedido (mover del carrito al historial)
+  const handleSendOrder = () => {
+    if (cart.length === 0) return
+
+    // Convertir items del carrito a items de historial
+    const newHistoryItems: HistoryItem[] = cart.map(item => ({
+      id: item.id,
+      name: item.name,
+      quantity: item.quantity,
+      subtotal: item.totalPrice,
+      comments: item.comments || undefined,
+      additionals: item.selectedOptions.length > 0 
+        ? item.selectedOptions.map(opt => opt.name).sort()
+        : undefined,
+      date: new Date().toISOString()
+    }))
+
+    // Combinar con historial existente
+    let updatedHistory = [...history, ...newHistoryItems]
+    
+    // Agrupar items idénticos (mismo nombre, adicionales y comentarios)
+    const groupedHistory: HistoryItem[] = []
+    
+    updatedHistory.forEach(item => {
+      // Buscar si ya existe un item idéntico en el grupo
+      const existingIndex = groupedHistory.findIndex(grouped => {
+        const sameBasics = grouped.name === item.name && grouped.comments === item.comments
+        
+        // Comparar adicionales (deben ser exactamente iguales)
+        const sameAdditionals = 
+          (!grouped.additionals && !item.additionals) ||
+          (grouped.additionals && item.additionals && 
+           grouped.additionals.length === item.additionals.length &&
+           grouped.additionals.every((add, idx) => add === item.additionals?.[idx]))
+        
+        return sameBasics && sameAdditionals
+      })
+      
+      if (existingIndex >= 0) {
+        // Si existe, sumar cantidad y subtotal
+        groupedHistory[existingIndex].quantity += item.quantity
+        groupedHistory[existingIndex].subtotal += item.subtotal
+        // Mantener la fecha más reciente
+        if (item.date > groupedHistory[existingIndex].date) {
+          groupedHistory[existingIndex].date = item.date
+        }
+      } else {
+        // Si no existe, agregar como nuevo item
+        groupedHistory.push({ ...item })
+      }
+    })
+    
+    // Guardar en localStorage
+    localStorage.setItem('orderHistory', JSON.stringify(groupedHistory))
+    
+    // Actualizar estado
+    setHistory(groupedHistory)
+    
+    // Calcular nuevo monto acumulado
+    const newTotal = groupedHistory.reduce((sum, item) => sum + item.subtotal, 0)
+    setTotalAccumulated(newTotal)
+    
+    // Limpiar el carrito
+    clearCart()
+  }
 
   // Función para verificar si se puede incrementar (límite por plato individual)
   const canIncrement = (itemId: string) => {
@@ -162,6 +254,7 @@ export default function CartSidebar({ isOpen, onClose }: CartSidebarProps) {
               {/* Botón de envío después de la lista - siempre mostrar */}
               <div className="mt-3 flex justify-center">
                 <Button 
+                  onClick={handleSendOrder}
                   className="w-[55%] bg-[#004166] hover:bg-[#003d5c] text-white py-3 text-base font-bold rounded-xl drop-shadow-[0_4px_8px_rgba(0,0,0,0.15)]"
                   disabled={cart.length === 0}
                 >
@@ -180,8 +273,7 @@ export default function CartSidebar({ isOpen, onClose }: CartSidebarProps) {
                 <div className="-mt-12 mx-3 border border-gray-300 rounded-xl p-4 bg-white relative z-10">
                   <h3 className="text-lg font-bold mb-3">Historial de pedido</h3>
                   
-                  {/* Estado sin artículos - cambiar a false cuando haya datos de la API */}
-                  {true ? (
+                  {history.length === 0 ? (
                     <div className="text-center py-8">
                       <p className="text-sm font-semibold text-gray-700">Sin artículos registrados</p>
                     </div>
@@ -191,23 +283,29 @@ export default function CartSidebar({ isOpen, onClose }: CartSidebarProps) {
                       
                       {/* Lista de pedidos del historial */}
                       <div className="space-y-3">
-                        {/* Item de ejemplo - aquí irán los datos de la API */}
-                        <div className="flex justify-between items-start pb-3 border-b last:border-b-0">
-                          <div className="flex-1">
-                            <h4 className="text-sm font-semibold mb-1">Ceviche de pescado</h4>
-                            <p className="text-xs text-gray-600">Comentarios: Mínimo de ají</p>
+                        {history.map((item, index) => (
+                          <div key={`${item.id}-${index}`} className="flex justify-between items-start pb-3 border-b last:border-b-0">
+                            <div className="flex-1">
+                              <h4 className="text-sm font-semibold mb-1">{item.name}</h4>
+                              {item.additionals && item.additionals.length > 0 && (
+                                <p className="text-xs text-gray-600">Adicionales: {item.additionals.join(", ")}</p>
+                              )}
+                              {item.comments && (
+                                <p className="text-xs text-gray-600">Comentarios: {item.comments}</p>
+                              )}
+                            </div>
+                            <div className="text-right">
+                              <p className="text-xs font-semibold mb-1">Cantidad: {item.quantity}</p>
+                              <p className="text-xs font-bold">Subtotal: S/ {item.subtotal.toFixed(2)}</p>
+                            </div>
                           </div>
-                          <div className="text-right">
-                            <p className="text-xs font-semibold mb-1">Cantidad: 1</p>
-                            <p className="text-xs font-bold">Subtotal: S/ 39.90</p>
-                          </div>
-                        </div>
+                        ))}
                       </div>
                       
                       {/* Monto acumulado */}
                       <div className="mt-4 pt-3 border-t border-gray-300">
                         <p className="text-base font-bold text-center">
-                          Monto acumulado: S/ 39.90
+                          Monto acumulado: S/ {totalAccumulated.toFixed(2)}
                         </p>
                       </div>
                     </div>
