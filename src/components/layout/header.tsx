@@ -1,6 +1,6 @@
 "use client"
 
-import { Heart, Menu } from "lucide-react"
+import { Heart, ShoppingCart } from "lucide-react"
 import Image from "next/image"
 import Link from "next/link"
 import { usePathname } from "next/navigation"
@@ -48,7 +48,7 @@ export default function Header({
               <div className="flex items-center space-x-40">
                 <Link 
                   href="/about" 
-                  className={`text-sm font-medium hover:text-[#5CEFFA] ${
+                  className={`text-base font-medium hover:text-[#5CEFFA] ${
                     pathname?.startsWith('/about') ? 'text-[#5CEFFA]' : 'text-white'
                   }`}
                 >
@@ -56,7 +56,7 @@ export default function Header({
                 </Link>
                 <Link 
                   href="/menu" 
-                  className={`text-sm font-medium hover:text-[#5CEFFA] ${
+                  className={`text-base font-medium hover:text-[#5CEFFA] ${
                     pathname?.startsWith('/menu') ? 'text-[#5CEFFA]' : 'text-white'
                   }`}
                 >
@@ -75,18 +75,18 @@ export default function Header({
               <div className="flex items-center space-x-40">
                 <button 
                   onClick={() => setCartOpen(true)}
-                  className="text-sm font-medium text-white hover:text-[#5CEFFA] relative"
+                  className="text-base font-medium text-white hover:text-[#5CEFFA] relative"
                 >
                   Mi Orden
                   {itemCount > 0 && (
-                    <span className="absolute -top-2 -right-5 h-5 w-5 rounded-full bg-white text-[#0056C6] text-xs flex items-center justify-center font-bold">
+                    <span className="absolute -top-2 -right-5 h-5 w-5 rounded-full border-2 border-white text-white text-xs flex items-center justify-center font-bold">
                       {itemCount}
                     </span>
                   )}
                 </button>
                 <Link 
                   href="/contact" 
-                  className={`text-sm font-medium hover:text-[#5CEFFA] ${
+                  className={`text-base font-medium hover:text-[#5CEFFA] ${
                     pathname?.startsWith('/contact') ? 'text-[#5CEFFA]' : 'text-white'
                   }`}
                 >
@@ -110,10 +110,10 @@ export default function Header({
             {/* Mobile Header - SOLO ESTO */}
             <div className="md:hidden flex items-center justify-between w-full">
               {/* Nosotros más a la izquierda */}
-              <div className="flex-1 flex justify-center ml-3">
+              <div className="flex-1 flex justify-center">
                 <Link 
                   href="/about" 
-                  className={`text-sm font-medium hover:text-[#5CEFFA] ${
+                  className={`text-base font-medium hover:text-[#5CEFFA] ${
                     pathname?.startsWith('/about') ? 'text-[#5CEFFA]' : 'text-white'
                   }`}
                 >
@@ -134,10 +134,10 @@ export default function Header({
                 </Link>
               </div>
               {/* Menú */}
-              <div className="flex-1 flex justify-end items-center pr-16">
+              <div className="flex-1 flex justify-center items-center">
                 <Link 
                   href="/menu" 
-                  className={`text-sm font-medium hover:text-[#5CEFFA] ${
+                  className={`text-base font-medium hover:text-[#5CEFFA] ${
                     pathname?.startsWith('/menu') ? 'text-[#5CEFFA]' : 'text-white'
                   }`}
                 >
@@ -145,7 +145,7 @@ export default function Header({
                 </Link>
               </div>
               
-              {/* Hamburguesa en esquina derecha absoluta */}
+              {/* Carrito en esquina derecha */}
               <div className="absolute right-4 top-1/2 transform -translate-y-1/2">
                 <Button
                   variant="ghost"
@@ -153,9 +153,9 @@ export default function Header({
                   className="text-white hover:bg-white/10 relative"
                   onClick={() => setCartOpen(true)}
                 >
-                  <Menu className="w-6 h-6" />
+                  <ShoppingCart className="!w-6 !h-6" />
                   {itemCount > 0 && (
-                    <span className="absolute -top-1 -right-1 h-4 w-4 rounded-full bg-white text-[#0056C6] text-xs flex items-center justify-center font-bold">
+                    <span className="absolute -top-2 -right-2 h-5 w-5 rounded-full border-2 border-white text-white text-[10px] flex items-center justify-center font-bold leading-none">
                       {itemCount}
                     </span>
                   )}

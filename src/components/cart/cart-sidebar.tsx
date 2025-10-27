@@ -1,7 +1,7 @@
 "use client"
 
 import { useState, useEffect } from "react"
-import { Menu, AlertTriangle } from "lucide-react"
+import { ShoppingCart, AlertTriangle } from "lucide-react"
 import Image from "next/image"
 
 import { Button } from "@/components/ui/button"
@@ -23,7 +23,7 @@ interface HistoryItem {
 }
 
 export default function CartSidebar({ isOpen, onClose }: CartSidebarProps) {
-  const { cart, updateQuantity, removeFromCart, total, clearCart } = useCart()
+  const { cart, updateQuantity, removeFromCart, total, clearCart, itemCount } = useCart()
   const [history, setHistory] = useState<HistoryItem[]>([])
   const [totalAccumulated, setTotalAccumulated] = useState(0)
 
@@ -143,16 +143,24 @@ export default function CartSidebar({ isOpen, onClose }: CartSidebarProps) {
       }`}>
         <div className="flex flex-col h-full">
           {/* Header - título centrado */}
-          <div className="bg-[#004166] text-white p-4 flex items-center justify-center relative">
-            <h2 className="text-xl font-bold">Mi orden</h2>
-            <Button
-              variant="ghost"
-              size="icon"
-              onClick={onClose}
-              className="text-white hover:bg-white/10 absolute right-4"
-            >
-              <Menu className="w-5 h-5" />
-            </Button>
+          <div className="bg-[#004166] text-white p-4 flex items-center justify-between relative">
+            <div className="flex-1"></div>
+            <h2 className="text-xl font-bold flex-1 text-center">Mi orden</h2>
+            <div className="flex-1 flex justify-end">
+              <Button
+                variant="ghost"
+                size="icon"
+                onClick={onClose}
+                className="text-white hover:bg-white/10 relative"
+              >
+                <ShoppingCart className="!w-6 !h-6" />
+                {itemCount > 0 && (
+                  <span className="absolute -top-2 -right-2 h-5 w-5 rounded-full border-2 border-white text-white text-[10px] flex items-center justify-center font-bold leading-none">
+                    {itemCount}
+                  </span>
+                )}
+              </Button>
+            </div>
           </div>
 
           {/* Content */}
