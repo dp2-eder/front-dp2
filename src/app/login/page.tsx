@@ -125,7 +125,7 @@ export default function LoginPage() {
         </div>
 
         {/* Formulario */}
-        <form onSubmit={handleSubmit} className="w-full max-w-md space-y-4 md:space-y-6">
+        <form onSubmit={handleSubmit} noValidate className="w-full max-w-md space-y-4 md:space-y-6">
           {/* Input Nombre */}
           <div>
             <div className="relative">
