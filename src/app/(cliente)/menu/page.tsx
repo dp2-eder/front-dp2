@@ -16,7 +16,7 @@ import { DishGridSkeleton } from '@/components/custom/dish-card-skeleton'
 import Footer from "@/components/layout/footer"
 import Header from "@/components/layout/header"
 import { Button } from '@/components/ui/button'
-import { Card, CardContent} from '@/components/ui/card'
+import { Card, CardContent } from '@/components/ui/card'
 import { Input } from '@/components/ui/input'
 import { useProductos } from '@/hooks/use-productos'
 import { Producto } from '@/types/productos'
@@ -49,7 +49,7 @@ export default function MenuPage() {
   // Generar categorías dinámicamente desde la API
   const categories = React.useMemo(() => {
     if (!productos.length) return ["Todos"]
-    
+
     const uniqueCategories = Array.from(new Set(productos.map(item => item.categoria.nombre)))
     return ["Todos", ...uniqueCategories.sort()]
   }, [productos])
@@ -97,16 +97,16 @@ export default function MenuPage() {
 
   const toggleCategory = (category: string) => {
     const isExpanding = !expandedCategories[category]
-    
+
     setExpandedCategories(prev => ({
       ...prev,
       [category]: !prev[category]
     }))
-    
+
     // Si se está expandiendo por primera vez, marcar como cargando
     if (isExpanding && !loadedCategories.has(category)) {
       setLoadingCategories(prev => new Set([...prev, category]))
-      
+
       // Reducir tiempo de skeleton - solo 300ms ahora
       // Si las imágenes están en cache, se verá aún más rápido
       setTimeout(() => {
@@ -119,7 +119,7 @@ export default function MenuPage() {
       }, 300) // Reducido de 400ms a 300ms para ser más instantáneo
     }
   }
-  
+
   // Función para precargar imágenes al hacer hover (mejorada)
   const handleCategoryHover = (category: string, dishes: typeof productos) => {
     // Solo precargar si no está ya cargada
@@ -160,7 +160,7 @@ export default function MenuPage() {
   useEffect(() => {
     if (Object.keys(dishesByCategory).length > 0 && !loading) {
       const firstCategories = Object.entries(dishesByCategory).slice(0, 2)
-      
+
       // Precargar las primeras 6 imágenes de cada una de las primeras 2 categorías
       firstCategories.forEach(([_, dishes]) => {
         dishes.slice(0, 6).forEach(dish => {
@@ -213,7 +213,7 @@ export default function MenuPage() {
   }
 
   return (
-    <div className="min-h-screen bg-gray-100" data-cy="page-container">
+    <div className="min-h-screen bg-white" data-cy="page-container">
       {/* Header */}
       <Header showFullNavigation={true} />
 
@@ -239,36 +239,48 @@ export default function MenuPage() {
             </div>
           </div>
 
-          {/* Carrusel de categorías horizontal sin flechitas */}
+          {/*Renderizado condicional de filtros o recuento de búsqueda */}
           <div className="relative">
-            <div
-              className="flex gap-2 overflow-x-auto scrollbar-hide py-2"
-              style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}
-              role="group"
-              aria-label="Filtros de categoría"
-            >
-              {categories.map((category) => (
-                <Button
-                  key={category}
-                  variant={selectedCategory === category ? "default" : "outline"}
-                  size="sm"
-                  onClick={() => setSelectedCategory(category)}
-                  className={`rounded-full px-4 py-2 whitespace-nowrap flex-shrink-0 ${
-                    selectedCategory === category
+            {searchTerm.length > 0 ? (
+              // CUANDO HAY BÚSQUEDA: Mostrar recuento de resultados
+              <div className="py-2"> {/* Contenedor para mantener el espaciado vertical */}
+                <div
+                  className="inline-block bg-gray-200 text-gray-700 rounded-full px-4 py-2 text-sm font-medium"
+                  aria-live="polite" // Mejora de accesibilidad: anuncia los cambios a lectores de pantalla
+                >
+                  {filteredDishes.length} {filteredDishes.length === 1 ? 'producto encontrado' : 'productos encontrados'}
+                </div>
+              </div>
+            ) : (
+              // CUANDO NO HAY BÚSQUEDA: Mostrar carrusel de categorías
+              <div
+                className="flex gap-2 overflow-x-auto scrollbar-hide py-2"
+                style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}
+                role="group"
+                aria-label="Filtros de categoría"
+              >
+                {categories.map((category) => (
+                  <Button
+                    key={category}
+                    variant={selectedCategory === category ? "default" : "outline"}
+                    size="sm"
+                    onClick={() => setSelectedCategory(category)}
+                    className={`rounded-full px-4 py-2 whitespace-nowrap flex-shrink-0 ${selectedCategory === category
                       ? "bg-[#0056C6] text-white"
                       : "bg-gray-200 text-gray-700 hover:bg-gray-300"
-                  }`}
-                  aria-pressed={selectedCategory === category}
-                  data-testid={`category-${category.toLowerCase()}`}
-                  data-cy={category === "Todos" ? "all-categories-btn" : "category-button"}
-                >
-                  {category}
-                </Button>
-              ))}
-            </div>
+                      }`}
+                    aria-pressed={selectedCategory === category}
+                    data-testid={`category-${category.toLowerCase()}`}
+                    data-cy={category === "Todos" ? "all-categories-btn" : "category-button"}
+                  >
+                    {category}
+                  </Button>
+                ))}
+              </div>
+            )}
           </div>
         </div>
-
+        
         {/* Menu Sections */}
         {filteredDishes.length > 0 ? (
           <>
@@ -368,7 +380,7 @@ export default function MenuPage() {
                               // Solo las primeras 6 imágenes de la primera categoría expandida tienen prioridad
                               const isFirstLoad = !loadedCategories.has(category)
                               const shouldPrioritize = isFirstLoad && index < 6
-                              
+
                               return (
                                 <DishCard
                                   key={dish.id}
@@ -401,15 +413,18 @@ export default function MenuPage() {
             </div>
           </>
         ) : (
-          <Card className="p-8 text-center bg-[#F5F7FA] shadow-sm rounded-xl">
+          <Card className="p-8 text-center bg-unavailable rounded-3xl">
             <div className="flex flex-col items-center">
-              <Search className="w-10 h-10 text-gray-500 mb-4" />
-              <h2 className="text-xl font-bold mb-2">No Tenemos El Producto</h2>
-              <p className="text-gray-600 mb-2">Ingrese Otro</p>
-              <p className="text-[#004166] font-semibold">&ldquo;{searchTerm}&rdquo;</p>
-              <p className="text-gray-500 mt-2 text-sm">
-                No encontramos ningún producto con tu búsqueda.<br />
-                Revisa ortografía o prueba con términos más generales.
+              <Search
+                className="w-24 h-24 mt-5 mb-16 text-foreground"
+                strokeWidth={0.5}
+                stroke="currentColor"
+              />
+              <h2 className="text-4xl font-medium mb-8">Ítem no disponible, ingrese otro</h2>
+              <p className="text-foreground text-3xl font-normal mb-4">&ldquo;{searchTerm}&rdquo;</p>
+              <p className="text-foreground mt-2 text-xl">
+                No encontramos ningún ítem con tu búsqueda<br />
+                Revisa ortografía o prueba con términos más generales
               </p>
             </div>
           </Card>
