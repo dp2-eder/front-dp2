@@ -277,7 +277,7 @@ export default function PersonalizarPage() {
                 <Card className="p-6 bg-white border border-[#99A1AF] rounded-xl shadow-sm">
                   <h3 className="text-lg font-semibold text-gray-900 mb-4">Resumen del pedido</h3>
 
-                  <div className="flex items-center justify-between mb-4">
+                  <div className="flex items-center justify-between mb-6">
                     <p className="text-sm text-gray-600">{producto.nombre}</p>
                     <p className="text-base font-semibold text-gray-900">{formatPrice(parseFloat(producto.precio_base))}</p>
                   </div>
