@@ -46,14 +46,18 @@ export default function Footer() {
         {/* Social Media */}
         <div className="flex justify-center space-x-6 mb-3">
           <a
-            href="https://facebook.com"
+            href="https://www.facebook.com/BarraArenaPeru/?locale=es_LA"
+            target="_blank"
+            rel="noopener noreferrer"
             className="w-10 h-10 bg-white/10 rounded-full flex items-center justify-center hover:bg-white/20 transition-colors"
             aria-label="Facebook"
           >
             <Facebook className="w-5 h-5" />
           </a>
           <a
-            href="https://instagram.com"
+            href="https://www.instagram.com/barraarenaperu/"
+            target="_blank"
+            rel="noopener noreferrer"
             className="w-10 h-10 bg-white/10 rounded-full flex items-center justify-center hover:bg-white/20 transition-colors"
             aria-label="Instagram"
           >

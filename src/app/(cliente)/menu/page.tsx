@@ -144,30 +144,6 @@ export default function MenuPage() {
     })
   }, [productos, selectedCategory, searchTerm])
 
-  // Función para precargar imágenes al hacer hover (mejorada)
-  const handleCategoryHover = (category: string, dishes: typeof productos) => {
-    // Solo precargar si no está ya cargada
-    if (!loadedCategories.has(category) && !loadingCategories.has(category)) {
-      // Precargar las primeras 6 imágenes (aumentado de 3 a 6)
-      dishes.slice(0, 6).forEach(dish => {
-        if (dish.imagen_path) {
-          const img = new Image()
-          img.src = dish.imagen_path
-        }
-      })
-    }
-  }
-
-  // Filtrar platos por categoría y búsqueda - Memoizado para evitar recalcular en cada render
-  const filteredDishes = React.useMemo(() => {
-    return productos.filter((dish) => {
-      const matchesCategory = selectedCategory === "Todos" || dish.categoria.nombre === selectedCategory
-      const matchesSearch =
-        (dish.nombre || '').toLowerCase().includes(searchTerm.toLowerCase())
-      return matchesCategory && matchesSearch
-    })
-  }, [productos, selectedCategory, searchTerm])
-
   // Agrupar platos por categoría - Memoizado
   const dishesByCategory = React.useMemo(() => {
     return filteredDishes.reduce((acc, dish) => {

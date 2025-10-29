@@ -113,9 +113,14 @@ export default function LoginPage() {
           <h1 className="text-white text-xl md:text-2xl font-light italic mb-2">
             &ldquo;Sabores Auténticos&rdquo;
           </h1>
-          <h2 className="text-white text-xl md:text-2xl font-light italic">
+          <h2 className="text-white text-xl md:text-2xl font-light italic mb-4">
             &ldquo;Momentos Inolvidables&rdquo;
           </h2>
+          
+          {/* Número de Mesa */}
+          <p className="text-white text-lg md:text-2xl font-bold italic">
+            Mesa Nro. 4
+          </p>
         </div>
 
         {/* Formulario */}

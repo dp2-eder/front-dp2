@@ -1,14 +1,29 @@
 import { useState, useEffect, useCallback } from "react";
 
-const defaultAlergenos = [
-  { nombre: "Nueces", icono: "🥜" },
-  { nombre: "Sésamo", icono: "🌰" },
-  { nombre: "Crustáceo", icono: "🦐" },
-  { nombre: "Huevo", icono: "🥚" },
-  { nombre: "Gluten", icono: "🌾" },
-  { nombre: "Pescado", icono: "🐟" },
-  { nombre: "Cítricos", icono: "🍋" },
-];
+// Mapeo de iconos por defecto para cuando la API no devuelve icono
+const defaultIcons: Record<string, string> = {
+  "Nueces": "🥜",
+  "Sésamo": "🌰",
+  "Crustáceo": "🦐",
+  "Mariscos": "🦐",
+  "Huevo": "🥚",
+  "Gluten": "🌾",
+  "Pescado": "🐟",
+  "Cítricos": "🍋",
+  "Moluscos": "🐙",
+  "Aj": "🧄",
+};
+
+interface AlergenoApi {
+  nombre: string;
+  descripcion?: string;
+  icono: string | null;
+  nivel_riesgo?: string;
+  id?: string;
+  activo?: boolean;
+  fecha_creacion?: string;
+  fecha_modificacion?: string;
+}
 
 interface Alergeno {
   nombre: string;
@@ -17,15 +32,12 @@ interface Alergeno {
 
 interface ApiResponse {
   success: boolean;
-  data?: {
-    items?: Array<{ nombre: string; icono: string }>;
-    total?: number;
-  };
+  data?: AlergenoApi[];
   error?: string;
 }
 
 export function useAlergenos(id: string) {
-  const [alergenos, setAlergenos] = useState<Alergeno[]>(defaultAlergenos);
+  const [alergenos, setAlergenos] = useState<Alergeno[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
@@ -34,21 +46,24 @@ export function useAlergenos(id: string) {
       setLoading(true);
       setError(null);
 
-      const response = await fetch(`/api/v1/alergenos/${id}`);
+      const response = await fetch(`/api/productos/${id}/alergenos`);
       const result = (await response.json()) as ApiResponse;
 
-      if (result.success && result.data?.items && result.data.items.length > 0) {
-        const parsed = result.data.items.map((item) => ({
+      if (result.success && result.data && result.data.length > 0) {
+        // Mapear la respuesta de la API a la estructura esperada
+        const parsed = result.data.map((item) => ({
           nombre: item.nombre,
-          icono: item.icono,
+          // Usar el icono de la API si existe, sino buscar en el mapeo por defecto, sino usar un icono genérico
+          icono: item.icono || defaultIcons[item.nombre] || "⚠️",
         }));
         setAlergenos(parsed);
       } else {
-        setAlergenos(defaultAlergenos);
+        // Si no hay alérgenos, devolver array vacío
+        setAlergenos([]);
         if (result.error) setError(result.error);
       }
     } catch (err) {
-      setAlergenos(defaultAlergenos);
+      setAlergenos([]);
       setError(err instanceof Error ? err.message : "Error desconocido");
     } finally {
       setLoading(false);
@@ -58,6 +73,9 @@ export function useAlergenos(id: string) {
   useEffect(() => {
     if (id) {
       void fetchAlergenos();
+    } else {
+      setAlergenos([]);
+      setLoading(false);
     }
   }, [id, fetchAlergenos]);
 

@@ -90,21 +90,29 @@ export default function PlatoDetailPage() {
                 <h2 className="text-xl font-normal text-gray-800 mb-4 text-left">
                   Lista de Alergenos presentes:</h2>
 
-                <div className="w-full flex justify-left mt-6">
-                  <div className="flex flex-wrap justify-center items-center bg-[#FAFCFE] rounded-2xl shadow-md px-6 py-4 max-w-3xl">
-                    {alergenos.map((item) => (
-                      <div
-                        key={item.nombre}
-                        className="flex flex-col items-center justify-center text-center mx-2 my-1"
-                      >
-                        <span className="text-xl mb-1 filter grayscale">{item.icono}</span>
-                        <span className="text-xs font-medium text-[#0D1030]">
-                          {item.nombre}
-                        </span>
-                      </div>
-                    ))}
+                {alergenos.length > 0 ? (
+                  <div className="w-full flex justify-left mt-6">
+                    <div className="flex flex-wrap justify-center items-center bg-[#FAFCFE] rounded-2xl shadow-md px-6 py-4 max-w-3xl">
+                      {alergenos.map((item) => (
+                        <div
+                          key={item.nombre}
+                          className="flex flex-col items-center justify-center text-center mx-2 my-1"
+                        >
+                          {item.icono && (
+                            <span className="text-xl mb-1 filter grayscale">{item.icono}</span>
+                          )}
+                          <span className="text-xs font-medium text-[#0D1030]">
+                            {item.nombre}
+                          </span>
+                        </div>
+                      ))}
+                    </div>
                   </div>
-                </div>
+                ) : (
+                  <div className="text-gray-500 text-sm mt-2">
+                    No hay alérgenos registrados para este producto.
+                  </div>
+                )}
               </div>
 
             </div>
