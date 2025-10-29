@@ -8,14 +8,14 @@ import Header from "@/components/layout/header"
 import BackButton from "@/components/ui/back-button"
 import { Button } from "@/components/ui/button"
 import SafeImage from "@/components/ui/safe-image"
-import { useProducto } from '@/hooks/use-producto'
 import { useAlergenos } from "@/hooks/use-alergenos"
+import { useProducto } from '@/hooks/use-producto'
 
 export default function PlatoDetailPage() {
   const params = useParams()
   const router = useRouter()
   const { producto, loading, error } = useProducto(params.id as string)
-  const { alergenos, loading: alergenosLoading, error: alergenosError } = useAlergenos(params.id as string);
+  const { alergenos } = useAlergenos(params.id as string);
 
   if (loading) return <Loading />
   if (error) return <div>Error: {error}</div>

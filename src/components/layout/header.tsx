@@ -49,7 +49,9 @@ export default function Header({
                 <Link 
                   href="/about" 
                   className={`text-base font-medium hover:text-[#5CEFFA] ${
-                    pathname?.startsWith('/about') ? 'text-[#5CEFFA]' : 'text-white'
+                    pathname?.startsWith('/about') 
+                      ? 'text-white underline underline-offset-4 decoration-2' 
+                      : 'text-white'
                   }`}
                 >
                   Nosotros
@@ -57,7 +59,9 @@ export default function Header({
                 <Link 
                   href="/menu" 
                   className={`text-base font-medium hover:text-[#5CEFFA] ${
-                    pathname?.startsWith('/menu') ? 'text-[#5CEFFA]' : 'text-white'
+                    pathname?.startsWith('/menu') 
+                      ? 'text-white underline underline-offset-4 decoration-2' 
+                      : 'text-white'
                   }`}
                 >
                   Menú
@@ -87,7 +91,9 @@ export default function Header({
                 <Link 
                   href="/contact" 
                   className={`text-base font-medium hover:text-[#5CEFFA] ${
-                    pathname?.startsWith('/contact') ? 'text-[#5CEFFA]' : 'text-white'
+                    pathname?.startsWith('/contact') 
+                      ? 'text-white underline underline-offset-4 decoration-2' 
+                      : 'text-white'
                   }`}
                 >
                   Contáctanos
@@ -114,7 +120,9 @@ export default function Header({
                 <Link 
                   href="/about" 
                   className={`text-base font-medium hover:text-[#5CEFFA] ${
-                    pathname?.startsWith('/about') ? 'text-[#5CEFFA]' : 'text-white'
+                    pathname?.startsWith('/about') 
+                      ? 'text-white underline underline-offset-4 decoration-2' 
+                      : 'text-white'
                   }`}
                 >
                   Nosotros
@@ -138,7 +146,9 @@ export default function Header({
                 <Link 
                   href="/menu" 
                   className={`text-base font-medium hover:text-[#5CEFFA] ${
-                    pathname?.startsWith('/menu') ? 'text-[#5CEFFA]' : 'text-white'
+                    pathname?.startsWith('/menu') 
+                      ? 'text-white underline underline-offset-4 decoration-2' 
+                      : 'text-white'
                   }`}
                 >
                   Menú

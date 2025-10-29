@@ -1,11 +1,13 @@
 "use client"
 
-import { useState } from "react"
+import { User, Mail } from "lucide-react"
 import Image from "next/image"
 import { useRouter } from "next/navigation"
+import { useState } from "react"
+
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
-import { User, Mail } from "lucide-react"
+
 
 export default function LoginPage() {
   const router = useRouter()
@@ -109,10 +111,10 @@ export default function LoginPage() {
         {/* Eslogan */}
         <div className="text-center mb-8 md:mb-12">
           <h1 className="text-white text-xl md:text-2xl font-light italic mb-2">
-            "Sabores Auténticos"
+            &ldquo;Sabores Auténticos&rdquo;
           </h1>
           <h2 className="text-white text-xl md:text-2xl font-light italic">
-            "Momentos Inolvidables"
+            &ldquo;Momentos Inolvidables&rdquo;
           </h2>
         </div>
 

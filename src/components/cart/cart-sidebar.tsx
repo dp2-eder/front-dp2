@@ -1,8 +1,8 @@
 "use client"
 
-import { useState, useEffect } from "react"
 import { ShoppingCart, AlertTriangle } from "lucide-react"
 import Image from "next/image"
+import { useState, useEffect } from "react"
 
 import { Button } from "@/components/ui/button"
 import { useCart } from "@/hooks/use-cart"
@@ -23,7 +23,7 @@ interface HistoryItem {
 }
 
 export default function CartSidebar({ isOpen, onClose }: CartSidebarProps) {
-  const { cart, updateQuantity, removeFromCart, total, clearCart, itemCount } = useCart()
+  const { cart, updateQuantity, total, clearCart, itemCount } = useCart()
   const [history, setHistory] = useState<HistoryItem[]>([])
   const [totalAccumulated, setTotalAccumulated] = useState(0)
 
@@ -31,7 +31,7 @@ export default function CartSidebar({ isOpen, onClose }: CartSidebarProps) {
   useEffect(() => {
     const savedHistory = localStorage.getItem('orderHistory')
     if (savedHistory) {
-      const parsedHistory = JSON.parse(savedHistory)
+      const parsedHistory = JSON.parse(savedHistory) as HistoryItem[]
       setHistory(parsedHistory)
       
       // Calcular monto acumulado
@@ -39,6 +39,37 @@ export default function CartSidebar({ isOpen, onClose }: CartSidebarProps) {
       setTotalAccumulated(accumulated)
     }
   }, [])
+
+  // Bloquear scroll del body cuando el sidebar está abierto
+  useEffect(() => {
+    if (isOpen) {
+      // Guardar el scroll actual
+      const scrollY = window.scrollY
+      // Bloquear scroll
+      document.body.style.position = 'fixed'
+      document.body.style.top = `-${scrollY}px`
+      document.body.style.width = '100%'
+      document.body.style.overflow = 'hidden'
+    } else {
+      // Restaurar scroll
+      const scrollY = document.body.style.top
+      document.body.style.position = ''
+      document.body.style.top = ''
+      document.body.style.width = ''
+      document.body.style.overflow = ''
+      if (scrollY) {
+        window.scrollTo(0, parseInt(scrollY || '0') * -1)
+      }
+    }
+
+    // Cleanup function
+    return () => {
+      document.body.style.position = ''
+      document.body.style.top = ''
+      document.body.style.width = ''
+      document.body.style.overflow = ''
+    }
+  }, [isOpen])
 
   // Función para enviar el pedido (mover del carrito al historial)
   const handleSendOrder = () => {
@@ -58,7 +89,7 @@ export default function CartSidebar({ isOpen, onClose }: CartSidebarProps) {
     }))
 
     // Combinar con historial existente
-    let updatedHistory = [...history, ...newHistoryItems]
+    const updatedHistory = [...history, ...newHistoryItems]
     
     // Agrupar items idénticos (mismo nombre, adicionales y comentarios)
     const groupedHistory: HistoryItem[] = []
@@ -138,7 +169,7 @@ export default function CartSidebar({ isOpen, onClose }: CartSidebarProps) {
       )}
       
       {/* Sidebar */}
-      <div className={`fixed top-0 right-0 h-full w-full md:w-[500px] bg-white shadow-2xl z-[70] transform transition-transform duration-300 ${
+      <div className={`fixed top-0 right-0 h-full w-[90%] max-w-[400px] md:w-[500px] bg-white shadow-2xl z-[70] transform transition-transform duration-300 ${
         isOpen ? 'translate-x-0' : 'translate-x-full'
       }`}>
         <div className="flex flex-col h-full">
@@ -164,7 +195,7 @@ export default function CartSidebar({ isOpen, onClose }: CartSidebarProps) {
           </div>
 
           {/* Content */}
-          <div className="flex-1 overflow-y-auto">
+          <div className="flex-1 overflow-y-auto overscroll-contain touch-pan-y">
             <div className="px-3 pt-3 pb-3">
               <h3 className="text-base font-bold mb-3">Lista de pedidos</h3>
               

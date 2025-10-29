@@ -127,13 +127,13 @@ export default function PersonalizarPage() {
     <div className="min-h-screen bg-[#FAFCFE] flex flex-col">
       <Header showFullNavigation={true} />
       
-      <main>
+      <main className="pb-12">
         <div className="max-w-[1110px] mx-auto px-4 py-8">
           <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
             {/* Left Column */}
             <div className="lg:col-span-8 space-y-6">
               {/* Product Summary Card */}
-              <Card className="p-6 bg-white border border-[#ECF1F4] rounded-xl shadow-sm">
+              <Card className="p-6 bg-white border border-[#99A1AF] rounded-xl shadow-sm">
                 <div className="flex items-start space-x-4">
                   <SafeImage
                     src={convertGoogleDriveUrl(producto.imagen_path)}
@@ -151,62 +151,97 @@ export default function PersonalizarPage() {
 
               {/* Opciones */}
               {producto.tipos_opciones && producto.tipos_opciones.length > 0 && (
-                <Card className="p-6 bg-white border border-[#ECF1F4] rounded-xl shadow-sm">
-                  <h3 className="text-lg font-semibold text-gray-900 mb-4">Opciones</h3>
+                <Card className="p-6 bg-white border border-[#99A1AF] rounded-xl shadow-sm">
+                  <div className="flex items-baseline gap-4 mb-4">
+                    <h3 className="text-lg font-semibold text-gray-900">Opciones</h3>
+                    <span className="px-2 py-1 text-xs font-medium text-white bg-[#004166] rounded-md">
+                      Opcional
+                    </span>
+                  </div>
                   <div className="space-y-6">
                     {producto.tipos_opciones.map((tipo: import('@/hooks/use-opciones-producto').TipoOpcion) => (
                       <div key={tipo.id_tipo_opcion}>
-                        <h4 className="font-semibold text-gray-800 mb-2">{tipo.nombre_tipo}</h4>
+                        <h4 className="font-semibold text-gray-800 mb-1">{tipo.nombre_tipo}</h4>
+                        <p className="text-sm text-gray-500 mb-3">
+                          {tipo.seleccion_maxima === 1 
+                            ? "Puedes elegir 1 opción." 
+                            : `Puedes elegir hasta ${tipo.seleccion_maxima || tipo.opciones.length} opciones.`
+                          }
+                        </p>
                         <div className="space-y-3">
                           {tipo.seleccion_maxima === 1 ? (
                             // Radio buttons
-                            <div className="flex flex-col gap-2">
-                              {tipo.opciones.map((opcion: import('@/hooks/use-opciones-producto').Opcion) => (
-                                <label key={opcion.id} className="flex items-center gap-2">
-                                  <input
-                                    type="radio"
-                                    name={tipo.id_tipo_opcion}
-                                    value={opcion.id}
-                                    checked={selectedExtras.includes(opcion.id)}
-                                    onChange={() => {
-                                      // Solo uno seleccionado por tipo
-                                      setSelectedExtras(prev => [
-                                        ...prev.filter(id => !tipo.opciones.some((o: import('@/hooks/use-opciones-producto').Opcion) => o.id === id)),
-                                        opcion.id
-                                      ])
-                                      setExtraQuantities(prev => ({ ...prev, [opcion.id]: 1 }))
-                                    }}
-                                  />
-                                  <span>{opcion.nombre}</span>
-                                  <span className="text-sm text-gray-900">+{formatPrice(parseFloat(opcion.precio_adicional))}</span>
-                                </label>
+                            <div className="space-y-0">
+                              {tipo.opciones.map((opcion: import('@/hooks/use-opciones-producto').Opcion, index: number) => (
+                                <div key={opcion.id}>
+                                  <label className="flex items-center justify-between py-3">
+                                    <div className="flex items-center gap-2">
+                                      <input
+                                        type="radio"
+                                        name={tipo.id_tipo_opcion}
+                                        value={opcion.id}
+                                        checked={selectedExtras.includes(opcion.id)}
+                                        onChange={() => {
+                                          // Solo uno seleccionado por tipo
+                                          setSelectedExtras(prev => [
+                                            ...prev.filter(id => !tipo.opciones.some((o: import('@/hooks/use-opciones-producto').Opcion) => o.id === id)),
+                                            opcion.id
+                                          ])
+                                          setExtraQuantities(prev => ({ ...prev, [opcion.id]: 1 }))
+                                        }}
+                                      />
+                                      <span>{opcion.nombre}</span>
+                                    </div>
+                                    <span className="text-sm text-gray-900 mr-4">
+                                      {parseFloat(opcion.precio_adicional) === 0 
+                                        ? "Gratis" 
+                                        : `+${formatPrice(parseFloat(opcion.precio_adicional))}`
+                                      }
+                                    </span>
+                                  </label>
+                                  {index < tipo.opciones.length - 1 && (
+                                    <div className="border-b border-gray-200"></div>
+                                  )}
+                                </div>
                               ))}
                             </div>
                           ) : (
                             // Checkbox
-                            <div className="flex flex-col gap-2">
-                              {tipo.opciones.map((opcion: import('@/hooks/use-opciones-producto').Opcion) => (
-                                <label key={opcion.id} className="flex items-center gap-2">
-                                  <input
-                                    type="checkbox"
-                                    checked={selectedExtras.includes(opcion.id)}
-                                    onChange={(e) => {
-                                      if (e.target.checked) {
-                                        setSelectedExtras([...selectedExtras, opcion.id])
-                                        setExtraQuantities(prev => ({ ...prev, [opcion.id]: 1 }))
-                                      } else {
-                                        setSelectedExtras(selectedExtras.filter(id => id !== opcion.id))
-                                        setExtraQuantities(prev => {
-                                          const newQuantities = { ...prev }
-                                          delete newQuantities[opcion.id]
-                                          return newQuantities
-                                        })
+                            <div className="space-y-0">
+                              {tipo.opciones.map((opcion: import('@/hooks/use-opciones-producto').Opcion, index: number) => (
+                                <div key={opcion.id}>
+                                  <label className="flex items-center justify-between py-3">
+                                    <div className="flex items-center gap-2">
+                                      <input
+                                        type="checkbox"
+                                        checked={selectedExtras.includes(opcion.id)}
+                                        onChange={(e) => {
+                                          if (e.target.checked) {
+                                            setSelectedExtras([...selectedExtras, opcion.id])
+                                            setExtraQuantities(prev => ({ ...prev, [opcion.id]: 1 }))
+                                          } else {
+                                            setSelectedExtras(selectedExtras.filter(id => id !== opcion.id))
+                                            setExtraQuantities(prev => {
+                                              const newQuantities = { ...prev }
+                                              delete newQuantities[opcion.id]
+                                              return newQuantities
+                                            })
+                                          }
+                                        }}
+                                      />
+                                      <span>{opcion.nombre}</span>
+                                    </div>
+                                    <span className="text-sm text-gray-900 mr-4">
+                                      {parseFloat(opcion.precio_adicional) === 0 
+                                        ? "Gratis" 
+                                        : `+${formatPrice(parseFloat(opcion.precio_adicional))}`
                                       }
-                                    }}
-                                  />
-                                  <span>{opcion.nombre}</span>
-                                  <span className="text-sm text-gray-900">+{formatPrice(parseFloat(opcion.precio_adicional))}</span>
-                                </label>
+                                    </span>
+                                  </label>
+                                  {index < tipo.opciones.length - 1 && (
+                                    <div className="border-b border-gray-200"></div>
+                                  )}
+                                </div>
                               ))}
                             </div>
                           )}
@@ -218,14 +253,19 @@ export default function PersonalizarPage() {
               )}
 
               {/* Comments Card */}
-              <Card className="p-6 bg-white border border-[#ECF1F4] rounded-xl shadow-sm">
-                <h3 className="text-lg font-semibold text-gray-900 mb-4">Comentarios</h3>
+              <Card className="p-6 bg-white border border-[#99A1AF] rounded-xl shadow-sm mb-8">
+                <div className="flex items-baseline gap-4 mb-4">
+                  <h3 className="text-lg font-semibold text-gray-900">Comentarios</h3>
+                  <span className="px-2 py-1 text-xs font-medium text-white bg-[#004166] rounded-md">
+                    Opcional
+                  </span>
+                </div>
                 <Textarea
                   placeholder="Sin ají, que no pique por favor..."
                   value={comments}
                   onChange={(e) => setComments(e.target.value)}
                   maxLength={200}
-                  className="min-h-[100px] resize-none border-[#ECF1F4] focus:border-[#5CEFFA] focus:ring-[#5CEFFA]"
+                  className="min-h-[100px] resize-none border border-[#99A1AF] focus:border-[#5CEFFA] focus:ring-[#5CEFFA]"
                 />
                 <p className="text-xs text-[#8C8CA1] mt-2">{comments.length}/200 caracteres</p>
               </Card>
@@ -234,17 +274,44 @@ export default function PersonalizarPage() {
             {/* Right Column */}
             <div className="lg:col-span-4">
               <div className="lg:sticky lg:top-24">
-                <Card className="p-6 bg-white border border-[#ECF1F4] rounded-xl shadow-sm">
+                <Card className="p-6 bg-white border border-[#99A1AF] rounded-xl shadow-sm">
                   <h3 className="text-lg font-semibold text-gray-900 mb-4">Resumen del pedido</h3>
 
-                  <div className="flex items-center justify-between mb-6">
+                  <div className="flex items-center justify-between mb-4">
                     <p className="text-sm text-gray-600">{producto.nombre}</p>
                     <p className="text-base font-semibold text-gray-900">{formatPrice(parseFloat(producto.precio_base))}</p>
                   </div>
 
+                  {/* Selected Options */}
+                  {selectedExtras.length > 0 && (
+                    <div className="mb-4">
+                      <div className="border-t border-gray-200 pt-4">
+                        {selectedExtras.map((extraId) => {
+                          const extra = producto.tipos_opciones
+                            ?.flatMap(tipo => tipo.opciones)
+                            .find(opcion => opcion.id === extraId)
+                          if (!extra) return null
+                          
+                          return (
+                            <div key={extraId} className="flex items-center justify-between py-2">
+                              <p className="text-sm text-gray-600">{extra.nombre}</p>
+                              <p className="text-sm font-medium text-gray-900">+{formatPrice(parseFloat(extra.precio_adicional))}</p>
+                            </div>
+                          )
+                        })}
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Total */}
+                  <div className="flex items-center justify-between mb-6 border-t border-gray-200 pt-4">
+                    <p className="text-base font-semibold text-gray-900">Total</p>
+                    <p className="text-lg font-bold text-gray-900">{formatPrice(calculateTotal())}</p>
+                  </div>
+
                   {/* Add to Cart Button */}
                   <Button
-                    className="w-full h-12 text-base font-semibold rounded-xl bg-[#0056C6] hover:bg-[#004299] text-white"
+                    className="w-full h-12 text-base font-semibold rounded-xl bg-[#004166] hover:bg-[#003049] text-white"
                     onClick={handleAddToCart}
                   >
                     Agregar al carrito – {formatPrice(calculateTotal())}
