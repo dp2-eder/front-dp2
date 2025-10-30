@@ -1,77 +1,72 @@
-"use client"
+"use client";
 
-import { User, Mail } from "lucide-react"
-import Image from "next/image"
-import { useRouter } from "next/navigation"
-import { useState } from "react"
+import { User, Mail } from "lucide-react";
+import Image from "next/image";
+import { useRouter, useSearchParams } from "next/navigation";
+import { useState } from "react";
 
-import { Button } from "@/components/ui/button"
-import { Input } from "@/components/ui/input"
-
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
 
 export default function LoginPage() {
-  const router = useRouter()
-  const [nombre, setNombre] = useState("")
-  const [email, setEmail] = useState("")
-  const [nombreError, setNombreError] = useState("")
-  const [emailError, setEmailError] = useState("")
+  const router = useRouter();
+  const searchParams = useSearchParams();
+
+  const [nombre, setNombre] = useState("");
+  const [email, setEmail] = useState("");
+  const [nombreError, setNombreError] = useState("");
+  const [emailError, setEmailError] = useState("");
+
+  // Soporta ?mesa=ID o un parámetro “key-only” tipo ?01K8...
+  const mesaId =
+    searchParams.get("mesa") ?? Array.from(searchParams.keys())[0] ?? "";
 
   const validateNombre = (value: string): boolean => {
-    // Sin validaciones, acepta cualquier valor
     if (!value.trim()) {
-      setNombreError("El nombre es requerido")
-      return false
+      setNombreError("El nombre es requerido");
+      return false;
     }
-    setNombreError("")
-    return true
-  }
+    setNombreError("");
+    return true;
+  };
 
   const validateEmail = (value: string): boolean => {
-    const regex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
+    const regex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
     if (!value.trim()) {
-      setEmailError("El correo electrónico es requerido")
-      return false
+      setEmailError("El correo electrónico es requerido");
+      return false;
     }
     if (!regex.test(value)) {
-      setEmailError("Ingrese un correo en formato válido. Ejm: hola@ejemplo.com")
-      return false
+      setEmailError("Ingrese un correo en formato válido. Ejm: hola@ejemplo.com");
+      return false;
     }
-    setEmailError("")
-    return true
-  }
+    setEmailError("");
+    return true;
+  };
 
   const handleNombreChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const value = e.target.value
-    setNombre(value)
-    // Limpiar error si hay texto
-    if (nombreError && value.trim()) {
-      setNombreError("")
-    }
-  }
+    const value = e.target.value;
+    setNombre(value);
+    if (nombreError && value.trim()) setNombreError("");
+  };
 
   const handleEmailChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const value = e.target.value
-    setEmail(value)
-    if (emailError) {
-      validateEmail(value)
-    }
-  }
+    const value = e.target.value;
+    setEmail(value);
+    if (emailError) validateEmail(value);
+  };
 
   const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault()
-    
-    const isNombreValid = validateNombre(nombre)
-    const isEmailValid = validateEmail(email)
-
+    e.preventDefault();
+    const isNombreValid = validateNombre(nombre);
+    const isEmailValid = validateEmail(email);
     if (isNombreValid && isEmailValid) {
-      // Guardar en localStorage temporalmente hasta tener las APIs
-      localStorage.setItem('userName', nombre)
-      localStorage.setItem('userEmail', email)
-      
-      // Redirigir a about (página principal)
-      router.push('/about')
+      localStorage.setItem("userName", nombre);
+      localStorage.setItem("userEmail", email);
+      if (mesaId) localStorage.setItem("mesaId", mesaId);
+      router.push("/about");
     }
-  }
+  };
 
   return (
     <div className="min-h-screen relative overflow-hidden bg-[#5B9BB8]">
@@ -118,9 +113,11 @@ export default function LoginPage() {
           </h2>
           
           {/* Número de Mesa */}
-          <p className="text-white text-lg md:text-2xl font-bold italic">
-            Mesa Nro. 4
-          </p>
+          {/*mesaId && (
+            <p className="text-white text-lg md:text-2xl font-bold italic">
+              Mesa ID: {mesaId}
+            </p>
+          )*/}
         </div>
 
         {/* Formulario */}

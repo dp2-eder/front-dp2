@@ -111,6 +111,7 @@ export default function PersonalizarPage() {
       selectedOptions: selectedExtras.map(extraId => {
         const opcion = findOpcionById(extraId)
         return {
+          id: opcion?.id || '', // id_producto_opcion
           type: 'extra',
           name: opcion?.nombre || '',
           price: parseFloat(opcion?.precio_adicional || '0') * (extraQuantities[extraId] || 1)

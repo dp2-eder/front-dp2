@@ -4,6 +4,77 @@ import { ShoppingCart, AlertTriangle } from "lucide-react"
 import Image from "next/image"
 import { useState, useEffect } from "react"
 
+// Función para enviar pedido a cocina
+import type { CartItem } from "@/hooks/use-cart";
+
+interface SendOrderParams {
+  cart: CartItem[];
+  notasCliente?: string;
+  notasCocina?: string;
+}
+
+// Helper para enviar pedido usando endpoint local (proxy en Next.js)
+async function sendOrderToKitchen({ cart, notasCliente = "", notasCocina = "" }: SendOrderParams) {
+  // Obtener id_mesa de localStorage
+  const id_mesa = typeof window !== 'undefined' ? localStorage.getItem("mesaId") : null;
+  if (!id_mesa) throw new Error("No se encontró el ID de la mesa");
+
+  // Armar items
+  const items = cart.map((item: CartItem) => {
+    // id_producto debe ser el id real del producto (string largo)
+    // El id_producto debe ser solo la parte antes del guion (producto.id)
+    const id_producto = String(item.id).split('-')[0];
+    // El precio_unitario debe ser SOLO el basePrice original del producto, sin adicionales
+    const precio_unitario = Number(Number(item.basePrice).toFixed(2));
+    // Opciones como array de objetos { id_producto_opcion, precio_adicional }
+    const opciones = Array.isArray(item.selectedOptions)
+      ? item.selectedOptions.map((opt: any) => ({
+          id_producto_opcion: opt.id ? String(opt.id) : "",
+          precio_adicional: Number(Number(opt.price || 0).toFixed(2))
+        }))
+      : [];
+    return {
+      id_producto,
+      cantidad: Number(item.quantity),
+      precio_unitario,
+      opciones,
+      notas_personalizacion: typeof item.comments === 'string' ? item.comments : null
+    };
+  });
+
+  const payload = {
+    id_mesa,
+    items,
+    notas_cliente: notasCliente,
+    notas_cocina: notasCocina
+  };
+  // Debug: mostrar el payload que se enviará
+  // eslint-disable-next-line no-console
+  console.log('Enviando pedido a cocina:', payload);
+
+  // Usar endpoint local, que puede ser proxy a backend externo
+  const response = await fetch("/api/pedidos/completo", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(payload)
+  });
+  let result: any = null;
+  try {
+    result = await response.json();
+  } catch {
+    result = await response.text();
+  }
+  if (!response.ok || (result && result.success === false)) {
+    let msg = "Error al enviar pedido";
+    if (typeof result === 'string') msg = result;
+    else if (result?.error) msg = result.error;
+    else if (result?.detail) msg = result.detail;
+    else if (typeof result === 'object') msg = JSON.stringify(result);
+    throw new Error(msg);
+  }
+  return result;
+}
+
 import { Button } from "@/components/ui/button"
 import { useCart } from "@/hooks/use-cart"
 
@@ -71,70 +142,70 @@ export default function CartSidebar({ isOpen, onClose }: CartSidebarProps) {
     }
   }, [isOpen])
 
-  // Función para enviar el pedido (mover del carrito al historial)
-  const handleSendOrder = () => {
-    if (cart.length === 0) return
+  // Función para enviar el pedido a cocina y manejar historial/localStorage
+  const [sending, setSending] = useState(false);
+  const [sendError, setSendError] = useState<string | null>(null);
+  const [sendSuccess, setSendSuccess] = useState(false);
 
-    // Convertir items del carrito a items de historial
-    const newHistoryItems: HistoryItem[] = cart.map(item => ({
-      id: item.id,
-      name: item.name,
-      quantity: item.quantity,
-      subtotal: item.totalPrice,
-      comments: item.comments || undefined,
-      additionals: item.selectedOptions.length > 0 
-        ? item.selectedOptions.map(opt => opt.name).sort()
-        : undefined,
-      date: new Date().toISOString()
-    }))
+  const handleSendOrder = async () => {
+    if (cart.length === 0 || sending) return;
+    setSendError(null);
+    setSendSuccess(false);
+    setSending(true);
+    try {
+      await sendOrderToKitchen({ cart });
+      setSendSuccess(true);
 
-    // Combinar con historial existente
-    const updatedHistory = [...history, ...newHistoryItems]
-    
-    // Agrupar items idénticos (mismo nombre, adicionales y comentarios)
-    const groupedHistory: HistoryItem[] = []
-    
-    updatedHistory.forEach(item => {
-      // Buscar si ya existe un item idéntico en el grupo
-      const existingIndex = groupedHistory.findIndex(grouped => {
-        const sameBasics = grouped.name === item.name && grouped.comments === item.comments
-        
-        // Comparar adicionales (deben ser exactamente iguales)
-        const sameAdditionals = 
-          (!grouped.additionals && !item.additionals) ||
-          (grouped.additionals && item.additionals && 
-           grouped.additionals.length === item.additionals.length &&
-           grouped.additionals.every((add, idx) => add === item.additionals?.[idx]))
-        
-        return sameBasics && sameAdditionals
-      })
-      
-      if (existingIndex >= 0) {
-        // Si existe, sumar cantidad y subtotal
-        groupedHistory[existingIndex].quantity += item.quantity
-        groupedHistory[existingIndex].subtotal += item.subtotal
-        // Mantener la fecha más reciente
-        if (item.date > groupedHistory[existingIndex].date) {
-          groupedHistory[existingIndex].date = item.date
+      // Convertir items del carrito a items de historial
+      const newHistoryItems: HistoryItem[] = cart.map(item => ({
+        id: item.id,
+        name: item.name,
+        quantity: item.quantity,
+        subtotal: item.totalPrice,
+        comments: item.comments || undefined,
+        additionals: item.selectedOptions.length > 0 
+          ? item.selectedOptions.map(opt => opt.name).sort()
+          : undefined,
+        date: new Date().toISOString()
+      }));
+
+      // Combinar con historial existente
+      const updatedHistory = [...history, ...newHistoryItems];
+      // Agrupar items idénticos (mismo nombre, adicionales y comentarios)
+      const groupedHistory: HistoryItem[] = [];
+      updatedHistory.forEach(item => {
+        const existingIndex = groupedHistory.findIndex(grouped => {
+          const sameBasics = grouped.name === item.name && grouped.comments === item.comments;
+          const sameAdditionals = 
+            (!grouped.additionals && !item.additionals) ||
+            (grouped.additionals && item.additionals && 
+             grouped.additionals.length === item.additionals.length &&
+             grouped.additionals.every((add, idx) => add === item.additionals?.[idx]));
+          return sameBasics && sameAdditionals;
+        });
+        if (existingIndex >= 0) {
+          groupedHistory[existingIndex].quantity += item.quantity;
+          groupedHistory[existingIndex].subtotal += item.subtotal;
+          if (item.date > groupedHistory[existingIndex].date) {
+            groupedHistory[existingIndex].date = item.date;
+          }
+        } else {
+          groupedHistory.push({ ...item });
         }
-      } else {
-        // Si no existe, agregar como nuevo item
-        groupedHistory.push({ ...item })
-      }
-    })
-    
-    // Guardar en localStorage
-    localStorage.setItem('orderHistory', JSON.stringify(groupedHistory))
-    
-    // Actualizar estado
-    setHistory(groupedHistory)
-    
-    // Calcular nuevo monto acumulado
-    const newTotal = groupedHistory.reduce((sum, item) => sum + item.subtotal, 0)
-    setTotalAccumulated(newTotal)
-    
-    // Limpiar el carrito
-    clearCart()
+      });
+      // Guardar en localStorage
+      localStorage.setItem('orderHistory', JSON.stringify(groupedHistory));
+      setHistory(groupedHistory);
+      // Calcular nuevo monto acumulado
+      const newTotal = groupedHistory.reduce((sum, item) => sum + item.subtotal, 0);
+      setTotalAccumulated(newTotal);
+      // Limpiar el carrito
+      clearCart();
+    } catch (err: any) {
+      setSendError(err?.message || 'Error al enviar pedido');
+    } finally {
+      setSending(false);
+    }
   }
 
   // Función para verificar si se puede incrementar (límite por plato individual)
@@ -291,65 +362,90 @@ export default function CartSidebar({ isOpen, onClose }: CartSidebarProps) {
               )}
                 
               {/* Botón de envío después de la lista - siempre mostrar */}
-              <div className="mt-3 flex justify-center">
+              <div className="mt-3 flex flex-col items-center gap-2">
                 <Button 
                   onClick={handleSendOrder}
                   className="w-[55%] bg-[#004166] hover:bg-[#003d5c] text-white py-3 text-base font-bold rounded-xl drop-shadow-[0_4px_8px_rgba(0,0,0,0.15)]"
-                  disabled={cart.length === 0}
+                  disabled={cart.length === 0 || sending}
+                  aria-busy={sending}
                 >
-                  Enviar Pedido {cart.length > 0 && `S/ ${total.toFixed(2)}`}
+                  {sending ? 'Enviando...' : <>Enviar Pedido {cart.length > 0 && `S/ ${total.toFixed(2)}`}</>}
                 </Button>
+                {/*{sendSuccess && (
+                  <span className="text-green-600 text-sm font-semibold">¡Pedido enviado correctamente!</span>
+                )}
+                {sendError && (
+                  <span className="text-red-600 text-sm font-semibold">{sendError}</span>
+                )}*/}
               </div>
                 
-                {/* Imagen decorativa del pescado */}
-                <div className="flex justify-end mt-4 opacity-50">
-                  <div 
-                    className="w-[75%] h-48 bg-[url('/pescado-inicio.jpg')] bg-no-repeat bg-right bg-contain"
-                  />
-                </div>
+              {/* Imagen decorativa del pescado */}
+              <div className="flex justify-end mt-4 opacity-50">
+                <div 
+                  className="w-[75%] h-48 bg-[url('/pescado-inicio.jpg')] bg-no-repeat bg-right bg-contain"
+                />
+              </div>
 
-                {/* Historial de pedido - con margen negativo para tapar al pescado */}
-                <div className="-mt-12 mx-3 border border-gray-300 rounded-xl p-4 bg-white relative z-10">
-                  <h3 className="text-lg font-bold mb-3">Historial de pedido</h3>
-                  
-                  {history.length === 0 ? (
-                    <div className="text-center py-8">
-                      <p className="text-sm font-semibold text-gray-700">Sin artículos registrados</p>
-                    </div>
-                  ) : (
-                    <div>
-                      <p className="text-xs text-gray-600 mb-3">Hasta ahora has pedido:</p>
-                      
-                      {/* Lista de pedidos del historial */}
-                      <div className="space-y-3">
-                        {history.map((item, index) => (
-                          <div key={`${item.id}-${index}`} className="flex justify-between items-start pb-3 border-b last:border-b-0">
-                            <div className="flex-1">
-                              <h4 className="text-sm font-semibold mb-1">{item.name}</h4>
-                              {item.additionals && item.additionals.length > 0 && (
-                                <p className="text-xs text-gray-600">Adicionales: {item.additionals.join(", ")}</p>
-                              )}
-                              {item.comments && (
-                                <p className="text-xs text-gray-600">Comentarios: {item.comments}</p>
-                              )}
-                            </div>
-                            <div className="text-right">
-                              <p className="text-xs font-semibold mb-1">Cantidad: {item.quantity}</p>
-                              <p className="text-xs font-bold">Subtotal: S/ {item.subtotal.toFixed(2)}</p>
-                            </div>
+              {/* Historial de pedido - con margen negativo para tapar al pescado */}
+              <div className="-mt-12 mx-3 border border-gray-300 rounded-xl p-4 bg-white relative z-10">
+                <h3 className="text-lg font-bold mb-3">Historial de pedido</h3>
+                
+                {history.length === 0 ? (
+                  <div className="text-center py-8">
+                    <p className="text-sm font-semibold text-gray-700">Sin artículos registrados</p>
+                  </div>
+                ) : (
+                  <div>
+                    <p className="text-xs text-gray-600 mb-3">Hasta ahora has pedido:</p>
+                    
+                    {/* Lista de pedidos del historial */}
+                    <div className="space-y-3">
+                      {history.map((item, index) => (
+                        <div key={`${item.id}-${index}`} className="flex justify-between items-start pb-3 border-b last:border-b-0">
+                          <div className="flex-1">
+                            <h4 className="text-sm font-semibold mb-1">{item.name}</h4>
+                            {item.additionals && item.additionals.length > 0 && (
+                              <p className="text-xs text-gray-600">Adicionales: {item.additionals.join(", ")}</p>
+                            )}
+                            {item.comments && (
+                              <p className="text-xs text-gray-600">Comentarios: {item.comments}</p>
+                            )}
                           </div>
-                        ))}
-                      </div>
-                      
-                      {/* Monto acumulado */}
-                      <div className="mt-4 pt-3 border-t border-gray-300">
-                        <p className="text-base font-bold text-center">
-                          Monto acumulado: S/ {totalAccumulated.toFixed(2)}
-                        </p>
-                      </div>
+                          <div className="text-right">
+                            <p className="text-xs font-semibold mb-1">Cantidad: {item.quantity}</p>
+                            <p className="text-xs font-bold">Subtotal: S/ {item.subtotal.toFixed(2)}</p>
+                          </div>
+                        </div>
+                      ))}
                     </div>
-                  )}
-                </div>
+                    
+                    {/* Monto acumulado */}
+                    <div className="mt-4 pt-3 border-t border-gray-300">
+                      <p className="text-base font-bold text-center">
+                        Monto acumulado: S/ {totalAccumulated.toFixed(2)}
+                      </p>
+                    </div>
+                    
+                    {/* Botón para borrar historial */}
+                    <div className="flex justify-end mt-3">
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        className="text-xs px-3 py-1 border-gray-300"
+                        onClick={() => {
+                          localStorage.removeItem('orderHistory');
+                          localStorage.removeItem('cart');
+                          setHistory([]);
+                          setTotalAccumulated(0);
+                          clearCart();
+                        }}
+                      >
+                        Borrar historial
+                      </Button>
+                    </div>
+                  </div>
+                )}
+              </div>
             </div>
           </div>
         </div>
