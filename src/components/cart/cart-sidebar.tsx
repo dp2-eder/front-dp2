@@ -4,8 +4,8 @@ import { ShoppingCart, AlertTriangle } from "lucide-react"
 import Image from "next/image"
 import { useState, useEffect } from "react"
 
-// Función para enviar pedido a cocina
-import type { CartItem } from "@/hooks/use-cart";
+import { Button } from "@/components/ui/button"
+import { useCart, type CartItem } from "@/hooks/use-cart"
 
 interface SendOrderParams {
   cart: CartItem[];
@@ -28,9 +28,9 @@ async function sendOrderToKitchen({ cart, notasCliente = "", notasCocina = "" }:
     const precio_unitario = Number(Number(item.basePrice).toFixed(2));
     // Opciones como array de objetos { id_producto_opcion, precio_adicional }
     const opciones = Array.isArray(item.selectedOptions)
-      ? item.selectedOptions.map((opt: any) => ({
-          id_producto_opcion: opt.id ? String(opt.id) : "",
-          precio_adicional: Number(Number(opt.price || 0).toFixed(2))
+      ? item.selectedOptions.map((opt: unknown) => ({
+          id_producto_opcion: (opt as Record<string, unknown>)?.id ? String((opt as Record<string, unknown>).id) : "",
+          precio_adicional: Number(Number((opt as Record<string, unknown>)?.price || 0).toFixed(2))
         }))
       : [];
     return {
@@ -58,25 +58,22 @@ async function sendOrderToKitchen({ cart, notasCliente = "", notasCocina = "" }:
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify(payload)
   });
-  let result: any = null;
+  let result: unknown = null;
   try {
     result = await response.json();
   } catch {
     result = await response.text();
   }
-  if (!response.ok || (result && result.success === false)) {
+  if (!response.ok || (result && typeof result === 'object' && result !== null && 'success' in result && (result as Record<string, unknown>).success === false)) {
     let msg = "Error al enviar pedido";
     if (typeof result === 'string') msg = result;
-    else if (result?.error) msg = result.error;
-    else if (result?.detail) msg = result.detail;
+    else if (result && typeof result === 'object' && 'error' in result) msg = String((result as Record<string, unknown>).error);
+    else if (result && typeof result === 'object' && 'detail' in result) msg = String((result as Record<string, unknown>).detail);
     else if (typeof result === 'object') msg = JSON.stringify(result);
     throw new Error(msg);
   }
   return result;
 }
-
-import { Button } from "@/components/ui/button"
-import { useCart } from "@/hooks/use-cart"
 
 interface CartSidebarProps {
   isOpen: boolean
@@ -144,17 +141,12 @@ export default function CartSidebar({ isOpen, onClose }: CartSidebarProps) {
 
   // Función para enviar el pedido a cocina y manejar historial/localStorage
   const [sending, setSending] = useState(false);
-  const [sendError, setSendError] = useState<string | null>(null);
-  const [sendSuccess, setSendSuccess] = useState(false);
 
   const handleSendOrder = async () => {
     if (cart.length === 0 || sending) return;
-    setSendError(null);
-    setSendSuccess(false);
     setSending(true);
     try {
       await sendOrderToKitchen({ cart });
-      setSendSuccess(true);
 
       // Convertir items del carrito a items de historial
       const newHistoryItems: HistoryItem[] = cart.map(item => ({
@@ -201,8 +193,8 @@ export default function CartSidebar({ isOpen, onClose }: CartSidebarProps) {
       setTotalAccumulated(newTotal);
       // Limpiar el carrito
       clearCart();
-    } catch (err: any) {
-      setSendError(err?.message || 'Error al enviar pedido');
+    } catch (err: unknown) {
+      console.error('Error al enviar pedido:', err instanceof Error ? err.message : 'Error desconocido');
     } finally {
       setSending(false);
     }
@@ -364,7 +356,7 @@ export default function CartSidebar({ isOpen, onClose }: CartSidebarProps) {
               {/* Botón de envío después de la lista - siempre mostrar */}
               <div className="mt-3 flex flex-col items-center gap-2">
                 <Button 
-                  onClick={handleSendOrder}
+                  onClick={() => void handleSendOrder()}
                   className="w-[55%] bg-[#004166] hover:bg-[#003d5c] text-white py-3 text-base font-bold rounded-xl drop-shadow-[0_4px_8px_rgba(0,0,0,0.15)]"
                   disabled={cart.length === 0 || sending}
                   aria-busy={sending}

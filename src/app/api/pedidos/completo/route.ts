@@ -12,12 +12,12 @@ export async function POST(req: NextRequest) {
     });
 
     const contentType = backendRes.headers.get('content-type');
-    const data = contentType && contentType.includes('application/json')
+    const data: unknown = contentType && contentType.includes('application/json')
       ? await backendRes.json()
       : await backendRes.text();
 
     return NextResponse.json(data, { status: backendRes.status });
-  } catch (error: any) {
-    return NextResponse.json({ error: error.message || 'Error en el proxy de pedidos' }, { status: 500 });
+  } catch (error: unknown) {
+    return NextResponse.json({ error: error instanceof Error ? error.message : 'Error en el proxy de pedidos' }, { status: 500 });
   }
 }
