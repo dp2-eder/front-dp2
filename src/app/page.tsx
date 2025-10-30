@@ -35,7 +35,7 @@ export default function Home() {
           </div>
         </div>
         <h2 className="text-white text-2xl font-semibold mb-2">Falta el ID de la mesa</h2>
-        <p className="text-white/80 text-sm mb-8">Por favor, añade <b>?TU_ID_MESA</b> al link para continuar.</p>
+        <p className="text-white/80 text-sm mb-8">Por favor, añade <b>/login?TU_ID_MESA</b> al link para continuar.</p>
       </div>
     </div>
   );
