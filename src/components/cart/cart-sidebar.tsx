@@ -427,7 +427,7 @@ export default function CartSidebar({ isOpen, onClose }: CartSidebarProps) {
                     </div>
                     
                     {/* Botón para borrar historial */}
-                    <div className="flex justify-end mt-3">
+                    {/*<div className="flex justify-end mt-3">
                       <Button
                         size="sm"
                         variant="outline"
@@ -442,7 +442,7 @@ export default function CartSidebar({ isOpen, onClose }: CartSidebarProps) {
                       >
                         Borrar historial
                       </Button>
-                    </div>
+                    </div>*/}
                   </div>
                 )}
               </div>
