@@ -60,11 +60,11 @@ export function CategoryCarousel({ categories }: CategoryCarouselProps) {
       }}
       className="w-full max-w-full mx-auto"
     >
-      <CarouselContent className="-ml-3 md:-ml-4">
+      <CarouselContent className="-ml-10 md:-ml-12">
         {categories.map((category, index) => (
           <CarouselItem
             key={`${category.nombre}-${index}`}
-            className="pl-3 md:pl-4 basis-1/2 md:basis-1/3 lg:basis-1/5"
+            className="pl-10 md:pl-12 basis-1/2 md:basis-1/3 lg:basis-1/5"
           >
             <div
               className="group block cursor-pointer"
@@ -111,8 +111,8 @@ export function CategoryCarousel({ categories }: CategoryCarouselProps) {
           </CarouselItem>
         ))}
       </CarouselContent>
-      <CarouselPrevious className="hidden md:flex -left-4" />
-      <CarouselNext className="hidden md:flex -right-4" />
+      <CarouselPrevious className="hidden md:flex -left-12 lg:-left-14" />
+      <CarouselNext className="hidden md:flex -right-12 lg:-right-14" />
     </Carousel>
   )
 }
