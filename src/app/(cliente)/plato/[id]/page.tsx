@@ -15,7 +15,7 @@ export default function PlatoDetailPage() {
   const params = useParams()
   const router = useRouter()
   const { producto, loading, error } = useProducto(params.id as string)
-  const { alergenos } = useAlergenos(params.id as string);
+  const { alergenos, loading: alergenosLoading } = useAlergenos(params.id as string);
 
   if (loading) return <Loading />
   if (error) return <div>Error: {error}</div>
@@ -87,11 +87,22 @@ export default function PlatoDetailPage() {
 
               {/* Alergenos */}
               <div>
-                <h2 className="text-xl font-normal text-gray-800 mb-4 text-left">
+                <h2 className="hidden md:block text-xl font-normal text-gray-800 mb-4 text-left">
                   Lista de Alergenos presentes:</h2>
 
-                {alergenos.length > 0 ? (
-                  <div className="w-full flex justify-left mt-6">
+                {alergenosLoading ? (
+                  <div className="flex justify-center md:justify-start mt-6">
+                    <div className="flex flex-wrap justify-center items-center bg-[#FAFCFE] rounded-2xl shadow-md px-6 py-4 max-w-3xl gap-2">
+                      {[1, 2, 3].map((i) => (
+                        <div key={i} className="flex flex-col items-center justify-center text-center mx-2 my-1 animate-pulse">
+                          <span className="text-xl mb-1 text-gray-300 w-6 h-6 rounded-full bg-gray-200"></span>
+                          <span className="text-xs font-medium text-gray-300 h-3 w-12 bg-gray-200 rounded"></span>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                ) : alergenos.length > 0 ? (
+                  <div className="w-full flex justify-center md:justify-start mt-6">
                     <div className="flex flex-wrap justify-center items-center bg-[#FAFCFE] rounded-2xl shadow-md px-6 py-4 max-w-3xl">
                       {alergenos.map((item) => (
                         <div
