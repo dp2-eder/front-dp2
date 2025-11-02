@@ -76,40 +76,20 @@ export default function PagoPage() {
 
               {/* Conditional components based on payment mode */}
               {paymentMode === "partes-iguales" && (
-                <>
-                  <SplitBill
-                    totalAmount={totalAccumulated}
-                    peopleCount={peopleCount}
-                    onPeopleCountChange={setPeopleCount}
-                  />
-
-                  {/* Total summary for partes iguales */}
-                  <div className="border border-gray-300 rounded-xl p-6 bg-white">
-                    <div className="text-center">
-                      <p className="text-sm text-gray-600 mb-2">Total a cobrar</p>
-                      <p className="text-4xl font-bold text-[#004166]">S/ {totalAccumulated.toFixed(2)}</p>
-                    </div>
-                  </div>
-                </>
+                <SplitBill
+                  totalAmount={totalAccumulated}
+                  peopleCount={peopleCount}
+                  onPeopleCountChange={setPeopleCount}
+                />
               )}
 
               {paymentMode === "grupos-pago" && (
-                <>
-                  <PaymentGroups
-                    orderHistory={orderHistory}
-                    onGroupsChange={() => {
-                      // Handle groups change if needed
-                    }}
-                  />
-
-                  {/* Total summary for grupos pago */}
-                  <div className="border border-gray-300 rounded-xl p-6 bg-white">
-                    <div className="text-center">
-                      <p className="text-sm text-gray-600 mb-2">Total a cobrar</p>
-                      <p className="text-4xl font-bold text-[#004166]">S/ {totalAccumulated.toFixed(2)}</p>
-                    </div>
-                  </div>
-                </>
+                <PaymentGroups
+                  orderHistory={orderHistory}
+                  onGroupsChange={() => {
+                    // Handle groups change if needed
+                  }}
+                />
               )}
 
               {paymentMode === "pago-inmediato" && (
