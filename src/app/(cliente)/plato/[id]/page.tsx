@@ -10,6 +10,8 @@ import { Button } from "@/components/ui/button"
 import SafeImage from "@/components/ui/safe-image"
 import { useAlergenos } from "@/hooks/use-alergenos"
 import { useProducto } from '@/hooks/use-producto'
+import Link from "next/link"
+import { LogIn } from "lucide-react"
 
 export default function PlatoDetailPage() {
   const params = useParams()
@@ -44,7 +46,9 @@ export default function PlatoDetailPage() {
       <main className="flex-1">
         <div className="max-w-[1110px] mx-auto px-4 py-8">
           <div className="mb-16">
-            <BackButton href="/menu" text="Volver Al Menú" />
+            <Link href="/menu" className="flex items-center gap-2 mb-6">
+              <LogIn className="w-7 h-7" style={{ transform: 'scaleX(-1)' }} />
+            </Link>
           </div>
 
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">

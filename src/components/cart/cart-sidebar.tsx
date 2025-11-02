@@ -2,6 +2,7 @@
 
 import { ShoppingCart, AlertTriangle } from "lucide-react"
 import Image from "next/image"
+import Link from "next/link"
 import { useState, useEffect } from "react"
 
 import { Button } from "@/components/ui/button"
@@ -87,6 +88,7 @@ interface HistoryItem {
   subtotal: number
   comments?: string
   additionals?: string[]
+  image?: string
   date: string
 }
 
@@ -155,9 +157,10 @@ export default function CartSidebar({ isOpen, onClose }: CartSidebarProps) {
         quantity: item.quantity,
         subtotal: item.totalPrice,
         comments: item.comments || undefined,
-        additionals: item.selectedOptions.length > 0 
+        additionals: item.selectedOptions.length > 0
           ? item.selectedOptions.map(opt => opt.name).sort()
           : undefined,
+        image: item.image,
         date: new Date().toISOString()
       }));
 
@@ -417,7 +420,7 @@ export default function CartSidebar({ isOpen, onClose }: CartSidebarProps) {
                         Monto acumulado: S/ {totalAccumulated.toFixed(2)}
                       </p>
                     </div>
-                    
+
                     {/* Botón para borrar historial */}
                     {/*<div className="flex justify-end mt-3">
                       <Button
@@ -438,6 +441,19 @@ export default function CartSidebar({ isOpen, onClose }: CartSidebarProps) {
                   </div>
                 )}
               </div>
+
+              {/* Botón Solicitar Cobro - visible solo si hay datos en historial, fuera del card */}
+              {history.length > 0 && (
+                <div className="mt-3 flex flex-col items-center gap-2">
+                  <Link href="/pago" className="w-full flex justify-center">
+                    <Button
+                      className="w-[55%] bg-[#004166] hover:bg-[#003d5c] text-white py-3 text-base font-bold rounded-xl drop-shadow-[0_4px_8px_rgba(0,0,0,0.15)]"
+                    >
+                      Solicitar Cobro{/* S/ {totalAccumulated.toFixed(2)}*/}
+                    </Button>
+                  </Link>
+                </div>
+              )}
             </div>
           </div>
         </div>
