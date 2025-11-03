@@ -266,21 +266,21 @@ export function PaymentGroups({ orderHistory, onGroupsChange }: PaymentGroupsPro
                         size="sm"
                         variant="ghost"
                         onClick={() => handleTogglePaid(group.id)}
-                        className={`w-8 h-8 p-0 ${
+                        className={`w-10 h-10 md:w-8 md:h-8 p-0 ${
                           isPaid
                             ? "bg-green-100 text-green-600 hover:bg-green-200"
                             : "text-gray-400 hover:bg-gray-100"
                         }`}
                       >
-                        <Check className="w-4 h-4" />
+                        <Check className="w-5 h-5 md:w-4 md:h-4" />
                       </Button>
                       <Button
                         size="sm"
                         variant="ghost"
                         onClick={() => handleDeleteGroup(group.id)}
-                        className="w-8 h-8 p-0 text-red-600 hover:bg-red-50"
+                        className="w-10 h-10 md:w-8 md:h-8 p-0 text-red-600 hover:bg-red-50"
                       >
-                        <Trash2 className="w-4 h-4" />
+                        <Trash2 className="w-5 h-5 md:w-4 md:h-4" />
                       </Button>
                     </div>
                   </div>
