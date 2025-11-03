@@ -12,6 +12,7 @@ import SafeImage from "@/components/ui/safe-image"
 import { useAlergenos } from "@/hooks/use-alergenos"
 import { useProducto } from "@/hooks/use-producto"
 
+
 export default function PlatoDetailPage() {
   const params = useParams()
   const router = useRouter()
@@ -48,6 +49,7 @@ export default function PlatoDetailPage() {
             <Link href="/menu" className="flex items-center gap-2 mb-6">
               <LogIn className="w-7 h-7" style={{ transform: 'scaleX(-1)' }} />
             </Link>
+
           </div>
 
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">

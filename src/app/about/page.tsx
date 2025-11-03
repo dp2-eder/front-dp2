@@ -21,7 +21,7 @@ export default function AboutPage() {
       {/* Hero Section */}
       <section className="lg:bg-gradient-to-br lg:from-[#0B4F6C] lg:to-[#0B4F6C]/90 lg:text-white lg:relative lg:overflow-hidden">
         {/* Fondo solo en desktop */}
-        <div className="hidden lg:block absolute inset-0 bg-[url('/fondo-inicio.png')] bg-cover bg-center"></div>
+        <div className="hidden lg:block absolute inset-0 bg-[url('/fondo-inicio.webp')] bg-cover bg-center"></div>
         
         {/* Layout para móvil y tablet - Imagen arriba */}
         <div className="lg:hidden">
