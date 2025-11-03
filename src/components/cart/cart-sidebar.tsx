@@ -5,7 +5,9 @@ import Image from "next/image"
 import { useState, useEffect } from "react"
 
 import { Button } from "@/components/ui/button"
-import { useCart } from "@/hooks/use-cart"
+import { useCart, type CartItem } from "@/hooks/use-cart"
+import type { SendOrderParams } from "@/hooks/use-orden"
+import { sendOrderToKitchen } from "@/hooks/use-orden"
 
 interface CartSidebarProps {
   isOpen: boolean
@@ -33,7 +35,7 @@ export default function CartSidebar({ isOpen, onClose }: CartSidebarProps) {
     if (savedHistory) {
       const parsedHistory = JSON.parse(savedHistory) as HistoryItem[]
       setHistory(parsedHistory)
-      
+
       // Calcular monto acumulado
       const accumulated = parsedHistory.reduce((sum: number, item: HistoryItem) => sum + item.subtotal, 0)
       setTotalAccumulated(accumulated)
@@ -71,71 +73,145 @@ export default function CartSidebar({ isOpen, onClose }: CartSidebarProps) {
     }
   }, [isOpen])
 
-  // Función para enviar el pedido (mover del carrito al historial)
-  const handleSendOrder = () => {
-    if (cart.length === 0) return
+  // Función para enviar el pedido a cocina y manejar historial/localStorage
+  const [sending, setSending] = useState(false);
 
-    // Convertir items del carrito a items de historial
-    const newHistoryItems: HistoryItem[] = cart.map(item => ({
-      id: item.id,
-      name: item.name,
-      quantity: item.quantity,
-      subtotal: item.totalPrice,
-      comments: item.comments || undefined,
-      additionals: item.selectedOptions.length > 0 
-        ? item.selectedOptions.map(opt => opt.name).sort()
-        : undefined,
-      date: new Date().toISOString()
-    }))
 
-    // Combinar con historial existente
-    const updatedHistory = [...history, ...newHistoryItems]
-    
-    // Agrupar items idénticos (mismo nombre, adicionales y comentarios)
-    const groupedHistory: HistoryItem[] = []
-    
-    updatedHistory.forEach(item => {
-      // Buscar si ya existe un item idéntico en el grupo
-      const existingIndex = groupedHistory.findIndex(grouped => {
-        const sameBasics = grouped.name === item.name && grouped.comments === item.comments
-        
-        // Comparar adicionales (deben ser exactamente iguales)
-        const sameAdditionals = 
-          (!grouped.additionals && !item.additionals) ||
-          (grouped.additionals && item.additionals && 
-           grouped.additionals.length === item.additionals.length &&
-           grouped.additionals.every((add, idx) => add === item.additionals?.[idx]))
-        
-        return sameBasics && sameAdditionals
-      })
-      
-      if (existingIndex >= 0) {
-        // Si existe, sumar cantidad y subtotal
-        groupedHistory[existingIndex].quantity += item.quantity
-        groupedHistory[existingIndex].subtotal += item.subtotal
-        // Mantener la fecha más reciente
-        if (item.date > groupedHistory[existingIndex].date) {
-          groupedHistory[existingIndex].date = item.date
+  const handleSendOrder = async () => {
+    if (cart.length === 0 || sending) return;
+    setSending(true);
+    try {
+      const idMesa = localStorage.getItem("mesaId") || "";
+      await sendOrderToKitchen({ cart, idMesa });
+
+      // Convertir items del carrito a items de historial
+      const newHistoryItems: HistoryItem[] = cart.map(item => ({
+        id: item.id,
+        name: item.name,
+        quantity: item.quantity,
+        subtotal: item.totalPrice,
+        comments: item.comments || undefined,
+        additionals: item.selectedOptions.length > 0 
+          ? item.selectedOptions.map(opt => opt.name).sort()
+          : undefined,
+        date: new Date().toISOString()
+      }));
+
+      // Combinar con historial existente
+      const updatedHistory = [...history, ...newHistoryItems];
+      // Agrupar items idénticos (mismo nombre, adicionales y comentarios)
+      const groupedHistory: HistoryItem[] = [];
+      updatedHistory.forEach(item => {
+        const existingIndex = groupedHistory.findIndex(grouped => {
+          const sameBasics = grouped.name === item.name && grouped.comments === item.comments;
+          const sameAdditionals = 
+            (!grouped.additionals && !item.additionals) ||
+            (grouped.additionals && item.additionals && 
+             grouped.additionals.length === item.additionals.length &&
+             grouped.additionals.every((add, idx) => add === item.additionals?.[idx]));
+          return sameBasics && sameAdditionals;
+        });
+        if (existingIndex >= 0) {
+          groupedHistory[existingIndex].quantity += item.quantity;
+          groupedHistory[existingIndex].subtotal += item.subtotal;
+          if (item.date > groupedHistory[existingIndex].date) {
+            groupedHistory[existingIndex].date = item.date;
+          }
+        } else {
+          groupedHistory.push({ ...item });
         }
-      } else {
-        // Si no existe, agregar como nuevo item
-        groupedHistory.push({ ...item })
-      }
-    })
-    
-    // Guardar en localStorage
-    localStorage.setItem('orderHistory', JSON.stringify(groupedHistory))
-    
-    // Actualizar estado
-    setHistory(groupedHistory)
-    
-    // Calcular nuevo monto acumulado
-    const newTotal = groupedHistory.reduce((sum, item) => sum + item.subtotal, 0)
-    setTotalAccumulated(newTotal)
-    
-    // Limpiar el carrito
-    clearCart()
+      });
+      // Guardar en localStorage
+      localStorage.setItem('orderHistory', JSON.stringify(groupedHistory));
+      setHistory(groupedHistory);
+      // Calcular nuevo monto acumulado
+      const newTotal = groupedHistory.reduce((sum, item) => sum + item.subtotal, 0);
+      setTotalAccumulated(newTotal);
+      // Limpiar el carrito
+      clearCart();
+    } catch (err: unknown) {
+      console.error('Error al enviar pedido:', err instanceof Error ? err.message : 'Error desconocido');
+    } finally {
+      setSending(false);
+    }
   }
+  /*const handleSendOrder = async () => {
+    if (cart.length === 0 || sending) return;
+    setSending(true);
+    try {
+      const idMesa = localStorage.getItem("mesaId") || ""; // 👈 aquí lo lees
+      if (!idMesa) throw new Error("No se encontró el ID de la mesa");
+
+      await sendOrderToKitchen({ cart, idMesa });           // 👈 aquí lo pasas
+
+      // ... tu lógica de historial y clearCart tal como la tienes
+    } catch (err) {
+      console.error(
+        "Error al enviar pedido:",
+        err instanceof Error ? err.message : "Error desconocido"
+      );
+    } finally {
+      setSending(false);
+    }
+  };*/
+
+  /*const handleSendOrder = async () => {
+    if (cart.length === 0 || sending) return;
+    setSending(true);
+    try {
+      await sendOrderToKitchen({ cart });
+
+      // Convertir items del carrito a items de historial
+      const newHistoryItems: HistoryItem[] = cart.map(item => ({
+        id: item.id,
+        name: item.name,
+        quantity: item.quantity,
+        subtotal: item.totalPrice,
+        comments: item.comments || undefined,
+        additionals: item.selectedOptions.length > 0 
+          ? item.selectedOptions.map(opt => opt.name).sort()
+          : undefined,
+        date: new Date().toISOString()
+      }));
+
+      // Combinar con historial existente
+      const updatedHistory = [...history, ...newHistoryItems];
+      // Agrupar items idénticos (mismo nombre, adicionales y comentarios)
+      const groupedHistory: HistoryItem[] = [];
+      updatedHistory.forEach(item => {
+        const existingIndex = groupedHistory.findIndex(grouped => {
+          const sameBasics = grouped.name === item.name && grouped.comments === item.comments;
+          const sameAdditionals = 
+            (!grouped.additionals && !item.additionals) ||
+            (grouped.additionals && item.additionals && 
+             grouped.additionals.length === item.additionals.length &&
+             grouped.additionals.every((add, idx) => add === item.additionals?.[idx]));
+          return sameBasics && sameAdditionals;
+        });
+        if (existingIndex >= 0) {
+          groupedHistory[existingIndex].quantity += item.quantity;
+          groupedHistory[existingIndex].subtotal += item.subtotal;
+          if (item.date > groupedHistory[existingIndex].date) {
+            groupedHistory[existingIndex].date = item.date;
+          }
+        } else {
+          groupedHistory.push({ ...item });
+        }
+      });
+      // Guardar en localStorage
+      localStorage.setItem('orderHistory', JSON.stringify(groupedHistory));
+      setHistory(groupedHistory);
+      // Calcular nuevo monto acumulado
+      const newTotal = groupedHistory.reduce((sum, item) => sum + item.subtotal, 0);
+      setTotalAccumulated(newTotal);
+      // Limpiar el carrito
+      clearCart();
+    } catch (err: unknown) {
+      console.error('Error al enviar pedido:', err instanceof Error ? err.message : 'Error desconocido');
+    } finally {
+      setSending(false);
+    }
+  }*/
 
   // Función para verificar si se puede incrementar (límite por plato individual)
   const canIncrement = (itemId: string) => {
@@ -148,13 +224,13 @@ export default function CartSidebar({ isOpen, onClose }: CartSidebarProps) {
     if (!url || url === 'null' || url === 'undefined' || !url.includes('drive.google.com')) {
       return '/placeholder-image.png'
     }
-    
+
     const match = url.match(/\/file\/d\/([a-zA-Z0-9-_]+)/)
     if (match) {
       const fileId = match[1]
       return `https://drive.google.com/uc?export=view&id=${fileId}`
     }
-    
+
     return url
   }
 
@@ -162,16 +238,15 @@ export default function CartSidebar({ isOpen, onClose }: CartSidebarProps) {
     <>
       {/* Overlay con efecto blur blanquecino */}
       {isOpen && (
-        <div 
+        <div
           className="fixed inset-0 bg-white/30 backdrop-blur-sm z-[60]"
           onClick={onClose}
         />
       )}
-      
+
       {/* Sidebar */}
-      <div className={`fixed top-0 right-0 h-full w-[90%] max-w-[400px] md:w-[500px] bg-white shadow-2xl z-[70] transform transition-transform duration-300 ${
-        isOpen ? 'translate-x-0' : 'translate-x-full'
-      }`}>
+      <div className={`fixed top-0 right-0 h-full w-[90%] max-w-[400px] md:w-[500px] bg-white shadow-2xl z-[70] transform transition-transform duration-300 ${isOpen ? 'translate-x-0' : 'translate-x-full'
+        }`}>
         <div className="flex flex-col h-full">
           {/* Header - título centrado */}
           <div className="bg-[#004166] text-white p-4 flex items-center justify-between relative">
@@ -198,7 +273,7 @@ export default function CartSidebar({ isOpen, onClose }: CartSidebarProps) {
           <div className="flex-1 overflow-y-auto overscroll-contain touch-pan-y">
             <div className="px-3 pt-3 pb-3">
               <h3 className="text-base font-bold mb-3">Lista de pedidos</h3>
-              
+
               {cart.length === 0 ? (
                 <div className="text-center py-8">
                   <p className="text-sm font-semibold text-gray-700">Sin artículos registrados</p>
@@ -226,14 +301,14 @@ export default function CartSidebar({ isOpen, onClose }: CartSidebarProps) {
                         {/* Info del plato */}
                         <div className="flex-1 min-w-0">
                           <h4 className="text-xs font-semibold mb-0.5 line-clamp-1">{item.name}</h4>
-                          
+
                           {/* Mostrar comentarios - solo si hay comentarios o no hay adicionales */}
                           {(item.comments && item.comments.trim() || item.selectedOptions.length === 0) && (
                             <p className="text-[10px] text-gray-500 mb-0.5 line-clamp-1">
                               Comentarios: {item.comments && item.comments.trim() ? item.comments : 'Sin comentarios'}
                             </p>
                           )}
-                          
+
                           {/* Mostrar opciones adicionales si existen */}
                           {item.selectedOptions.length > 0 && (
                             <p className="text-[10px] text-gray-500 mb-0.5 line-clamp-1">
@@ -272,9 +347,8 @@ export default function CartSidebar({ isOpen, onClose }: CartSidebarProps) {
                               variant="ghost"
                               onClick={() => canIncrement(item.id) && updateQuantity(item.id, item.quantity + 1)}
                               disabled={!canIncrement(item.id)}
-                              className={`w-5 h-5 p-0 text-sm font-bold rounded-md ${
-                                !canIncrement(item.id) ? "opacity-50 cursor-not-allowed" : "hover:bg-gray-300"
-                              }`}
+                              className={`w-5 h-5 p-0 text-sm font-bold rounded-md ${!canIncrement(item.id) ? "opacity-50 cursor-not-allowed" : "hover:bg-gray-300"
+                                }`}
                             >
                               +
                             </Button>
@@ -289,67 +363,92 @@ export default function CartSidebar({ isOpen, onClose }: CartSidebarProps) {
                   ))}
                 </div>
               )}
-                
-              {/* Botón de envío después de la lista - siempre mostrar */}
-              <div className="mt-3 flex justify-center">
-                <Button 
-                  onClick={handleSendOrder}
-                  className="w-[55%] bg-[#004166] hover:bg-[#003d5c] text-white py-3 text-base font-bold rounded-xl drop-shadow-[0_4px_8px_rgba(0,0,0,0.15)]"
-                  disabled={cart.length === 0}
-                >
-                  Enviar Pedido {cart.length > 0 && `S/ ${total.toFixed(2)}`}
-                </Button>
-              </div>
-                
-                {/* Imagen decorativa del pescado */}
-                <div className="flex justify-end mt-4 opacity-50">
-                  <div 
-                    className="w-[75%] h-48 bg-[url('/pescado-inicio.jpg')] bg-no-repeat bg-right bg-contain"
-                  />
-                </div>
 
-                {/* Historial de pedido - con margen negativo para tapar al pescado */}
-                <div className="-mt-12 mx-3 border border-gray-300 rounded-xl p-4 bg-white relative z-10">
-                  <h3 className="text-lg font-bold mb-3">Historial de pedido</h3>
-                  
-                  {history.length === 0 ? (
-                    <div className="text-center py-8">
-                      <p className="text-sm font-semibold text-gray-700">Sin artículos registrados</p>
-                    </div>
-                  ) : (
-                    <div>
-                      <p className="text-xs text-gray-600 mb-3">Hasta ahora has pedido:</p>
-                      
-                      {/* Lista de pedidos del historial */}
-                      <div className="space-y-3">
-                        {history.map((item, index) => (
-                          <div key={`${item.id}-${index}`} className="flex justify-between items-start pb-3 border-b last:border-b-0">
-                            <div className="flex-1">
-                              <h4 className="text-sm font-semibold mb-1">{item.name}</h4>
-                              {item.additionals && item.additionals.length > 0 && (
-                                <p className="text-xs text-gray-600">Adicionales: {item.additionals.join(", ")}</p>
-                              )}
-                              {item.comments && (
-                                <p className="text-xs text-gray-600">Comentarios: {item.comments}</p>
-                              )}
-                            </div>
-                            <div className="text-right">
-                              <p className="text-xs font-semibold mb-1">Cantidad: {item.quantity}</p>
-                              <p className="text-xs font-bold">Subtotal: S/ {item.subtotal.toFixed(2)}</p>
-                            </div>
+              {/* Botón de envío después de la lista - siempre mostrar */}
+              <div className="mt-3 flex flex-col items-center gap-2">
+                <Button
+                  onClick={() => void handleSendOrder()}
+                  className="w-[55%] bg-[#004166] hover:bg-[#003d5c] text-white py-3 text-base font-bold rounded-xl drop-shadow-[0_4px_8px_rgba(0,0,0,0.15)]"
+                  disabled={cart.length === 0 || sending}
+                  aria-busy={sending}
+                >
+                  {sending ? 'Enviando...' : <>Enviar Pedido {cart.length > 0 && `S/ ${total.toFixed(2)}`}</>}
+                </Button>
+                {/*{sendSuccess && (
+                  <span className="text-green-600 text-sm font-semibold">¡Pedido enviado correctamente!</span>
+                )}
+                {sendError && (
+                  <span className="text-red-600 text-sm font-semibold">{sendError}</span>
+                )}*/}
+              </div>
+
+              {/* Imagen decorativa del pescado */}
+              <div className="flex justify-end mt-4 opacity-50">
+                <div
+                  className="w-[75%] h-48 bg-[url('/pescado-inicio.jpg')] bg-no-repeat bg-right bg-contain"
+                />
+              </div>
+
+              {/* Historial de pedido - con margen negativo para tapar al pescado */}
+              <div className="-mt-12 mx-3 border border-gray-300 rounded-xl p-4 bg-white relative z-10">
+                <h3 className="text-lg font-bold mb-3">Historial de pedido</h3>
+
+                {history.length === 0 ? (
+                  <div className="text-center py-8">
+                    <p className="text-sm font-semibold text-gray-700">Sin artículos registrados</p>
+                  </div>
+                ) : (
+                  <div>
+                    <p className="text-xs text-gray-600 mb-3">Hasta ahora has pedido:</p>
+
+                    {/* Lista de pedidos del historial */}
+                    <div className="space-y-3">
+                      {history.map((item, index) => (
+                        <div key={`${item.id}-${index}`} className="flex justify-between items-start pb-3 border-b last:border-b-0">
+                          <div className="flex-1">
+                            <h4 className="text-sm font-semibold mb-1">{item.name}</h4>
+                            {item.additionals && item.additionals.length > 0 && (
+                              <p className="text-xs text-gray-600">Adicionales: {item.additionals.join(", ")}</p>
+                            )}
+                            {item.comments && (
+                              <p className="text-xs text-gray-600">Comentarios: {item.comments}</p>
+                            )}
                           </div>
-                        ))}
-                      </div>
-                      
-                      {/* Monto acumulado */}
-                      <div className="mt-4 pt-3 border-t border-gray-300">
-                        <p className="text-base font-bold text-center">
-                          Monto acumulado: S/ {totalAccumulated.toFixed(2)}
-                        </p>
-                      </div>
+                          <div className="text-right">
+                            <p className="text-xs font-semibold mb-1">Cantidad: {item.quantity}</p>
+                            <p className="text-xs font-bold">Subtotal: S/ {item.subtotal.toFixed(2)}</p>
+                          </div>
+                        </div>
+                      ))}
                     </div>
-                  )}
-                </div>
+
+                    {/* Monto acumulado */}
+                    <div className="mt-4 pt-3 border-t border-gray-300">
+                      <p className="text-base font-bold text-center">
+                        Monto acumulado: S/ {totalAccumulated.toFixed(2)}
+                      </p>
+                    </div>
+
+                    {/* Botón para borrar historial */}
+                    {/*<div className="flex justify-end mt-3">
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        className="text-xs px-3 py-1 border-gray-300"
+                        onClick={() => {
+                          localStorage.removeItem('orderHistory');
+                          localStorage.removeItem('cart');
+                          setHistory([]);
+                          setTotalAccumulated(0);
+                          clearCart();
+                        }}
+                      >
+                        Borrar historial
+                      </Button>
+                    </div>*/}
+                  </div>
+                )}
+              </div>
             </div>
           </div>
         </div>
