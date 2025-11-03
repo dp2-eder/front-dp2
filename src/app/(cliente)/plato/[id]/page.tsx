@@ -1,17 +1,16 @@
 "use client"
 
+import { LogIn } from "lucide-react"
+import Link from "next/link"
 import { useParams, useRouter } from "next/navigation"
 
 import Loading from "@/app/loading"
 import Footer from "@/components/layout/footer"
 import Header from "@/components/layout/header"
-import BackButton from "@/components/ui/back-button"
 import { Button } from "@/components/ui/button"
 import SafeImage from "@/components/ui/safe-image"
 import { useAlergenos } from "@/hooks/use-alergenos"
-import { useProducto } from '@/hooks/use-producto'
-import Link from "next/link"
-import { LogIn } from "lucide-react"
+import { useProducto } from "@/hooks/use-producto"
 
 export default function PlatoDetailPage() {
   const params = useParams()

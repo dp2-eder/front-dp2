@@ -23,11 +23,19 @@ interface OrderHistoryItem {
   date: string
 }
 
+interface PaymentGroup {
+  id: string
+  name: string
+  subtotal: number
+}
+
 export default function PagoPage() {
   const [paymentMode, setPaymentMode] = useState("partes-iguales")
   const [orderHistory, setOrderHistory] = useState<OrderHistoryItem[]>([])
   const [totalAccumulated, setTotalAccumulated] = useState(0)
   const [peopleCount, setPeopleCount] = useState(2)
+  const [paidGroupIds, setPaidGroupIds] = useState<string[]>([])
+  const [groups, setGroups] = useState<PaymentGroup[]>([])
 
   // Cargar historial desde localStorage al montar el componente
   useEffect(() => {
@@ -84,12 +92,37 @@ export default function PagoPage() {
               )}
 
               {paymentMode === "grupos-pago" && (
-                <PaymentGroups
-                  orderHistory={orderHistory}
-                  onGroupsChange={() => {
-                    // Handle groups change if needed
-                  }}
-                />
+                <>
+                  <PaymentGroups
+                    orderHistory={orderHistory}
+                    onGroupsChange={(updatedGroups, updatedPaidGroupIds) => {
+                      setGroups(updatedGroups)
+                      setPaidGroupIds(updatedPaidGroupIds)
+                    }}
+                  />
+
+                  {/* Monto pendiente por pagar */}
+                  {(() => {
+                    const paidTotal = groups.reduce((sum, group) => {
+                      if (paidGroupIds.includes(group.id)) {
+                        return sum + group.subtotal
+                      }
+                      return sum
+                    }, 0)
+                    const pendingAmount = totalAccumulated - paidTotal
+
+                    return (
+                      <div className="border border-gray-300 rounded-xl p-6 bg-white">
+                        <div className="text-center">
+                          <p className="text-sm text-gray-600 mb-2">Monto pendiente por pagar</p>
+                          <p className={`text-4xl font-bold ${pendingAmount > 0 ? "text-red-600" : "text-green-600"}`}>
+                            S/ {pendingAmount.toFixed(2)}
+                          </p>
+                        </div>
+                      </div>
+                    )
+                  })()}
+                </>
               )}
 
               {paymentMode === "pago-inmediato" && (

@@ -1,6 +1,6 @@
 "use client"
 
-import { Trash2 } from "lucide-react"
+import { Check, Trash2 } from "lucide-react"
 import Image from "next/image"
 import { useState } from "react"
 
@@ -26,13 +26,14 @@ interface PaymentGroup {
 
 interface PaymentGroupsProps {
   orderHistory: OrderItem[]
-  onGroupsChange?: (groups: PaymentGroup[]) => void
+  onGroupsChange?: (groups: PaymentGroup[], paidGroupIds: string[]) => void
 }
 
 export function PaymentGroups({ orderHistory, onGroupsChange }: PaymentGroupsProps) {
   const [groupName, setGroupName] = useState("")
   const [groups, setGroups] = useState<PaymentGroup[]>([])
   const [selectedItems, setSelectedItems] = useState<Record<string, number>>({})
+  const [paidGroupIds, setPaidGroupIds] = useState<Set<string>>(new Set())
 
   // Función para convertir URL de Google Drive
   const convertGoogleDriveUrl = (url?: string): string => {
@@ -117,13 +118,28 @@ export function PaymentGroups({ orderHistory, onGroupsChange }: PaymentGroupsPro
     setGroups(updatedGroups)
     setGroupName("")
     setSelectedItems({})
-    onGroupsChange?.(updatedGroups)
+    onGroupsChange?.(updatedGroups, Array.from(paidGroupIds))
   }
 
   const handleDeleteGroup = (groupId: string) => {
     const updatedGroups = groups.filter(g => g.id !== groupId)
     setGroups(updatedGroups)
-    onGroupsChange?.(updatedGroups)
+    // Remover el ID del grupo de los pagados
+    const newPaidGroupIds = new Set(paidGroupIds)
+    newPaidGroupIds.delete(groupId)
+    setPaidGroupIds(newPaidGroupIds)
+    onGroupsChange?.(updatedGroups, Array.from(newPaidGroupIds))
+  }
+
+  const handleTogglePaid = (groupId: string) => {
+    const newPaidGroupIds = new Set(paidGroupIds)
+    if (newPaidGroupIds.has(groupId)) {
+      newPaidGroupIds.delete(groupId)
+    } else {
+      newPaidGroupIds.add(groupId)
+    }
+    setPaidGroupIds(newPaidGroupIds)
+    onGroupsChange?.(groups, Array.from(newPaidGroupIds))
   }
 
   const availableItems = getAvailableItems()
@@ -230,35 +246,64 @@ export function PaymentGroups({ orderHistory, onGroupsChange }: PaymentGroupsPro
           </div>
         ) : (
           <div className="space-y-3">
-            {groups.map((group) => (
-              <div key={group.id} className="border border-gray-200 rounded-lg p-4">
-                <div className="flex justify-between items-start mb-3">
-                  <h4 className="text-base font-bold">{group.name}</h4>
-                  <Button
-                    size="sm"
-                    variant="ghost"
-                    onClick={() => handleDeleteGroup(group.id)}
-                    className="w-8 h-8 p-0 text-red-600 hover:bg-red-50"
-                  >
-                    <Trash2 className="w-4 h-4" />
-                  </Button>
-                </div>
+            {groups.map((group) => {
+              const isPaid = paidGroupIds.has(group.id)
+              return (
+                <div
+                  key={group.id}
+                  className={`border rounded-lg p-4 transition-all ${
+                    isPaid
+                      ? "border-gray-400 bg-gray-100"
+                      : "border-gray-200 bg-white"
+                  }`}
+                >
+                  <div className="flex justify-between items-start mb-3">
+                    <h4 className={`text-base font-bold ${isPaid ? "text-gray-500" : ""}`}>
+                      {group.name}
+                    </h4>
+                    <div className="flex gap-2">
+                      <Button
+                        size="sm"
+                        variant="ghost"
+                        onClick={() => handleTogglePaid(group.id)}
+                        className={`w-8 h-8 p-0 ${
+                          isPaid
+                            ? "bg-green-100 text-green-600 hover:bg-green-200"
+                            : "text-gray-400 hover:bg-gray-100"
+                        }`}
+                      >
+                        <Check className="w-4 h-4" />
+                      </Button>
+                      <Button
+                        size="sm"
+                        variant="ghost"
+                        onClick={() => handleDeleteGroup(group.id)}
+                        className="w-8 h-8 p-0 text-red-600 hover:bg-red-50"
+                      >
+                        <Trash2 className="w-4 h-4" />
+                      </Button>
+                    </div>
+                  </div>
 
-                <div className="space-y-2 mb-3">
-                  {group.items.map((item) => (
-                    <p key={`${group.id}-${item.id}`} className="text-xs text-gray-700">
-                      {item.name} <span className="font-semibold">(x{item.selectedQuantity})</span>
+                  <div className="space-y-2 mb-3">
+                    {group.items.map((item) => (
+                      <p
+                        key={`${group.id}-${item.id}`}
+                        className={`text-xs ${isPaid ? "text-gray-500" : "text-gray-700"}`}
+                      >
+                        {item.name} <span className="font-semibold">(x{item.selectedQuantity})</span>
+                      </p>
+                    ))}
+                  </div>
+
+                  <div className="pt-3 border-t border-gray-200">
+                    <p className={`text-sm font-bold ${isPaid ? "text-gray-500" : ""}`}>
+                      Subtotal: S/ {group.subtotal.toFixed(2)}
                     </p>
-                  ))}
+                  </div>
                 </div>
-
-                <div className="pt-3 border-t border-gray-200">
-                  <p className="text-sm font-bold">
-                    Subtotal: S/ {group.subtotal.toFixed(2)}
-                  </p>
-                </div>
-              </div>
-            ))}
+              )
+            })}
           </div>
         )}
       </div>
