@@ -474,11 +474,11 @@ export default function MenuPage() {
                 strokeWidth={0.5}
                 stroke="currentColor"
               />
-              <h2 className="text-4xl font-medium mb-8">Ítem no disponible, ingrese otro</h2>
+              <h2 className="text-4xl font-medium mb-8">Ítem No Disponible, Ingrese Otro</h2>
               <p className="text-foreground text-3xl font-normal mb-4">&ldquo;{searchTerm}&rdquo;</p>
               <p className="text-foreground mt-2 text-xl">
-                No encontramos ningún ítem con tu búsqueda<br />
-                Revisa ortografía o prueba con términos más generales
+                No Encontramos Ningún Ítem Con Tu Búsqueda<br />
+                Revisa Ortografía O Prueba Con Términos Más Generales
               </p>
             </div>
           </Card>

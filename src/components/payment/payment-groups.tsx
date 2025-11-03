@@ -50,55 +50,102 @@ export function PaymentGroups({ orderHistory, onGroupsChange }: PaymentGroupsPro
     return url
   }
 
-  const getAvailableItems = () => {
-    return orderHistory.filter(item => {
-      // Calcular cuánto ha sido asignado a grupos
-      const assignedInGroups = groups.reduce((sum, group) => {
-        const groupItem = group.items.find(i => i.id === item.id)
-        return sum + (groupItem?.selectedQuantity || 0)
-      }, 0)
+  // Agrupar items por nombre y subtotal
+  const getGroupedAvailableItems = () => {
+    const grouped: Record<string, OrderItem & { totalQuantity: number; allIds: string[] }> = {}
 
-      // El item está disponible si aún tiene cantidad no asignada
-      return assignedInGroups < item.quantity
+    orderHistory.forEach(item => {
+      // Crear key única basada en nombre y subtotal
+      const key = `${item.name}-${item.subtotal}`
+
+      if (!grouped[key]) {
+        grouped[key] = {
+          ...item,
+          totalQuantity: 0,
+          allIds: []
+        }
+      }
+
+      grouped[key].totalQuantity += item.quantity
+      grouped[key].allIds.push(item.id)
     })
+
+    // Filtrar items que aún tengan cantidad disponible
+    return Object.entries(grouped)
+      .map(([, item]) => {
+        // Calcular cuánto ha sido asignado a grupos
+        const assignedInGroups = groups.reduce((sum, group) => {
+          const groupItem = group.items.find(i => item.allIds.includes(i.id))
+          return sum + (groupItem?.selectedQuantity || 0)
+        }, 0)
+
+        return {
+          ...item,
+          availableQuantity: item.totalQuantity - assignedInGroups
+        }
+      })
+      .filter(item => item.availableQuantity > 0)
   }
 
-  const getMaxSelectableQuantity = (itemId: string) => {
-    const item = orderHistory.find(i => i.id === itemId)
-    if (!item) return 0
-
-    // Cuánto ha sido asignado a grupos
-    const assignedInGroups = groups.reduce((sum, group) => {
-      const groupItem = group.items.find(i => i.id === itemId)
-      return sum + (groupItem?.selectedQuantity || 0)
-    }, 0)
-
-    // Máximo que se puede seleccionar es lo que no ha sido asignado
-    return item.quantity - assignedInGroups
+  const getMaxSelectableQuantity = (itemName: string, itemSubtotal: number) => {
+    const grouped = getGroupedAvailableItems()
+    const item = grouped.find(i => i.name === itemName && i.subtotal === itemSubtotal)
+    return item?.availableQuantity || 0
   }
 
-  const handleItemQuantityChange = (itemId: string, quantity: number) => {
-    const maxSelectable = getMaxSelectableQuantity(itemId)
+  const handleItemQuantityChange = (itemName: string, itemSubtotal: number, quantity: number) => {
+    const maxSelectable = getMaxSelectableQuantity(itemName, itemSubtotal)
 
     if (quantity < 0 || quantity > maxSelectable) return
 
+    const key = `${itemName}-${itemSubtotal}`
     setSelectedItems(prev => ({
       ...prev,
-      [itemId]: quantity
+      [key]: quantity
     }))
   }
 
   const handleCreateGroup = () => {
     if (!groupName.trim()) return
 
-    const newGroupItems = Object.entries(selectedItems)
+    const newGroupItems: Array<OrderItem & { selectedQuantity: number }> = []
+
+    // Procesar cada item seleccionado (agrupado)
+    Object.entries(selectedItems)
       .filter(([_, qty]) => qty > 0)
-      .map(([itemId, selectedQuantity]) => {
-        const item = orderHistory.find(i => i.id === itemId)
-        return {
-          ...(item as OrderItem),
-          selectedQuantity
-        }
+      .forEach(([key, selectedQuantity]) => {
+        const [itemName, itemSubtotalStr] = key.split('-')
+        const itemSubtotal = parseFloat(itemSubtotalStr)
+
+        // Encontrar todos los items originales con este nombre y subtotal
+        const matchingItems = orderHistory.filter(
+          item => item.name === itemName && item.subtotal === itemSubtotal
+        )
+
+        // Distribuir la cantidad seleccionada entre los items originales
+        let remainingQty = selectedQuantity
+        matchingItems.forEach(item => {
+          if (remainingQty > 0) {
+            const qtyToTake = Math.min(remainingQty, item.quantity)
+
+            // Calcular cuánto ya fue asignado a otros grupos para este item
+            const alreadyAssigned = groups.reduce((sum, group) => {
+              const groupItem = group.items.find(gi => gi.id === item.id)
+              return sum + (groupItem?.selectedQuantity || 0)
+            }, 0)
+
+            const availableForThisItem = item.quantity - alreadyAssigned
+            const actualQtyToTake = Math.min(qtyToTake, availableForThisItem)
+
+            if (actualQtyToTake > 0) {
+              newGroupItems.push({
+                ...item,
+                selectedQuantity: actualQtyToTake
+              })
+              remainingQty -= actualQtyToTake
+            }
+          }
+        })
       })
 
     if (newGroupItems.length === 0) return
@@ -142,7 +189,7 @@ export function PaymentGroups({ orderHistory, onGroupsChange }: PaymentGroupsPro
     onGroupsChange?.(groups, Array.from(newPaidGroupIds))
   }
 
-  const availableItems = getAvailableItems()
+  const availableItems = getGroupedAvailableItems()
 
   return (
     <div className="space-y-4">
@@ -164,11 +211,12 @@ export function PaymentGroups({ orderHistory, onGroupsChange }: PaymentGroupsPro
         ) : (
           <div className="space-y-4 mb-6">
             {availableItems.map((item) => {
-              const selectedQty = selectedItems[item.id] || 0
-              const maxSelectable = getMaxSelectableQuantity(item.id)
+              const itemKey = `${item.name}-${item.subtotal}`
+              const selectedQty = selectedItems[itemKey] || 0
+              const maxSelectable = getMaxSelectableQuantity(item.name, item.subtotal)
 
               return (
-                <div key={item.id} className="border-b pb-4 last:border-b-0">
+                <div key={itemKey} className="border-b pb-4 last:border-b-0">
                   <div className="flex gap-4">
                     {/* Imagen del plato */}
                     <div className="relative w-20 h-20 rounded-lg overflow-hidden flex-shrink-0 bg-gray-100">
@@ -185,9 +233,9 @@ export function PaymentGroups({ orderHistory, onGroupsChange }: PaymentGroupsPro
                     <div className="flex-1 min-w-0">
                       <h4 className="text-sm font-semibold mb-1">{item.name}</h4>
                       <p className="text-xs text-gray-600 mb-1">
-                        Precio unitario: S/{(item.subtotal / item.quantity).toFixed(2)}
+                        Precio unitario: S/{(item.subtotal / item.totalQuantity).toFixed(2)}
                       </p>
-                      <p className="text-xs text-gray-600">Cantidad solicitada: {maxSelectable}</p>
+                      <p className="text-xs text-gray-600">Disponibles: {maxSelectable}</p>
                     </div>
 
                     {/* Controles de cantidad */}
@@ -196,7 +244,7 @@ export function PaymentGroups({ orderHistory, onGroupsChange }: PaymentGroupsPro
                         <Button
                           size="sm"
                           variant="ghost"
-                          onClick={() => handleItemQuantityChange(item.id, selectedQty - 1)}
+                          onClick={() => handleItemQuantityChange(item.name, item.subtotal, selectedQty - 1)}
                           className="w-6 h-6 p-0 text-sm font-bold hover:bg-gray-300 rounded"
                         >
                           -
@@ -207,18 +255,13 @@ export function PaymentGroups({ orderHistory, onGroupsChange }: PaymentGroupsPro
                         <Button
                           size="sm"
                           variant="ghost"
-                          onClick={() => handleItemQuantityChange(item.id, selectedQty + 1)}
+                          onClick={() => handleItemQuantityChange(item.name, item.subtotal, selectedQty + 1)}
                           disabled={selectedQty >= maxSelectable}
                           className="w-6 h-6 p-0 text-sm font-bold rounded disabled:opacity-50"
                         >
                           +
                         </Button>
                       </div>
-                      {/* 
-                      <p className="text-xs text-gray-600 text-right mt-1">
-                        Solicitado: {item.quantity}
-                      </p>
-                      */}
                     </div>
                   </div>
                 </div>
