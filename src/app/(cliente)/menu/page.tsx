@@ -20,6 +20,7 @@ import { Card, CardContent } from '@/components/ui/card'
 import { Input } from '@/components/ui/input'
 import { useProductos } from '@/hooks/use-productos'
 import { Producto } from '@/types/productos'
+import { useDebounce } from '@/hooks/use-debounce'
 
 // Categorías basadas en tu API
 
@@ -45,6 +46,8 @@ export default function MenuPage() {
 
   // Usar el hook de la API
   const { productos, loading, error, refetch } = useProductos()
+  const [inputValue, setInputValue] = useState("")
+  const debouncedSearchTerm = useDebounce(inputValue, 500)
 
   // Generar categorías dinámicamente desde la API
   const categories = React.useMemo(() => {
@@ -116,7 +119,7 @@ export default function MenuPage() {
           newSet.delete(category)
           return newSet
         })
-      }, 300) // Reducido de 400ms a 300ms para ser más instantáneo
+      }, 150) // Reducido de 300ms a 150ms para ser más instantáneo
     }
   }
 
@@ -139,10 +142,10 @@ export default function MenuPage() {
     return productos.filter((dish) => {
       const matchesCategory = selectedCategory === "Todos" || dish.categoria.nombre === selectedCategory
       const matchesSearch =
-        (dish.nombre || '').toLowerCase().includes(searchTerm.toLowerCase())
+        (dish.nombre || '').toLowerCase().includes(debouncedSearchTerm.toLowerCase())
       return matchesCategory && matchesSearch
     })
-  }, [productos, selectedCategory, searchTerm])
+  }, [productos, selectedCategory, debouncedSearchTerm])
 
   // Agrupar platos por categoría - Memoizado
   const dishesByCategory = React.useMemo(() => {
@@ -229,8 +232,8 @@ export default function MenuPage() {
               <Search className="absolute right-3 top-1/2 transform -translate-y-1/2 text-black-50 h-5 w-5" />
               <Input
                 placeholder="Buscar platos..."
-                value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
+                value={inputValue}
+                onChange={(e) => setInputValue(e.target.value)}
                 className="w-full h-12 text-lg rounded-[10px] shadow-[0_4px_4px_rgba(0,0,0,0.25)]"
                 aria-label="Buscar platos"
                 data-testid="search-input"
@@ -241,7 +244,7 @@ export default function MenuPage() {
 
           {/*Renderizado condicional de filtros o recuento de búsqueda */}
           <div className="relative">
-            {searchTerm.length > 0 ? (
+            {inputValue.length > 0 ? (
               // CUANDO HAY BÚSQUEDA: Mostrar recuento de resultados
               <div className="py-2"> {/* Contenedor para mantener el espaciado vertical */}
                 <div
@@ -280,7 +283,7 @@ export default function MenuPage() {
             )}
           </div>
         </div>
-        
+
         {/* Menu Sections */}
         {filteredDishes.length > 0 ? (
           <>
@@ -374,56 +377,54 @@ export default function MenuPage() {
                       {expandedCategories[category] && <hr className="border-blue-700" />}
 
                       {/* Platos o Skeleton */}
-                      {expandedCategories[category] && (
-                        <>
-                          {loadingCategories.has(category) ? (
-                            <DishGridSkeleton count={Math.min(dishes.length, 6)} />
-                          ) : (
-                            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 py-5" data-cy="plate-grid">
-                              {/* Mostrar solo las primeras 8 cards */}
-                              {dishes.slice(0, 8).map((dish, index) => {
-                                const isFirstLoad = !loadedCategories.has(category)
-                                const shouldPrioritize = isFirstLoad && index < 6
+                      <div className={!expandedCategories[category] ? 'hidden' : ''}>
+                        {loadingCategories.has(category) ? (
+                          <DishGridSkeleton count={Math.min(dishes.length, 6)} />
+                        ) : (
+                          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 py-5" data-cy="plate-grid">
+                            {/* Mostrar solo las primeras 8 cards */}
+                            {dishes.slice(0, 8).map((dish, index) => {
+                              const isFirstLoad = !loadedCategories.has(category)
+                              const shouldPrioritize = isFirstLoad && index < 6
 
-                                return (
-                                  <DishCard
-                                    key={dish.id}
-                                    dish={{
-                                      id: dish.id as unknown as number,
-                                      nombre: dish.nombre || 'Sin nombre',
-                                      imagen: dish.imagen_path || '/placeholder-image.png',
-                                      precio: parseFloat(dish.precio_base),
-                                      stock: 10,
-                                      disponible: true,
-                                      categoria: dish.categoria.nombre,
-                                      alergenos: [],
-                                      tiempo_preparacion: 15,
-                                      descripcion: '',
-                                      ingredientes: [],
-                                      grupo_personalizacion: []
-                                    }}
-                                    showPrice={true}
-                                    priority={shouldPrioritize}
-                                  />
-                                )
-                              })}
-                              
-                              {/* Card "Más opciones..." si hay más de 8 platos */}
-                              {dishes.length > 8 && (
-                                <div
-                                  onClick={() => setSelectedCategory(category)}
-                                  className="cursor-pointer rounded-2xl overflow-hidden shadow-lg hover:shadow-2xl transition-all duration-300 hover:scale-105 flex items-center justify-center bg-[#004166] text-white"
-                                  style={{ minHeight: '300px' }}
-                                >
-                                  <div className="text-center p-6">
-                                    <h3 className="text-2xl font-bold">Más opciones...</h3>
-                                  </div>
+                              return (
+                                <DishCard
+                                  key={dish.id}
+                                  dish={{
+                                    id: dish.id as unknown as number,
+                                    nombre: dish.nombre || 'Sin nombre',
+                                    imagen: dish.imagen_path || '/placeholder-image.png',
+                                    precio: parseFloat(dish.precio_base),
+                                    stock: 10,
+                                    disponible: true,
+                                    categoria: dish.categoria.nombre,
+                                    alergenos: [],
+                                    tiempo_preparacion: 15,
+                                    descripcion: '',
+                                    ingredientes: [],
+                                    grupo_personalizacion: []
+                                  }}
+                                  showPrice={true}
+                                  priority={shouldPrioritize}
+                                />
+                              )
+                            })}
+
+                            {/* Card "Más opciones..." si hay más de 8 platos */}
+                            {dishes.length > 8 && (
+                              <div
+                                onClick={() => setSelectedCategory(category)}
+                                className="cursor-pointer rounded-2xl overflow-hidden shadow-lg hover:shadow-2xl transition-all duration-300 hover:scale-105 flex items-center justify-center bg-[#004166] text-white"
+                                style={{ minHeight: '300px' }}
+                              >
+                                <div className="text-center p-6">
+                                  <h3 className="text-2xl font-bold">Más opciones...</h3>
                                 </div>
-                              )}
-                            </div>
-                          )}
-                        </>
-                      )}
+                              </div>
+                            )}
+                          </div>
+                        )}
+                      </div>
                     </div>
                   </div>
                 ))
@@ -435,7 +436,7 @@ export default function MenuPage() {
                     <h2 className="text-2xl font-bold text-gray-800 mb-6 text-center">
                       {category}
                     </h2>
-                    
+
                     {/* Cards directamente sin contenedor */}
                     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6" data-cy="plate-grid">
                       {dishes.map((dish, index) => (
