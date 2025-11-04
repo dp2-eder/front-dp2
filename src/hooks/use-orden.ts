@@ -9,7 +9,9 @@ export interface CartItem {
   basePrice: number;
   quantity: number;
   image: string;
-  selectedOptions: { type: string; name: string; price: number }[];
+  selectedOptions: {
+    id: any; type: string; name: string; price: number 
+}[];
   totalPrice: number;
   comments?: string;
 }
