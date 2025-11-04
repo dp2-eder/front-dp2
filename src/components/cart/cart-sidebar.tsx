@@ -197,7 +197,7 @@ export default function CartSidebar({ isOpen, onClose }: CartSidebarProps) {
       // Limpiar el carrito
       clearCart();
     } catch (err: unknown) {
-      console.error('Error al enviar pedido:', err instanceof Error ? err.message : 'Error desconocido');
+      // Handle error silently
     } finally {
       setSending(false);
     }

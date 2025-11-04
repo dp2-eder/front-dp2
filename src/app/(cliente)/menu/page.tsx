@@ -18,9 +18,9 @@ import Header from "@/components/layout/header"
 import { Button } from '@/components/ui/button'
 import { Card, CardContent } from '@/components/ui/card'
 import { Input } from '@/components/ui/input'
+import { useDebounce } from '@/hooks/use-debounce'
 import { useProductos } from '@/hooks/use-productos'
 import { Producto } from '@/types/productos'
-import { useDebounce } from '@/hooks/use-debounce'
 
 // Categorías basadas en tu API
 
@@ -33,7 +33,7 @@ export default function MenuPage() {
   //const [isLoading, setIsLoading] = useState(false)
   const [isAuthenticated, setIsAuthenticated] = useState(true)
   const [selectedCategory, setSelectedCategory] = useState("Todos") // Mostrar todos por defecto
-  const [searchTerm, setSearchTerm] = useState("")
+  const [searchTerm] = useState("")
   //const [cart, setCart] = useState<number[]>([])
   //const [favorites, setFavorites] = useState<number[]>([])
   const [expandedCategories, setExpandedCategories] = useState<{ [key: string]: boolean }>({})

@@ -55,7 +55,7 @@ export default function PagoPage() {
       <Header showFullNavigation={true} />
 
       <main className="flex-1">
-        <div className="max-w-4xl mx-auto px-4 py-6 md:py-8">
+        <div className="max-w-4xl mx-auto px-4 py-6 md:py-8 pb-20 md:pb-24">
           {/* Back button */}
           <Link href="/about" className="flex items-center gap-2 mb-6">
             <LogIn className="w-7 h-7" style={{ transform: 'scaleX(-1)' }} />
