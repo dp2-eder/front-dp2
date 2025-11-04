@@ -7,74 +7,9 @@ import { useState, useEffect } from "react"
 
 import { Button } from "@/components/ui/button"
 import { useCart, type CartItem } from "@/hooks/use-cart"
+import type { SendOrderParams } from "@/hooks/use-orden"
+import { sendOrderToKitchen } from "@/hooks/use-orden"
 
-interface SendOrderParams {
-  cart: CartItem[];
-  notasCliente?: string;
-  notasCocina?: string;
-}
-
-// Helper para enviar pedido usando endpoint local (proxy en Next.js)
-async function sendOrderToKitchen({ cart, notasCliente = "", notasCocina = "" }: SendOrderParams) {
-  // Obtener id_mesa de localStorage
-  const id_mesa = typeof window !== 'undefined' ? localStorage.getItem("mesaId") : null;
-  if (!id_mesa) throw new Error("No se encontró el ID de la mesa");
-
-  // Armar items
-  const items = cart.map((item: CartItem) => {
-    // id_producto debe ser el id real del producto (string largo)
-    // El id_producto debe ser solo la parte antes del guion (producto.id)
-    const id_producto = String(item.id).split('-')[0];
-    // El precio_unitario debe ser SOLO el basePrice original del producto, sin adicionales
-    const precio_unitario = Number(Number(item.basePrice).toFixed(2));
-    // Opciones como array de objetos { id_producto_opcion, precio_adicional }
-    const opciones = Array.isArray(item.selectedOptions)
-      ? item.selectedOptions.map((opt: unknown) => ({
-        id_producto_opcion: (opt as Record<string, unknown>)?.id ? String((opt as Record<string, unknown>).id) : "",
-        precio_adicional: Number(Number((opt as Record<string, unknown>)?.price || 0).toFixed(2))
-      }))
-      : [];
-    return {
-      id_producto,
-      cantidad: Number(item.quantity),
-      precio_unitario,
-      opciones,
-      notas_personalizacion: typeof item.comments === 'string' ? item.comments : null
-    };
-  });
-
-  const payload = {
-    id_mesa,
-    items,
-    notas_cliente: notasCliente,
-    notas_cocina: notasCocina
-  };
-  // Debug: mostrar el payload que se enviará
-  // eslint-disable-next-line no-console
-  console.log('Enviando pedido a cocina:', payload);
-
-  // Usar endpoint local, que puede ser proxy a backend externo
-  const response = await fetch("/api/pedidos/completo", {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify(payload)
-  });
-  let result: unknown = null;
-  try {
-    result = await response.json();
-  } catch {
-    result = await response.text();
-  }
-  if (!response.ok || (result && typeof result === 'object' && result !== null && 'success' in result && (result as Record<string, unknown>).success === false)) {
-    let msg = "Error al enviar pedido";
-    if (typeof result === 'string') msg = result;
-    else if (result && typeof result === 'object' && 'error' in result) msg = String((result as Record<string, unknown>).error);
-    else if (result && typeof result === 'object' && 'detail' in result) msg = String((result as Record<string, unknown>).detail);
-    else if (typeof result === 'object') msg = JSON.stringify(result);
-    throw new Error(msg);
-  }
-  return result;
-}
 
 interface CartSidebarProps {
   isOpen: boolean
@@ -148,7 +83,8 @@ export default function CartSidebar({ isOpen, onClose }: CartSidebarProps) {
     if (cart.length === 0 || sending) return;
     setSending(true);
     try {
-      await sendOrderToKitchen({ cart });
+      const idMesa = localStorage.getItem("mesaId") || "";
+      await sendOrderToKitchen({ cart, idMesa });
 
       // Convertir items del carrito a items de historial
       const newHistoryItems: HistoryItem[] = cart.map(item => ({
@@ -157,10 +93,9 @@ export default function CartSidebar({ isOpen, onClose }: CartSidebarProps) {
         quantity: item.quantity,
         subtotal: item.totalPrice,
         comments: item.comments || undefined,
-        additionals: item.selectedOptions.length > 0
+        additionals: item.selectedOptions.length > 0 
           ? item.selectedOptions.map(opt => opt.name).sort()
           : undefined,
-        image: item.image,
         date: new Date().toISOString()
       }));
 
@@ -171,11 +106,11 @@ export default function CartSidebar({ isOpen, onClose }: CartSidebarProps) {
       updatedHistory.forEach(item => {
         const existingIndex = groupedHistory.findIndex(grouped => {
           const sameBasics = grouped.name === item.name && grouped.comments === item.comments;
-          const sameAdditionals =
+          const sameAdditionals = 
             (!grouped.additionals && !item.additionals) ||
-            (grouped.additionals && item.additionals &&
-              grouped.additionals.length === item.additionals.length &&
-              grouped.additionals.every((add, idx) => add === item.additionals?.[idx]));
+            (grouped.additionals && item.additionals && 
+             grouped.additionals.length === item.additionals.length &&
+             grouped.additionals.every((add, idx) => add === item.additionals?.[idx]));
           return sameBasics && sameAdditionals;
         });
         if (existingIndex >= 0) {
