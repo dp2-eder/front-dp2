@@ -233,7 +233,7 @@ export function PaymentGroups({ orderHistory, onGroupsChange }: PaymentGroupsPro
                     <div className="flex-1 min-w-0">
                       <h4 className="text-sm font-semibold mb-1">{item.name}</h4>
                       <p className="text-xs text-gray-600 mb-1">
-                        Precio unitario: S/{(item.subtotal / item.totalQuantity).toFixed(2)}
+                        Precio unitario: S/{(item.subtotal / item.quantity).toFixed(2)}
                       </p>
                       <p className="text-xs text-gray-600">Disponibles: {maxSelectable}</p>
                     </div>
