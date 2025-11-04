@@ -19,6 +19,7 @@ export interface SendOrderParams {
   idMesa: string;            // 👈 NUEVO (obligatorio)
   notasCliente?: string;
   notasCocina?: string;
+  simulateServerError?: boolean; // 👈 NUEVO parámetro opcional
 }
 
 export async function sendOrderToKitchen({
@@ -26,44 +27,35 @@ export async function sendOrderToKitchen({
   idMesa,
   notasCliente = "",
   notasCocina = "",
-}: SendOrderParams) {
+  simulateNetworkError = false, // 👈 NUEVO
+}: SendOrderParams & { simulateNetworkError?: boolean }) {
 
   if (!idMesa) throw new Error("No se encontró el ID de la mesa");
 
-  const items = cart.map((item) => ({
-    id_producto: String(item.id).split("-")[0],
-    cantidad: Number(item.quantity),
-    precio_unitario: Number(Number(item.basePrice).toFixed(2)),
-    // si tu backend espera string[]:
-    opciones: item.selectedOptions?.map(o => String(o.name)) ?? [],
-    notas_personalizacion: item.comments ?? "",
-  }));
-
-  const payload = {
-    id_mesa: idMesa,
-    items,
-    notas_cliente: notasCliente,
-    notas_cocina: notasCocina,
-  };
-
-  const res = await fetch("https://back-dp2.onrender.com/api/v1/pedidos/completo", {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify(payload),
-  });
-
-  const text = await res.text();               // lee SOLO una vez
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  let data: any;
-  try { data = text ? JSON.parse(text) : null; } catch { data = text; }
-
-  if (!res.ok) {
-    const msg =
-      (data && typeof data === "object" && (data.error || data.detail)) ||
-      (typeof data === "string" && data) ||
-      `HTTP ${res.status}`;
-    throw new Error(msg);
+  if (simulateNetworkError) {
+    console.error("🌐 Simulando error de red...");
+    throw new TypeError("Failed to fetch");
   }
 
-  return data;
+  try {
+    const res = await fetch("https://back-dp2.onrender.com/api/v1/pedidos/completo", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ id_mesa: idMesa, items: [] }),
+    });
+
+    if (!res.ok) throw new Error(`HTTP error! status: ${res.status}`);
+
+    const data = await res.json();
+    console.log("✅ Pedido enviado correctamente:", data);
+    return data;
+
+  } catch (error) {
+    if (error instanceof TypeError && error.message === "Failed to fetch") {
+      console.error("❌ Error de red: no se pudo conectar al servidor o la conexión falló.");
+    } else {
+      console.error("💥 Error al enviar pedido:", error);
+    }
+    throw error;
+  }
 }

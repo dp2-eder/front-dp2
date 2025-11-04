@@ -83,7 +83,8 @@ export default function CartSidebar({ isOpen, onClose }: CartSidebarProps) {
     setSending(true);
     try {
       const idMesa = localStorage.getItem("mesaId") || "";
-      await sendOrderToKitchen({ cart, idMesa });
+      if (idMesa === "") console.error("No se encontró el ID de la mesa");
+      await sendOrderToKitchen({ cart, idMesa});
 
       // Convertir items del carrito a items de historial
       const newHistoryItems: HistoryItem[] = cart.map(item => ({
