@@ -9,6 +9,7 @@ export interface CartItem {
   quantity: number
   image: string
   selectedOptions: {
+    id: string
     type: string
     name: string
     price: number
