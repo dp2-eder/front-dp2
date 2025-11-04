@@ -29,10 +29,16 @@ interface PaymentGroupsProps {
   onGroupsChange?: (groups: PaymentGroup[], paidGroupIds: string[]) => void
 }
 
+interface SelectedItem {
+  name: string
+  subtotal: number
+  quantity: number
+}
+
 export function PaymentGroups({ orderHistory, onGroupsChange }: PaymentGroupsProps) {
   const [groupName, setGroupName] = useState("")
   const [groups, setGroups] = useState<PaymentGroup[]>([])
-  const [selectedItems, setSelectedItems] = useState<Record<string, number>>({})
+  const [selectedItems, setSelectedItems] = useState<SelectedItem[]>([])
   const [paidGroupIds, setPaidGroupIds] = useState<Set<string>>(new Set())
 
   // Función para convertir URL de Google Drive
@@ -73,10 +79,12 @@ export function PaymentGroups({ orderHistory, onGroupsChange }: PaymentGroupsPro
     // Filtrar items que aún tengan cantidad disponible
     return Object.entries(grouped)
       .map(([, item]) => {
-        // Calcular cuánto ha sido asignado a grupos
+        // Calcular cuánto ha sido asignado a grupos ya creados
         const assignedInGroups = groups.reduce((sum, group) => {
-          const groupItem = group.items.find(i => item.allIds.includes(i.id))
-          return sum + (groupItem?.selectedQuantity || 0)
+          // Sumar TODOS los items del grupo que coincidan con este item agrupado
+          const matchingItems = group.items.filter(i => item.allIds.includes(i.id))
+          const groupTotal = matchingItems.reduce((qty, gi) => qty + gi.selectedQuantity, 0)
+          return sum + groupTotal
         }, 0)
 
         return {
@@ -94,15 +102,35 @@ export function PaymentGroups({ orderHistory, onGroupsChange }: PaymentGroupsPro
   }
 
   const handleItemQuantityChange = (itemName: string, itemSubtotal: number, quantity: number) => {
+    if (quantity < 0) return
+
+    // Obtener la cantidad actualmente seleccionada de este item
+    const currentQuantity = selectedItems.find(si => si.name === itemName && si.subtotal === itemSubtotal)?.quantity || 0
+
+    // Obtener el máximo disponible
     const maxSelectable = getMaxSelectableQuantity(itemName, itemSubtotal)
 
-    if (quantity < 0 || quantity > maxSelectable) return
+    // Si es un item que ya estoy modificando, permitir cambiar hasta maxSelectable + currentQuantity
+    // Si es un item nuevo, permitir seleccionar hasta maxSelectable
+    const maxAllowed = currentQuantity > 0 ? maxSelectable + currentQuantity : maxSelectable
 
-    const key = `${itemName}-${itemSubtotal}`
-    setSelectedItems(prev => ({
-      ...prev,
-      [key]: quantity
-    }))
+    if (quantity > maxAllowed) return
+
+    setSelectedItems(prev => {
+      const index = prev.findIndex(item => item.name === itemName && item.subtotal === itemSubtotal)
+
+      if (index >= 0) {
+        // Update existing item
+        const newItems = [...prev]
+        newItems[index].quantity = quantity
+        return newItems
+      } else if (quantity > 0) {
+        // Add new item
+        return [...prev, { name: itemName, subtotal: itemSubtotal, quantity }]
+      }
+
+      return prev
+    })
   }
 
   const handleCreateGroup = () => {
@@ -111,42 +139,39 @@ export function PaymentGroups({ orderHistory, onGroupsChange }: PaymentGroupsPro
     const newGroupItems: Array<OrderItem & { selectedQuantity: number }> = []
 
     // Procesar cada item seleccionado (agrupado)
-    Object.entries(selectedItems)
-      .filter(([_, qty]) => qty > 0)
-      .forEach(([key, selectedQuantity]) => {
-        const [itemName, itemSubtotalStr] = key.split('-')
-        const itemSubtotal = parseFloat(itemSubtotalStr)
+    selectedItems.forEach(({ name: itemName, subtotal: itemSubtotal, quantity: selectedQuantity }) => {
+      if (selectedQuantity <= 0) return
 
-        // Encontrar todos los items originales con este nombre y subtotal
-        const matchingItems = orderHistory.filter(
-          item => item.name === itemName && item.subtotal === itemSubtotal
-        )
+      // Encontrar todos los items originales con este nombre y subtotal
+      const matchingItems = orderHistory.filter(
+        item => item.name === itemName && item.subtotal === itemSubtotal
+      )
 
-        // Distribuir la cantidad seleccionada entre los items originales
-        let remainingQty = selectedQuantity
-        matchingItems.forEach(item => {
-          if (remainingQty > 0) {
-            const qtyToTake = Math.min(remainingQty, item.quantity)
+      // Distribuir la cantidad seleccionada entre los items originales
+      let remainingQty = selectedQuantity
+      matchingItems.forEach(item => {
+        if (remainingQty > 0) {
+          const qtyToTake = Math.min(remainingQty, item.quantity)
 
-            // Calcular cuánto ya fue asignado a otros grupos para este item
-            const alreadyAssigned = groups.reduce((sum, group) => {
-              const groupItem = group.items.find(gi => gi.id === item.id)
-              return sum + (groupItem?.selectedQuantity || 0)
-            }, 0)
+          // Calcular cuánto ya fue asignado a otros grupos para este item
+          const alreadyAssigned = groups.reduce((sum, group) => {
+            const groupItem = group.items.find(gi => gi.id === item.id)
+            return sum + (groupItem?.selectedQuantity || 0)
+          }, 0)
 
-            const availableForThisItem = item.quantity - alreadyAssigned
-            const actualQtyToTake = Math.min(qtyToTake, availableForThisItem)
+          const availableForThisItem = item.quantity - alreadyAssigned
+          const actualQtyToTake = Math.min(qtyToTake, availableForThisItem)
 
-            if (actualQtyToTake > 0) {
-              newGroupItems.push({
-                ...item,
-                selectedQuantity: actualQtyToTake
-              })
-              remainingQty -= actualQtyToTake
-            }
+          if (actualQtyToTake > 0) {
+            newGroupItems.push({
+              ...item,
+              selectedQuantity: actualQtyToTake
+            })
+            remainingQty -= actualQtyToTake
           }
-        })
+        }
       })
+    })
 
     if (newGroupItems.length === 0) return
 
@@ -164,7 +189,7 @@ export function PaymentGroups({ orderHistory, onGroupsChange }: PaymentGroupsPro
     const updatedGroups = [...groups, newGroup]
     setGroups(updatedGroups)
     setGroupName("")
-    setSelectedItems({})
+    setSelectedItems([])
     onGroupsChange?.(updatedGroups, Array.from(paidGroupIds))
   }
 
@@ -212,7 +237,7 @@ export function PaymentGroups({ orderHistory, onGroupsChange }: PaymentGroupsPro
           <div className="space-y-4 mb-6">
             {availableItems.map((item) => {
               const itemKey = `${item.name}-${item.subtotal}`
-              const selectedQty = selectedItems[itemKey] || 0
+              const selectedQty = selectedItems.find(si => si.name === item.name && si.subtotal === item.subtotal)?.quantity || 0
               const maxSelectable = getMaxSelectableQuantity(item.name, item.subtotal)
 
               return (
@@ -272,7 +297,7 @@ export function PaymentGroups({ orderHistory, onGroupsChange }: PaymentGroupsPro
 
         <Button
           onClick={handleCreateGroup}
-          disabled={Object.values(selectedItems).every(qty => qty === 0) || !groupName.trim()}
+          disabled={selectedItems.every(item => item.quantity === 0) || !groupName.trim()}
           className="w-full bg-[#004166] hover:bg-[#003d5c] text-white py-3 font-bold rounded-lg"
         >
           Crear grupo de pago
@@ -329,14 +354,22 @@ export function PaymentGroups({ orderHistory, onGroupsChange }: PaymentGroupsPro
                   </div>
 
                   <div className="space-y-2 mb-3">
-                    {group.items.map((item) => (
-                      <p
-                        key={`${group.id}-${item.id}`}
-                        className={`text-xs ${isPaid ? "text-gray-500" : "text-gray-700"}`}
-                      >
-                        {item.name} <span className="font-semibold">(x{item.selectedQuantity})</span>
-                      </p>
-                    ))}
+                    {(() => {
+                      // Agrupar items por nombre y sumar cantidades
+                      const groupedByName: Record<string, number> = {}
+                      group.items.forEach(item => {
+                        groupedByName[item.name] = (groupedByName[item.name] || 0) + item.selectedQuantity
+                      })
+
+                      return Object.entries(groupedByName).map(([name, totalQty]) => (
+                        <p
+                          key={`${group.id}-${name}`}
+                          className={`text-xs ${isPaid ? "text-gray-500" : "text-gray-700"}`}
+                        >
+                          {name} <span className="font-semibold">(x{totalQty})</span>
+                        </p>
+                      ))
+                    })()}
                   </div>
 
                   <div className="pt-3 border-t border-gray-200">

@@ -6,8 +6,7 @@ import Link from "next/link"
 import { useState, useEffect } from "react"
 
 import { Button } from "@/components/ui/button"
-import { useCart, type CartItem } from "@/hooks/use-cart"
-import type { SendOrderParams } from "@/hooks/use-orden"
+import { useCart } from "@/hooks/use-cart"
 import { sendOrderToKitchen } from "@/hooks/use-orden"
 
 

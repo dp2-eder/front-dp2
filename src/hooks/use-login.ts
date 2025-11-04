@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-unsafe-argument */
 export interface RegisterRequest {
   email: string;
   password: string;
@@ -24,20 +25,21 @@ export async function registerUser(data: RegisterRequest): Promise<RegisterRespo
     });
 
     const text = await response.text();
-    let result: any;
+    let result: RegisterResponse = {};
     try {
-      result = text ? JSON.parse(text) : null;
+      result = text ? JSON.parse(text) as RegisterResponse : {};
     } catch {
-      result = text;
+      result = { error: text };
     }
 
     if (!response.ok) {
-      throw new Error(result?.error || result?.detail || `Error ${response.status}`);
+      const errorMessage = (result as Record<string, string>)?.error || (result as Record<string, string>)?.detail || `Error ${response.status}`;
+      throw new Error(errorMessage);
     }
 
     return result;
-  } catch (error: any) {
-    console.error("❌ Error al registrar usuario:", error);
-    return { success: false, error: error.message };
+  } catch (error) {
+    const errorMessage = error instanceof Error ? error.message : "Unknown error";
+    return { success: false, error: errorMessage };
   }
 }

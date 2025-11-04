@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-unsafe-argument, @typescript-eslint/no-unsafe-return */
 // Reusa tu CartItem del hook si ya lo exporta.
 // Si no, deja este igual al que ya tienes:
 export interface CartItem {
@@ -52,6 +53,7 @@ export async function sendOrderToKitchen({
   });
 
   const text = await res.text();               // lee SOLO una vez
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   let data: any;
   try { data = text ? JSON.parse(text) : null; } catch { data = text; }
 

@@ -8,7 +8,6 @@ import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { registerUser } from "@/hooks/use-login";
-import { RegisterRequest } from "@/hooks/use-login";
 
 
 export default function LoginPage() {
@@ -19,7 +18,6 @@ export default function LoginPage() {
   const [email, setEmail] = useState("");
   const [nombreError, setNombreError] = useState("");
   const [emailError, setEmailError] = useState("");
-  const [submitting, setSubmitting] = useState(false);
 
 
   // Soporta ?mesa=ID o un parámetro “key-only” tipo ?01K8...
@@ -70,7 +68,6 @@ export default function LoginPage() {
       localStorage.setItem("userEmail", email);
       if (mesaId) localStorage.setItem("mesaId", mesaId);
 
-      setSubmitting(true);
       try {
         // 👇 Payload con hardcodes temporales
         const payload = {
@@ -81,9 +78,8 @@ export default function LoginPage() {
           id_rol: "01K8ZF92T11888N1NFJJJYZ88A", // TODO: reemplazar por real
         };
 
-        const res = await registerUser(payload); // POST
+        await registerUser(payload); // POST
         // opcional: guarda token/datos si tu API lo devuelve
-        // if (res.token) localStorage.setItem("authToken", res.token);
 
         // guarda tus datos locales
         localStorage.setItem("userName", nombre);
@@ -91,15 +87,9 @@ export default function LoginPage() {
         if (mesaId) localStorage.setItem("mesaId", mesaId);
 
         router.push("/about"); // navega solo si no hubo error
-      } catch (err: any) {
-        console.error("Error registrando usuario:", err?.message || err);
+      } catch {
         // aquí podrías mostrar un toast o setear un error en UI
-      } finally {
-        setSubmitting(false);
       }
-
-
-      router.push("/about");
     }
   };
 
@@ -156,7 +146,7 @@ export default function LoginPage() {
         </div>
 
         {/* Formulario */}
-        <form onSubmit={handleSubmit} noValidate className="w-full max-w-md space-y-4 md:space-y-6">
+        <form onSubmit={(e) => { void handleSubmit(e) }} noValidate className="w-full max-w-md space-y-4 md:space-y-6">
           {/* Input Nombre */}
           <div>
             <div className="relative">
