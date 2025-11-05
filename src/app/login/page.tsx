@@ -7,6 +7,8 @@ import { useState } from "react";
 
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { registerUser } from "@/hooks/use-login";
+
 
 export default function LoginPage() {
   const router = useRouter();
@@ -16,6 +18,7 @@ export default function LoginPage() {
   const [email, setEmail] = useState("");
   const [nombreError, setNombreError] = useState("");
   const [emailError, setEmailError] = useState("");
+
 
   // Soporta ?mesa=ID o un parámetro “key-only” tipo ?01K8...
   const mesaId =
@@ -56,7 +59,7 @@ export default function LoginPage() {
     if (emailError) validateEmail(value);
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     const isNombreValid = validateNombre(nombre);
     const isEmailValid = validateEmail(email);
@@ -64,14 +67,36 @@ export default function LoginPage() {
       localStorage.setItem("userName", nombre);
       localStorage.setItem("userEmail", email);
       if (mesaId) localStorage.setItem("mesaId", mesaId);
-      router.push("/about");
+
+      try {
+        // 👇 Payload con hardcodes temporales
+        const payload = {
+          email,
+          password: "password123",            // TODO: reemplazar por real
+          nombre,
+          telefono: "000000000",              // TODO: reemplazar por real
+          id_rol: "01K8ZF92T11888N1NFJJJYZ88A", // TODO: reemplazar por real
+        };
+
+        await registerUser(payload); // POST
+        // opcional: guarda token/datos si tu API lo devuelve
+
+        // guarda tus datos locales
+        localStorage.setItem("userName", nombre);
+        localStorage.setItem("userEmail", email);
+        if (mesaId) localStorage.setItem("mesaId", mesaId);
+
+        router.push("/about"); // navega solo si no hubo error
+      } catch {
+        // aquí podrías mostrar un toast o setear un error en UI
+      }
     }
   };
 
   return (
     <div className="min-h-screen relative overflow-hidden bg-[#5B9BB8]">
       {/* Fondo con patrón de pescados - rotados 45 grados hacia arriba */}
-      <div 
+      <div
         className="absolute opacity-30"
         style={{
           backgroundImage: "url('/pescado-inicio.jpg')",
@@ -86,7 +111,7 @@ export default function LoginPage() {
           left: '-50%'
         }}
       />
-      
+
       {/* Overlay azulado */}
       <div className="absolute inset-0 bg-[#5B9BB8]/60" />
 
@@ -111,7 +136,7 @@ export default function LoginPage() {
           <h2 className="text-white text-xl md:text-2xl font-light italic mb-4">
             &ldquo;Momentos Inolvidables&rdquo;
           </h2>
-          
+
           {/* Número de Mesa */}
           {/*mesaId && (
             <p className="text-white text-lg md:text-2xl font-bold italic">
@@ -121,7 +146,7 @@ export default function LoginPage() {
         </div>
 
         {/* Formulario */}
-        <form onSubmit={handleSubmit} noValidate className="w-full max-w-md space-y-4 md:space-y-6">
+        <form onSubmit={(e) => { void handleSubmit(e) }} noValidate className="w-full max-w-md space-y-4 md:space-y-6">
           {/* Input Nombre */}
           <div>
             <div className="relative">
@@ -130,15 +155,13 @@ export default function LoginPage() {
                 placeholder="Nombre"
                 value={nombre}
                 onChange={handleNombreChange}
-                className={`w-full h-12 md:h-14 pl-4 pr-12 text-base md:text-lg rounded-xl border-2 ${
-                  nombreError 
-                    ? 'border-red-500 focus:ring-red-500 focus:border-red-500' 
-                    : 'border-gray-300 focus:ring-[#004166] focus:border-[#004166]'
-                } bg-white shadow-lg`}
+                className={`w-full h-12 md:h-14 pl-4 pr-12 text-base md:text-lg rounded-xl border-2 ${nombreError
+                  ? 'border-red-500 focus:ring-red-500 focus:border-red-500'
+                  : 'border-gray-300 focus:ring-[#004166] focus:border-[#004166]'
+                  } bg-white shadow-lg`}
               />
-              <User className={`absolute right-4 top-1/2 transform -translate-y-1/2 w-5 h-5 ${
-                nombreError ? 'text-red-500' : 'text-gray-400'
-              }`} />
+              <User className={`absolute right-4 top-1/2 transform -translate-y-1/2 w-5 h-5 ${nombreError ? 'text-red-500' : 'text-gray-400'
+                }`} />
             </div>
             {nombreError && (
               <p className="text-red-600 text-sm mt-2 ml-2 font-medium">
@@ -156,15 +179,13 @@ export default function LoginPage() {
                 value={email}
                 onChange={handleEmailChange}
                 onBlur={() => email && validateEmail(email)}
-                className={`w-full h-12 md:h-14 pl-4 pr-12 text-base md:text-lg rounded-xl border-2 ${
-                  emailError 
-                    ? 'border-red-500 focus:ring-red-500 focus:border-red-500' 
-                    : 'border-gray-300 focus:ring-[#004166] focus:border-[#004166]'
-                } bg-white shadow-lg`}
+                className={`w-full h-12 md:h-14 pl-4 pr-12 text-base md:text-lg rounded-xl border-2 ${emailError
+                  ? 'border-red-500 focus:ring-red-500 focus:border-red-500'
+                  : 'border-gray-300 focus:ring-[#004166] focus:border-[#004166]'
+                  } bg-white shadow-lg`}
               />
-              <Mail className={`absolute right-4 top-1/2 transform -translate-y-1/2 w-5 h-5 ${
-                emailError ? 'text-red-500' : 'text-gray-400'
-              }`} />
+              <Mail className={`absolute right-4 top-1/2 transform -translate-y-1/2 w-5 h-5 ${emailError ? 'text-red-500' : 'text-gray-400'
+                }`} />
             </div>
             {emailError && (
               <p className="text-red-600 text-sm mt-2 ml-2 font-medium">

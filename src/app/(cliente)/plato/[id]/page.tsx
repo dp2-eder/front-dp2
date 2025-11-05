@@ -1,21 +1,23 @@
 "use client"
 
+import { LogIn } from "lucide-react"
+import Link from "next/link"
 import { useParams, useRouter } from "next/navigation"
 
 import Loading from "@/app/loading"
 import Footer from "@/components/layout/footer"
 import Header from "@/components/layout/header"
-import BackButton from "@/components/ui/back-button"
 import { Button } from "@/components/ui/button"
 import SafeImage from "@/components/ui/safe-image"
 import { useAlergenos } from "@/hooks/use-alergenos"
-import { useProducto } from '@/hooks/use-producto'
+import { useProducto } from "@/hooks/use-producto"
+
 
 export default function PlatoDetailPage() {
   const params = useParams()
   const router = useRouter()
   const { producto, loading, error } = useProducto(params.id as string)
-  const { alergenos } = useAlergenos(params.id as string);
+  const { alergenos, loading: alergenosLoading } = useAlergenos(params.id as string);
 
   if (loading) return <Loading />
   if (error) return <div>Error: {error}</div>
@@ -44,7 +46,10 @@ export default function PlatoDetailPage() {
       <main className="flex-1">
         <div className="max-w-[1110px] mx-auto px-4 py-8">
           <div className="mb-16">
-            <BackButton href="/menu" text="Volver Al Menú" />
+            <Link href="/menu" className="flex items-center gap-2 mb-6">
+              <LogIn className="w-7 h-7" style={{ transform: 'scaleX(-1)' }} />
+            </Link>
+
           </div>
 
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
@@ -87,11 +92,22 @@ export default function PlatoDetailPage() {
 
               {/* Alergenos */}
               <div>
-                <h2 className="text-xl font-normal text-gray-800 mb-4 text-left">
+                <h2 className="hidden md:block text-xl font-normal text-gray-800 mb-4 text-left">
                   Lista de Alergenos presentes:</h2>
 
-                {alergenos.length > 0 ? (
-                  <div className="w-full flex justify-left mt-6">
+                {alergenosLoading ? (
+                  <div className="flex justify-center md:justify-start mt-6">
+                    <div className="flex flex-wrap justify-center items-center bg-[#FAFCFE] rounded-2xl shadow-md px-6 py-4 max-w-3xl gap-2">
+                      {[1, 2, 3].map((i) => (
+                        <div key={i} className="flex flex-col items-center justify-center text-center mx-2 my-1 animate-pulse">
+                          <span className="text-xl mb-1 text-gray-300 w-6 h-6 rounded-full bg-gray-200"></span>
+                          <span className="text-xs font-medium text-gray-300 h-3 w-12 bg-gray-200 rounded"></span>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                ) : alergenos.length > 0 ? (
+                  <div className="w-full flex justify-center md:justify-start mt-6">
                     <div className="flex flex-wrap justify-center items-center bg-[#FAFCFE] rounded-2xl shadow-md px-6 py-4 max-w-3xl">
                       {alergenos.map((item) => (
                         <div

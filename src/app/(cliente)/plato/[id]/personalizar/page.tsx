@@ -1,5 +1,6 @@
 "use client"
 
+import { LogIn } from "lucide-react"
 import Link from "next/link"
 import { useParams, useRouter } from "next/navigation"
 import { useState } from "react"
@@ -11,8 +12,8 @@ import { Button } from "@/components/ui/button"
 import { Card } from "@/components/ui/card"
 import SafeImage from "@/components/ui/safe-image"
 import { Textarea } from "@/components/ui/textarea"
-import { useCart, CartItem } from '@/hooks/use-cart'
-import { useOpcionesProducto } from '@/hooks/use-opciones-producto'
+import { useCart, type CartItem } from "@/hooks/use-cart"
+import { useOpcionesProducto } from "@/hooks/use-opciones-producto"
 
 export default function PersonalizarPage() {
   const params = useParams()
@@ -130,6 +131,11 @@ export default function PersonalizarPage() {
       
       <main className="pb-12">
         <div className="max-w-[1110px] mx-auto px-4 py-8">
+          <div className="mb-16">
+            <Link href={`/plato/${params.id as string}`} className="flex items-center gap-2 mb-6">
+              <LogIn className="w-7 h-7" style={{ transform: 'scaleX(-1)' }} />
+            </Link>
+          </div>
           <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
             {/* Left Column */}
             <div className="lg:col-span-8 space-y-6">
