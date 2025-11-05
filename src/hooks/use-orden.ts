@@ -9,7 +9,9 @@ export interface CartItem {
   basePrice: number;
   quantity: number;
   image: string;
-  selectedOptions: { id: string; type: string; name: string; price: number }[];
+  selectedOptions: {
+    id: any; type: string; name: string; price: number 
+}[];
   totalPrice: number;
   comments?: string;
 }
@@ -19,13 +21,7 @@ export interface SendOrderParams {
   idMesa: string;            // 👈 NUEVO (obligatorio)
   notasCliente?: string;
   notasCocina?: string;
-}
-
-interface ValidationError {
-  loc?: string[];
-  msg?: string;
-  input?: unknown;
-  type?: string;
+  simulateServerError?: boolean; // 👈 NUEVO parámetro opcional
 }
 
 export async function sendOrderToKitchen({
@@ -33,7 +29,8 @@ export async function sendOrderToKitchen({
   idMesa,
   notasCliente = "",
   notasCocina = "",
-}: SendOrderParams) {
+  simulateNetworkError = false, // 👈 NUEVO
+}: SendOrderParams & { simulateNetworkError?: boolean }) {
 
   if (!idMesa) throw new Error("No se encontró el ID de la mesa");
 
