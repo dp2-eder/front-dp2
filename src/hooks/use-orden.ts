@@ -9,7 +9,7 @@ export interface CartItem {
   basePrice: number;
   quantity: number;
   image: string;
-  selectedOptions: { type: string; name: string; price: number }[];
+  selectedOptions: { id: string; type: string; name: string; price: number }[];
   totalPrice: number;
   comments?: string;
 }
@@ -19,6 +19,13 @@ export interface SendOrderParams {
   idMesa: string;            // 👈 NUEVO (obligatorio)
   notasCliente?: string;
   notasCocina?: string;
+}
+
+interface ValidationError {
+  loc?: string[];
+  msg?: string;
+  input?: unknown;
+  type?: string;
 }
 
 export async function sendOrderToKitchen({
@@ -49,13 +56,13 @@ export async function sendOrderToKitchen({
     notas_cocina: notasCocina,
   };
 
-  console.log("📤 POST a /api/v1/pedidos/completo con payload:", payload);
+  //console.log("📤 POST a /api/v1/pedidos/completo con payload:", payload);
   const res = await fetch("https://back-dp2.onrender.com/api/v1/pedidos/completo", {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify(payload),
   });
-  console.log("📥 Respuesta del servidor:", res.status, res.statusText);
+  //console.log("📥 Respuesta del servidor:", res.status, res.statusText);
 
   const text = await res.text();               // lee SOLO una vez
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -63,11 +70,13 @@ export async function sendOrderToKitchen({
   try { data = text ? JSON.parse(text) : null; } catch { data = text; }
 
   if (!res.ok) {
-    console.error("📋 Respuesta completa del servidor:", data);
+    //console.error("📋 Respuesta completa del servidor:", data);
 
     // Mostrar detalles de cada error
     if (data?.detail && Array.isArray(data.detail)) {
-      data.detail.forEach((err: any, idx: number) => {
+      const details = data.detail as ValidationError[];
+      details.forEach((err, idx) => {
+        // eslint-disable-next-line no-console
         console.error(`  ❌ Error ${idx + 1}:`, {
           location: err.loc?.join(" > "),
           message: err.msg,
