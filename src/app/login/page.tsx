@@ -7,7 +7,7 @@ import { useState } from "react";
 
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { loginUser, registerUser } from "@/hooks/use-login";
+import { loginUser, registerUser, type RegisterResponse } from "@/hooks/use-login";
 
 
 export default function LoginPage() {
@@ -72,12 +72,14 @@ export default function LoginPage() {
         const password = "password123"; // TODO: reemplazar por real
 
         // 1️⃣ Intenta hacer LOGIN primero
-        console.log("🔐 Intentando login con email:", email);
-        const loginResponse = await loginUser({ email, password });
+        //console.log("🔐 Intentando login con email:", email);
+        // eslint-disable-next-line @typescript-eslint/no-unsafe-call
+        const loginResponseUnknown: unknown = await loginUser({ email, password });
+        const loginResponse = loginResponseUnknown as RegisterResponse;
 
-        if (loginResponse.error) {
+        if (loginResponse.error && typeof loginResponse.error === 'string') {
           // 2️⃣ Si falla el login, intenta REGISTRAR
-          console.log("❌ Login falló, intentando registro automático...");
+          //console.log("❌ Login falló, intentando registro automático...");
           const registerPayload = {
             email,
             password,
@@ -86,31 +88,44 @@ export default function LoginPage() {
             id_rol: "01K98T4KTD9H23FGQP24XT7P53", // TODO: reemplazar por real
           };
 
-          const registerResponse = await registerUser(registerPayload);
+          const registerResponseUnknown: unknown = await registerUser(registerPayload);
+          const registerResponse = registerResponseUnknown as RegisterResponse;
 
-          if (registerResponse.error) {
+          if (registerResponse.error && typeof registerResponse.error === 'string') {
             throw new Error(`Registro falló: ${registerResponse.error}`);
           }
 
           // Guardar el id_usuario del registro desde usuario.id
-          const userId = registerResponse.usuario?.id;
+          // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
+          const registerUsuario = registerResponse.usuario;
+          if (!registerUsuario || typeof registerUsuario !== 'object' || !('id' in registerUsuario)) {
+            throw new Error("El servidor no devolvió ID de usuario");
+          }
+          // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-member-access
+          const userId = String(registerUsuario.id);
           if (!userId) {
             throw new Error("El servidor no devolvió ID de usuario");
           }
 
-          console.log("✅ Usuario registrado exitosamente con ID:", userId);
+          //console.log("✅ Usuario registrado exitosamente con ID:", userId);
 
           // Limpiar localStorage antes de guardar datos del nuevo usuario
           localStorage.clear();
           localStorage.setItem("userId", userId);
         } else {
           // 3️⃣ Si login fue exitoso, guardar id_usuario desde usuario.id
-          const userId = loginResponse.usuario?.id;
+          // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
+          const loginUsuario = loginResponse.usuario;
+          if (!loginUsuario || typeof loginUsuario !== 'object' || !('id' in loginUsuario)) {
+            throw new Error("El servidor no devolvió ID de usuario");
+          }
+          // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-member-access
+          const userId = String(loginUsuario.id);
           if (!userId) {
             throw new Error("El servidor no devolvió ID de usuario");
           }
 
-          console.log("✅ Login exitoso con ID:", userId);
+          //console.log("✅ Login exitoso con ID:", userId);
           localStorage.setItem("userId", userId);
         }
 
@@ -122,7 +137,7 @@ export default function LoginPage() {
         router.push("/about"); // navega solo si no hubo error
       } catch (error) {
         const errorMsg = error instanceof Error ? error.message : "Error desconocido";
-        console.error("❌ Error en login/registro:", errorMsg);
+        //console.error("❌ Error en login/registro:", errorMsg);
         alert(`Error: ${errorMsg}`);
       } finally {
         setIsLoading(false);

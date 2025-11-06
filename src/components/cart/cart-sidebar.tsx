@@ -84,9 +84,9 @@ export default function CartSidebar({ isOpen, onClose }: CartSidebarProps) {
     try {
       const idMesa = localStorage.getItem("mesaId") || "";
       const userId = localStorage.getItem("userId") || "";
-      console.log("📦 Enviando pedido a la cocina...", { idMesa, userId, cartLength: cart.length });
+      //console.log("📦 Enviando pedido a la cocina...", { idMesa, userId, cartLength: cart.length });
       await sendOrderToKitchen({ cart, idMesa, userId });
-      console.log("✅ Pedido enviado correctamente");
+      //console.log("✅ Pedido enviado correctamente");
 
       // Convertir items del carrito a items de historial
       const newHistoryItems: HistoryItem[] = cart.map(item => ({
@@ -135,7 +135,7 @@ export default function CartSidebar({ isOpen, onClose }: CartSidebarProps) {
       // Limpiar el carrito
       clearCart();
     } catch (err: unknown) {
-      console.error("❌ Error al enviar pedido:", err);
+      //console.error("❌ Error al enviar pedido:", err);
       const errorMsg = err instanceof Error ? err.message : String(err);
       alert(`Error al enviar pedido: ${errorMsg}`);
     } finally {
