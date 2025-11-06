@@ -7,7 +7,7 @@ import { useState } from "react";
 
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { registerUser } from "@/hooks/use-login";
+import { loginUser, registerUser } from "@/hooks/use-login";
 
 
 export default function LoginPage() {
@@ -18,6 +18,7 @@ export default function LoginPage() {
   const [email, setEmail] = useState("");
   const [nombreError, setNombreError] = useState("");
   const [emailError, setEmailError] = useState("");
+  const [isLoading, setIsLoading] = useState(false);
 
 
   // Soporta ?mesa=ID o un parámetro “key-only” tipo ?01K8...
@@ -63,32 +64,68 @@ export default function LoginPage() {
     e.preventDefault();
     const isNombreValid = validateNombre(nombre);
     const isEmailValid = validateEmail(email);
+
     if (isNombreValid && isEmailValid) {
-      localStorage.setItem("userName", nombre);
-      localStorage.setItem("userEmail", email);
-      if (mesaId) localStorage.setItem("mesaId", mesaId);
+      setIsLoading(true);
 
       try {
-        // 👇 Payload con hardcodes temporales
-        const payload = {
-          email,
-          password: "password123",            // TODO: reemplazar por real
-          nombre,
-          telefono: "000000000",              // TODO: reemplazar por real
-          id_rol: "01K98T4KTD9H23FGQP24XT7P53", // TODO: reemplazar por real
-        };
+        const password = "password123"; // TODO: reemplazar por real
 
-        await registerUser(payload); // POST
-        // opcional: guarda token/datos si tu API lo devuelve
+        // 1️⃣ Intenta hacer LOGIN primero
+        console.log("🔐 Intentando login con email:", email);
+        const loginResponse = await loginUser({ email, password });
 
-        // guarda tus datos locales
+        if (loginResponse.error) {
+          // 2️⃣ Si falla el login, intenta REGISTRAR
+          console.log("❌ Login falló, intentando registro automático...");
+          const registerPayload = {
+            email,
+            password,
+            nombre,
+            telefono: "000000000",              // TODO: reemplazar por real
+            id_rol: "01K98T4KTD9H23FGQP24XT7P53", // TODO: reemplazar por real
+          };
+
+          const registerResponse = await registerUser(registerPayload);
+
+          if (registerResponse.error) {
+            throw new Error(`Registro falló: ${registerResponse.error}`);
+          }
+
+          // Guardar el id_usuario del registro desde usuario.id
+          const userId = registerResponse.usuario?.id;
+          if (!userId) {
+            throw new Error("El servidor no devolvió ID de usuario");
+          }
+
+          console.log("✅ Usuario registrado exitosamente con ID:", userId);
+
+          // Limpiar localStorage antes de guardar datos del nuevo usuario
+          localStorage.clear();
+          localStorage.setItem("userId", userId);
+        } else {
+          // 3️⃣ Si login fue exitoso, guardar id_usuario desde usuario.id
+          const userId = loginResponse.usuario?.id;
+          if (!userId) {
+            throw new Error("El servidor no devolvió ID de usuario");
+          }
+
+          console.log("✅ Login exitoso con ID:", userId);
+          localStorage.setItem("userId", userId);
+        }
+
+        // Guardar datos locales
         localStorage.setItem("userName", nombre);
         localStorage.setItem("userEmail", email);
         if (mesaId) localStorage.setItem("mesaId", mesaId);
 
         router.push("/about"); // navega solo si no hubo error
-      } catch {
-        // aquí podrías mostrar un toast o setear un error en UI
+      } catch (error) {
+        const errorMsg = error instanceof Error ? error.message : "Error desconocido";
+        console.error("❌ Error en login/registro:", errorMsg);
+        alert(`Error: ${errorMsg}`);
+      } finally {
+        setIsLoading(false);
       }
     }
   };
@@ -198,9 +235,10 @@ export default function LoginPage() {
           <div className="flex justify-center">
             <Button
               type="submit"
-              className="h-12 md:h-14 px-12 bg-[#004166] hover:bg-[#003d5c] text-white text-lg md:text-xl font-bold rounded-xl shadow-2xl transition-all duration-200 hover:scale-105 mt-6 md:mt-8"
+              disabled={isLoading}
+              className="h-12 md:h-14 px-12 bg-[#004166] hover:bg-[#003d5c] text-white text-lg md:text-xl font-bold rounded-xl shadow-2xl transition-all duration-200 hover:scale-105 mt-6 md:mt-8 disabled:opacity-50 disabled:cursor-not-allowed"
             >
-              Ingresar
+              {isLoading ? "Ingresando..." : "Ingresar"}
             </Button>
           </div>
         </form>

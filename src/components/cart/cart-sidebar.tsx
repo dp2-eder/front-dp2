@@ -83,8 +83,9 @@ export default function CartSidebar({ isOpen, onClose }: CartSidebarProps) {
     setSending(true);
     try {
       const idMesa = localStorage.getItem("mesaId") || "";
-      console.log("📦 Enviando pedido a la cocina...", { idMesa, cartLength: cart.length });
-      await sendOrderToKitchen({ cart, idMesa });
+      const userId = localStorage.getItem("userId") || "";
+      console.log("📦 Enviando pedido a la cocina...", { idMesa, userId, cartLength: cart.length });
+      await sendOrderToKitchen({ cart, idMesa, userId });
       console.log("✅ Pedido enviado correctamente");
 
       // Convertir items del carrito a items de historial
@@ -94,9 +95,10 @@ export default function CartSidebar({ isOpen, onClose }: CartSidebarProps) {
         quantity: item.quantity,
         subtotal: item.totalPrice,
         comments: item.comments || undefined,
-        additionals: item.selectedOptions.length > 0 
+        additionals: item.selectedOptions.length > 0
           ? item.selectedOptions.map(opt => opt.name).sort()
           : undefined,
+        image: item.image,
         date: new Date().toISOString()
       }));
 

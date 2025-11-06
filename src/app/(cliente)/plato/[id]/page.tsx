@@ -140,6 +140,10 @@ export default function PlatoDetailPage() {
                   alt={String((producto as Record<string, unknown>)?.nombre || 'Sin nombre')}
                   className="w-full h-64 lg:h-96 object-cover rounded-2xl bg-gray-300"
                   showIndicator={true}
+                  width={800}
+                  height={400}
+                  priority={false}
+                  quality={35}
                 />
               </div>
             </div>
