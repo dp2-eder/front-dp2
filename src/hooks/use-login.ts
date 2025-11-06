@@ -16,7 +16,7 @@ export interface RegisterResponse {
 
 export async function registerUser(data: RegisterRequest): Promise<RegisterResponse> {
   try {
-    const response = await fetch("api/v1/auth/register", {
+    const response = await fetch("/api/auth/register", {
       method: "POST",
       headers: {
         "Content-Type": "application/json",

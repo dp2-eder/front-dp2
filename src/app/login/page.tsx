@@ -75,7 +75,7 @@ export default function LoginPage() {
           password: "password123",            // TODO: reemplazar por real
           nombre,
           telefono: "000000000",              // TODO: reemplazar por real
-          id_rol: "01K8ZF92T11888N1NFJJJYZ88A", // TODO: reemplazar por real
+          id_rol: "01K98T4KTD9H23FGQP24XT7P53", // TODO: reemplazar por real
         };
 
         await registerUser(payload); // POST
