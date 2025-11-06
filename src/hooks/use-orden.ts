@@ -19,6 +19,7 @@ export interface CartItem {
 export interface SendOrderParams {
   cart: CartItem[];
   idMesa: string;            // 👈 NUEVO (obligatorio)
+  userId?: string;           // 👈 NUEVO (id del usuario)
   notasCliente?: string;
   notasCocina?: string;
 }
@@ -33,11 +34,13 @@ interface ValidationError {
 export async function sendOrderToKitchen({
   cart,
   idMesa,
+  userId,
   notasCliente = "",
   notasCocina = "",
 }: SendOrderParams) {
 
   if (!idMesa) throw new Error("No se encontró el ID de la mesa");
+  if (!userId) throw new Error("No se encontró el ID del usuario");
 
   const items = cart.map((item) => ({
     id_producto: String(item.id).split("-")[0],
@@ -52,14 +55,15 @@ export async function sendOrderToKitchen({
   }));
 
   const payload = {
+    id_usuario: userId,
     id_mesa: idMesa,
     items,
     notas_cliente: notasCliente,
     notas_cocina: notasCocina,
   };
 
-  //console.log("📤 POST a /api/v1/pedidos/completo con payload:", payload);
-  const res = await fetch("https://back-dp2.onrender.com/api/v1/pedidos/completo", {
+  //console.log("📤 POST a /api/pedidos/completo con payload:", payload);
+  const res = await fetch("/api/pedidos/completo", {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify(payload),

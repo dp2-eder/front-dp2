@@ -304,7 +304,7 @@ export default function MenuPage() {
                     >
                       <DishCard
                         dish={{
-                          id: dishes[0]?.id as unknown as number,
+                          id: dishes[0]?.id || "",
                           nombre: category,
                           descripcion: "",
                           precio: 0,
@@ -329,7 +329,7 @@ export default function MenuPage() {
                     <DishCard
                       key={dish.id}
                       dish={{
-                        id: dish.id as unknown as number,
+                        id: dish.id,
                         nombre: dish.nombre || 'Sin nombre',
                         imagen: dish.imagen_path || '/placeholder-image.png',
                         precio: parseFloat(dish.precio_base),
@@ -392,7 +392,7 @@ export default function MenuPage() {
                                 <DishCard
                                   key={dish.id}
                                   dish={{
-                                    id: dish.id as unknown as number,
+                                    id: dish.id,
                                     nombre: dish.nombre || 'Sin nombre',
                                     imagen: dish.imagen_path || '/placeholder-image.png',
                                     precio: parseFloat(dish.precio_base),
@@ -447,7 +447,7 @@ export default function MenuPage() {
                         <DishCard
                           key={dish.id}
                           dish={{
-                            id: dish.id as unknown as number,
+                            id: dish.id,
                             nombre: dish.nombre || 'Sin nombre',
                             imagen: dish.imagen_path || '/placeholder-image.png',
                             precio: parseFloat(dish.precio_base),

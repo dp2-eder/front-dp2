@@ -244,13 +244,15 @@ export function PaymentGroups({ orderHistory, onGroupsChange }: PaymentGroupsPro
                 <div key={itemKey} className="border-b pb-4 last:border-b-0">
                   <div className="flex gap-4">
                     {/* Imagen del plato */}
-                    <div className="relative w-20 h-20 rounded-lg overflow-hidden flex-shrink-0 bg-gray-100">
+                    <div className="relative w-16 h-16 rounded-lg overflow-hidden flex-shrink-0 bg-gray-100">
                       <Image
                         src={convertGoogleDriveUrl(item.image)}
                         alt={item.name}
-                        fill
-                        className="object-cover"
-                        sizes="80px"
+                        width={64}
+                        height={64}
+                        className="object-cover w-full h-full"
+                        loading="lazy"
+                        quality={60}
                       />
                     </div>
 

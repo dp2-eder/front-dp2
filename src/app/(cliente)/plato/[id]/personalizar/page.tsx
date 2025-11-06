@@ -147,6 +147,10 @@ export default function PersonalizarPage() {
                     alt={producto.nombre}
                     className="w-20 h-20 rounded-[30px] object-cover flex-shrink-0"
                     showIndicator={true}
+                    width={80}
+                    height={80}
+                    priority={false}
+                    quality={40}
                   />
                   <div className="flex-1">
                     <h2 className="text-base font-semibold text-gray-900 mb-1">{producto.nombre}</h2>

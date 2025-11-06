@@ -83,9 +83,10 @@ export default function CartSidebar({ isOpen, onClose }: CartSidebarProps) {
     setSending(true);
     try {
       const idMesa = localStorage.getItem("mesaId") || "";
-      console.log("📦 Enviando pedido a la cocina...", { idMesa, cartLength: cart.length });
-      await sendOrderToKitchen({ cart, idMesa });
-      console.log("✅ Pedido enviado correctamente");
+      const userId = localStorage.getItem("userId") || "";
+      //console.log("📦 Enviando pedido a la cocina...", { idMesa, userId, cartLength: cart.length });
+      await sendOrderToKitchen({ cart, idMesa, userId });
+      //console.log("✅ Pedido enviado correctamente");
 
       // Convertir items del carrito a items de historial
       const newHistoryItems: HistoryItem[] = cart.map(item => ({
@@ -94,9 +95,10 @@ export default function CartSidebar({ isOpen, onClose }: CartSidebarProps) {
         quantity: item.quantity,
         subtotal: item.totalPrice,
         comments: item.comments || undefined,
-        additionals: item.selectedOptions.length > 0 
+        additionals: item.selectedOptions.length > 0
           ? item.selectedOptions.map(opt => opt.name).sort()
           : undefined,
+        image: item.image,
         date: new Date().toISOString()
       }));
 
@@ -133,7 +135,7 @@ export default function CartSidebar({ isOpen, onClose }: CartSidebarProps) {
       // Limpiar el carrito
       clearCart();
     } catch (err: unknown) {
-      console.error("❌ Error al enviar pedido:", err);
+      //console.error("❌ Error al enviar pedido:", err);
       const errorMsg = err instanceof Error ? err.message : String(err);
       alert(`Error al enviar pedido: ${errorMsg}`);
     } finally {
