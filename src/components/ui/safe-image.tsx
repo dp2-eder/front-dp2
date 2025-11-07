@@ -1,6 +1,7 @@
 "use client"
 import Image from "next/image"
-import { useState } from "react"
+import { useEffect, useState } from "react"
+import { isImageCached, markImageAsCached } from "@/lib/image-cache"
 
 interface SafeImageProps {
   src: string | undefined
@@ -27,6 +28,20 @@ export default function SafeImage({
   quality
 }: SafeImageProps) {
   const [hasError, setHasError] = useState(false)
+  const [isLoaded, setIsLoaded] = useState(false)
+  const [isCached, setIsCached] = useState(false)
+
+  // Verificar si la imagen está en caché al montar
+  useEffect(() => {
+    if (src) {
+      const cached = isImageCached(src)
+      setIsCached(cached)
+      // Si está en caché, no mostrar loading
+      if (cached) {
+        setIsLoaded(true)
+      }
+    }
+  }, [src])
 
   // Función para validar URL de imagen
   const getValidImageSrc = (imageUrl: string | undefined): string => {
@@ -59,8 +74,30 @@ export default function SafeImage({
     }
   }
 
+  const handleLoad = () => {
+    setIsLoaded(true)
+    // Marcar imagen como cacheada cuando se carga
+    if (validSrc !== fallbackSrc) {
+      markImageAsCached(validSrc)
+    }
+  }
+
+  // Mostrar skeleton solo si NO está en caché y NO ha cargado
+  const showSkeleton = !isLoaded && !isCached
+
   return (
     <div className="relative">
+      {/* Skeleton loader - solo si no está en caché */}
+      {showSkeleton && (
+        <div
+          className={`${className} absolute inset-0 bg-gradient-to-br from-gray-200 to-gray-300 animate-pulse rounded`}
+          style={{
+            width: width ? `${width}px` : undefined,
+            height: height ? `${height}px` : undefined
+          }}
+        />
+      )}
+
       <Image
         src={hasError ? fallbackSrc : validSrc}
         alt={alt}
@@ -68,6 +105,7 @@ export default function SafeImage({
         height={height || 200}
         className={className}
         onError={handleError}
+        onLoad={handleLoad}
         priority={priority}
         quality={quality}
       />

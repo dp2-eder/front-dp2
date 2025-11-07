@@ -1,9 +1,10 @@
 import Image from "next/image"
 import Link from "next/link"
-import { useState } from "react"
+import { useEffect, useState } from "react"
 
 import { Badge } from "@/components/ui/badge"
 import { Root2 } from "@/types/menu"
+import { isImageCached, markImageAsCached } from "@/lib/image-cache"
 
 interface DishCardProps {
   dish: Root2
@@ -18,6 +19,49 @@ export function DishCard({
   priority = false
 }: DishCardProps) {
   const [imageLoaded, setImageLoaded] = useState(false)
+  const [isCached, setIsCached] = useState(false)
+
+  // Verificar si la imagen está en caché
+  // Se ejecuta cuando el componente monta O cuando la imagen cambia
+  useEffect(() => {
+    if (dish.imagen) {
+      const cached = isImageCached(dish.imagen)
+      setIsCached(cached)
+      // Si está en caché, no mostrar skeleton
+      if (cached) {
+        setImageLoaded(true)
+      }
+    }
+  }, [dish.imagen])
+
+  // Verificar caché nuevamente cuando el componente se hace visible (para navegaciones)
+  useEffect(() => {
+    const checkCacheOnVisibility = () => {
+      if (dish.imagen) {
+        const cached = isImageCached(dish.imagen)
+        if (cached && !imageLoaded) {
+          setIsCached(true)
+          setImageLoaded(true)
+        }
+      }
+    }
+
+    // Verificar cuando la pestaña se vuelve visible
+    document.addEventListener('visibilitychange', checkCacheOnVisibility)
+
+    // Verificar después de un pequeño delay (para navegaciones)
+    // Primera verificación rápida
+    const timeout1 = setTimeout(checkCacheOnVisibility, 100)
+
+    // Segunda verificación más agresiva como fallback (en caso de que el dato haya llegado tarde)
+    const timeout2 = setTimeout(checkCacheOnVisibility, 500)
+
+    return () => {
+      document.removeEventListener('visibilitychange', checkCacheOnVisibility)
+      clearTimeout(timeout1)
+      clearTimeout(timeout2)
+    }
+  }, [dish.imagen, imageLoaded])
   
   // Array de imágenes locales como fallback
   const localImages = [
@@ -57,13 +101,13 @@ export function DishCard({
       <article className="text-center cursor-pointer hover:scale-105 transition-transform duration-200" data-cy="plate-card">
         {/* Image Container */}
         <div className="relative">
-          {/* Loading Skeleton */}
-          {!imageLoaded && (
+          {/* Loading Skeleton - solo si no está en caché */}
+          {!imageLoaded && !isCached && (
             <div className="absolute inset-0 bg-gradient-to-br from-gray-200 to-gray-300 animate-pulse rounded-t-3xl flex items-center justify-center">
               <div className="w-12 h-12 border-4 border-gray-400 border-t-transparent rounded-full animate-spin"></div>
             </div>
           )}
-          
+
           <Image
             src={dish.imagen || getLocalImage(dish.id)}
             alt={dish.nombre || "Imagen no disponible"}
@@ -75,7 +119,13 @@ export function DishCard({
               imageLoaded ? 'opacity-100' : 'opacity-0'
             }`}
             data-cy="plate-image"
-            onLoad={() => setImageLoaded(true)}
+            onLoad={() => {
+              setImageLoaded(true)
+              // Marcar imagen como cacheada cuando se carga
+              if (dish.imagen) {
+                markImageAsCached(dish.imagen)
+              }
+            }}
             onError={(e) => {
               const target = e.target as HTMLImageElement
               target.src = getLocalImage(dish.id)

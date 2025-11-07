@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from 'react'
+import { useState, useEffect, useCallback, useRef } from 'react'
 
 import { CategoriasResponse } from '@/types/categorias'
 
@@ -42,6 +42,7 @@ export function useCategorias(limit = 12) {
     return true
   })
   const [error, setError] = useState<string | null>(null)
+  const hasFetched = useRef(false)
 
   const fetchCategorias = useCallback(async (force = false) => {
     try {
@@ -59,32 +60,32 @@ export function useCategorias(limit = 12) {
         next: { revalidate: 300 } // Cache en el cliente también
       })
       const result = await response.json() as { success: boolean; data: CategoriasResponse; error?: string }
-      
+
       if (result.success) {
         // Convertir URLs de Google Drive a URLs directas usando el proxy
         const categoriasConImagenes = result.data.items.map(categoria => {
           const originalUrl = convertGoogleDriveUrl(categoria.imagen_path)
-          
+
           // Solo usar el proxy para URLs externas (Google Drive, http/https)
           // No usar el proxy para URLs locales o placeholders
-          const shouldUseProxy = originalUrl.startsWith('http://') || 
+          const shouldUseProxy = originalUrl.startsWith('http://') ||
                                 originalUrl.startsWith('https://') ||
                                 originalUrl.includes('drive.google.com')
-          
-          const finalUrl = shouldUseProxy 
+
+          const finalUrl = shouldUseProxy
             ? `/api/image-proxy?url=${encodeURIComponent(originalUrl)}`
             : originalUrl
-          
+
           return {
             ...categoria,
             imagen_path: finalUrl
           }
         })
-        
+
         // Actualizar cache global
         cachedCategorias = categoriasConImagenes
         cacheTimestamp = Date.now()
-        
+
         setCategorias(categoriasConImagenes)
       } else {
         setError(result.error || 'Error al cargar las categorías')
@@ -97,7 +98,11 @@ export function useCategorias(limit = 12) {
   }, [limit])
 
   useEffect(() => {
-    void fetchCategorias()
+    // Solo ejecutar una vez en el montaje
+    if (!hasFetched.current) {
+      hasFetched.current = true
+      void fetchCategorias()
+    }
   }, [fetchCategorias])
 
   return {

@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useRef } from "react";
 
 // Mapeo de iconos por defecto para cuando la API no devuelve icono
 const defaultIcons: Record<string, string> = {
@@ -40,6 +40,7 @@ export function useAlergenos(id: string) {
   const [alergenos, setAlergenos] = useState<Alergeno[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const hasFetched = useRef<string | null>(null);
 
   const fetchAlergenos = useCallback(async () => {
     try {
@@ -71,9 +72,10 @@ export function useAlergenos(id: string) {
   }, [id]);
 
   useEffect(() => {
-    if (id) {
+    if (id && hasFetched.current !== id) {
+      hasFetched.current = id;
       void fetchAlergenos();
-    } else {
+    } else if (!id) {
       setAlergenos([]);
       setLoading(false);
     }

@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from 'react'
+import { useState, useEffect, useCallback, useRef } from 'react'
 
 export interface Opcion {
   id: string
@@ -34,15 +34,16 @@ export function useOpcionesProducto(id: string) {
   const [producto, setProducto] = useState<ProductoConOpciones | null>(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
+  const hasFetched = useRef<string | null>(null)
 
   const fetchOpciones = useCallback(async () => {
     try {
       setLoading(true)
       setError(null)
-      
+
       const response = await fetch(`/api/productos/${id}/opciones`)
       const result = await response.json() as { success: boolean; data: ProductoConOpciones; error?: string }
-      
+
       if (result.success && result.data) {
         setProducto(result.data) // Usar result.data en lugar de result directamente
       } else {
@@ -56,7 +57,8 @@ export function useOpcionesProducto(id: string) {
   }, [id])
 
   useEffect(() => {
-    if (id) {
+    if (id && hasFetched.current !== id) {
+      hasFetched.current = id
       void fetchOpciones()
     }
   }, [id, fetchOpciones])

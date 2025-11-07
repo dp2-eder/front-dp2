@@ -1,18 +1,19 @@
-import { useState, useEffect, useCallback } from 'react'
+import { useState, useEffect, useCallback, useRef } from 'react'
 
 export function useProducto(id: string) {
   const [producto, setProducto] = useState<unknown>(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
+  const hasFetched = useRef<string | null>(null)
 
   const fetchProducto = useCallback(async () => {
     try {
       setLoading(true)
       setError(null)
-      
+
       const response = await fetch(`/api/productos/${id}`)
       const result = await response.json() as { success: boolean; data: unknown; error?: string }
-      
+
       if (result.success) {
         setProducto(result.data)
       } else {
@@ -26,7 +27,8 @@ export function useProducto(id: string) {
   }, [id])
 
   useEffect(() => {
-    if (id) {
+    if (id && hasFetched.current !== id) {
+      hasFetched.current = id
       void fetchProducto()
     }
   }, [id, fetchProducto])

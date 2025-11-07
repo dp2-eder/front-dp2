@@ -98,3 +98,41 @@ export async function registerUser(data: RegisterRequest): Promise<RegisterRespo
     return { success: false, error: errorMessage };
   }
 }
+
+interface RolResponse {
+  id: string;
+  nombre: string;
+  activo: boolean;
+}
+
+interface RolesApiResponse {
+  items: RolResponse[];
+  total: number;
+}
+
+export async function getClientRoleId(): Promise<string> {
+  try {
+    const response = await fetch("https://back-dp2.onrender.com/api/v1/roles?skip=0&limit=100", {
+      method: "GET",
+      headers: {
+        "Content-Type": "application/json",
+      },
+    });
+
+    if (!response.ok) {
+      throw new Error(`Error obteniendo roles: ${response.status}`);
+    }
+
+    const result = await response.json() as RolesApiResponse;
+    const clientRole = result.items.find((rol: RolResponse) => rol.nombre === "Cliente");
+
+    if (!clientRole) {
+      throw new Error("No se encontró el rol 'Cliente'");
+    }
+
+    return clientRole.id;
+  } catch (error) {
+    const errorMessage = error instanceof Error ? error.message : "Error desconocido al obtener rol";
+    throw new Error(errorMessage);
+  }
+}

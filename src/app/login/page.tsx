@@ -7,7 +7,8 @@ import { useState } from "react";
 
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { loginUser, registerUser, type RegisterResponse } from "@/hooks/use-login";
+import { loginUser, registerUser, getClientRoleId, type RegisterResponse } from "@/hooks/use-login";
+import { clearLocalStoragePreservingImageCache } from "@/lib/image-cache";
 
 
 export default function LoginPage() {
@@ -80,12 +81,16 @@ export default function LoginPage() {
         if (loginResponse.error && typeof loginResponse.error === 'string') {
           // 2️⃣ Si falla el login, intenta REGISTRAR
           //console.log("❌ Login falló, intentando registro automático...");
+
+          // Obtener dinámicamente el ID del rol "Cliente"
+          const clientRoleId = await getClientRoleId();
+
           const registerPayload = {
             email,
             password,
             nombre,
             telefono: "000000000",              // TODO: reemplazar por real
-            id_rol: "01K9DQ9D35K2GGZ0DJ0VR6V7FM", // TODO: reemplazar por real
+            id_rol: clientRoleId,
           };
 
           const registerResponseUnknown: unknown = await registerUser(registerPayload);
@@ -110,7 +115,8 @@ export default function LoginPage() {
           //console.log("✅ Usuario registrado exitosamente con ID:", userId);
 
           // Limpiar localStorage antes de guardar datos del nuevo usuario
-          localStorage.clear();
+          // Pero preservar el caché de imágenes para mejor rendimiento
+          clearLocalStoragePreservingImageCache();
           localStorage.setItem("userId", userId);
         } else {
           // 3️⃣ Si login fue exitoso, guardar id_usuario desde usuario.id

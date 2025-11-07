@@ -12,6 +12,7 @@ import {
   CarouselNext,
   CarouselPrevious,
 } from "@/components/ui/carousel"
+import { isImageCached, markImageAsCached } from "@/lib/image-cache"
 
 interface Category {
   nombre: string
@@ -27,6 +28,18 @@ export function CategoryCarousel({ categories }: CategoryCarouselProps) {
   const [loadedImages, setLoadedImages] = useState<Set<number>>(
     new Set(Array.from({ length: Math.min(categories.length, 6) }, (_, i) => i))
   )
+  const [cachedImages, setCachedImages] = useState<Set<number>>(new Set())
+
+  // Verificar qué imágenes están en caché
+  useEffect(() => {
+    const cached = new Set<number>()
+    categories.forEach((category, index) => {
+      if (isImageCached(category.imagen_path)) {
+        cached.add(index)
+      }
+    })
+    setCachedImages(cached)
+  }, [categories])
 
   // Precargar todas las imágenes progresivamente después de la carga inicial
   useEffect(() => {
@@ -34,7 +47,7 @@ export function CategoryCarousel({ categories }: CategoryCarouselProps) {
       const loadRemainingImages = async () => {
         // Esperar 1 segundo antes de empezar a precargar el resto
         await new Promise(resolve => setTimeout(resolve, 1000))
-        
+
         // Cargar de a 3 imágenes cada 500ms
         for (let i = 6; i < categories.length; i += 3) {
           await new Promise(resolve => setTimeout(resolve, 500))
@@ -47,7 +60,7 @@ export function CategoryCarousel({ categories }: CategoryCarouselProps) {
           })
         }
       }
-      
+
       void loadRemainingImages()
     }
   }, [categories.length])
@@ -75,7 +88,7 @@ export function CategoryCarousel({ categories }: CategoryCarouselProps) {
               <Card className="overflow-hidden border-0 shadow-xl hover:shadow-2xl transition-all duration-300 group-hover:scale-105 rounded-3xl">
                 <CardContent className="p-0">
                   <div className="relative h-64 lg:h-72 bg-gradient-to-br from-gray-200 to-gray-300">
-                    {loadedImages.has(index) ? (
+                    {loadedImages.has(index) || cachedImages.has(index) ? (
                       <Image
                         src={category.imagen_path}
                         alt={category.nombre}
@@ -84,6 +97,10 @@ export function CategoryCarousel({ categories }: CategoryCarouselProps) {
                         loading={index < 3 ? "eager" : "lazy"}
                         sizes="(max-width: 768px) 50vw, (max-width: 1024px) 33vw, 20vw"
                         className="object-cover group-hover:scale-110 transition-transform duration-500"
+                        onLoad={() => {
+                          // Marcar imagen como cacheada cuando se carga
+                          markImageAsCached(category.imagen_path)
+                        }}
                         onError={(e) => {
                           const target = e.target as HTMLImageElement
                           // Si falla, intentar con una imagen placeholder local
