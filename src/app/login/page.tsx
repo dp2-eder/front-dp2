@@ -85,7 +85,7 @@ export default function LoginPage() {
             password,
             nombre,
             telefono: "000000000",              // TODO: reemplazar por real
-            id_rol: "01K98T4KTD9H23FGQP24XT7P53", // TODO: reemplazar por real
+            id_rol: "01K9DQ9D35K2GGZ0DJ0VR6V7FM", // TODO: reemplazar por real
           };
 
           const registerResponseUnknown: unknown = await registerUser(registerPayload);
