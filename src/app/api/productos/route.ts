@@ -1,4 +1,5 @@
 import { NextResponse } from 'next/server'
+import { API_BASE_URL } from '@/lib/api-config';
 
 // Configuración del segmento de ruta para habilitar cache
 export const revalidate = 300 // Revalidar cada 5 minutos
@@ -6,7 +7,7 @@ export const dynamic = 'force-static' // Forzar generación estática con cache
 
 export async function GET() {
   try {
-    const productosUrl = process.env.NEXT_PUBLIC_PRODUCTOS_URL || 'https://back-dp2.onrender.com/api/v1/productos/cards?skip=0&limit=300'
+    const productosUrl = `${API_BASE_URL}/api/v1/productos/cards?skip=0&limit=300`
     
     const response = await fetch(productosUrl, {
       next: { 

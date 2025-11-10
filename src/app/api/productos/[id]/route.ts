@@ -1,4 +1,5 @@
 import { NextResponse } from 'next/server'
+import { API_BASE_URL } from '@/lib/api-config';
 
 export async function GET(
   request: Request,
@@ -6,7 +7,7 @@ export async function GET(
 ) {
   try {
     const { id } = await params
-    const productoUrl = `https://back-dp2.onrender.com/api/v1/productos/${id}`
+    const productoUrl = `${API_BASE_URL}/api/v1/productos/${id}`
     
     const response = await fetch(productoUrl)
     const data = await response.json() as unknown

@@ -1,4 +1,6 @@
 /* eslint-disable @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-unsafe-argument */
+import { API_BASE_URL } from "@/lib/api-config";
+
 export interface LoginRequest {
   email: string;
   password: string;
@@ -112,7 +114,7 @@ interface RolesApiResponse {
 
 export async function getClientRoleId(): Promise<string> {
   try {
-    const response = await fetch("https://back-dp2.onrender.com/api/v1/roles?skip=0&limit=100", {
+    const response = await fetch(`${API_BASE_URL}/api/v1/roles?skip=0&limit=100`, {
       method: "GET",
       headers: {
         "Content-Type": "application/json",

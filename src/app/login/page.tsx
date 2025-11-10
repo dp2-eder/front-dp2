@@ -3,12 +3,13 @@
 import { User, Mail } from "lucide-react";
 import Image from "next/image";
 import { useRouter, useSearchParams } from "next/navigation";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { loginUser, registerUser, getClientRoleId, type RegisterResponse } from "@/hooks/use-login";
 import { clearLocalStoragePreservingImageCache } from "@/lib/image-cache";
+import { API_BASE_URL } from "@/lib/api-config";
 
 
 export default function LoginPage() {
@@ -20,11 +21,31 @@ export default function LoginPage() {
   const [nombreError, setNombreError] = useState("");
   const [emailError, setEmailError] = useState("");
   const [isLoading, setIsLoading] = useState(false);
+  const [mesaNumero, setMesaNumero] = useState<string | null>(null);
 
 
-  // Soporta ?mesa=ID o un parámetro “key-only” tipo ?01K8...
+  // Soporta ?mesa=ID o un parámetro "key-only" tipo ?01K8...
   const mesaId =
     searchParams.get("mesa") ?? Array.from(searchParams.keys())[0] ?? "";
+
+  // Fetch del número de mesa cuando el componente se monta
+  useEffect(() => {
+    if (mesaId) {
+      const fetchMesaData = async () => {
+        try {
+          const response = await fetch(`${API_BASE_URL}/api/v1/mesas/${mesaId}`);
+          if (response.ok) {
+            const data = await response.json() as { numero: string };
+            setMesaNumero(data.numero);
+          }
+        } catch (error) {
+          console.error("Error fetching mesa data:", error);
+        }
+      };
+
+      fetchMesaData();
+    }
+  }, [mesaId]);
 
   const validateNombre = (value: string): boolean => {
     if (!value.trim()) {
@@ -71,74 +92,85 @@ export default function LoginPage() {
 
       try {
         const password = "password123"; // TODO: reemplazar por real
+        let finalResponse: RegisterResponse;
 
-        // 1️⃣ Intenta hacer LOGIN primero
-        //console.log("🔐 Intentando login con email:", email);
+        // 1️⃣ Intenta REGISTRAR primero
+        console.log("📝 Intentando registrar usuario con email:", email);
+
+        // Obtener dinámicamente el ID del rol "Cliente"
+        const clientRoleId = await getClientRoleId();
+
+        const registerPayload = {
+          email,
+          password,
+          nombre,
+          telefono: "000000000",              // TODO: reemplazar por real
+          id_rol: clientRoleId,
+        };
+
+        const registerResponseUnknown: unknown = await registerUser(registerPayload);
+        const registerResponse = registerResponseUnknown as RegisterResponse;
+
+        if (registerResponse.error && typeof registerResponse.error === 'string') {
+          // 2️⃣ Si falla el registro, registra el intento
+          console.log("❌ Registro falló:", registerResponse.error);
+        } else {
+          // ✅ Registro exitoso
+          console.log("✅ Registro exitoso");
+        }
+
+        // 3️⃣ LOGIN OBLIGATORIO - siempre se intenta, sin importar el registro
+        console.log("🔐 Intentando login con email:", email);
         // eslint-disable-next-line @typescript-eslint/no-unsafe-call
         const loginResponseUnknown: unknown = await loginUser({ email, password });
         const loginResponse = loginResponseUnknown as RegisterResponse;
 
         if (loginResponse.error && typeof loginResponse.error === 'string') {
-          // 2️⃣ Si falla el login, intenta REGISTRAR
-          //console.log("❌ Login falló, intentando registro automático...");
-
-          // Obtener dinámicamente el ID del rol "Cliente"
-          const clientRoleId = await getClientRoleId();
-
-          const registerPayload = {
-            email,
-            password,
-            nombre,
-            telefono: "000000000",              // TODO: reemplazar por real
-            id_rol: clientRoleId,
-          };
-
-          const registerResponseUnknown: unknown = await registerUser(registerPayload);
-          const registerResponse = registerResponseUnknown as RegisterResponse;
-
-          if (registerResponse.error && typeof registerResponse.error === 'string') {
-            throw new Error(`Registro falló: ${registerResponse.error}`);
-          }
-
-          // Guardar el id_usuario del registro desde usuario.id
-          // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
-          const registerUsuario = registerResponse.usuario;
-          if (!registerUsuario || typeof registerUsuario !== 'object' || !('id' in registerUsuario)) {
-            throw new Error("El servidor no devolvió ID de usuario");
-          }
-          // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-member-access
-          const userId = String(registerUsuario.id);
-          if (!userId) {
-            throw new Error("El servidor no devolvió ID de usuario");
-          }
-
-          //console.log("✅ Usuario registrado exitosamente con ID:", userId);
-
-          // Limpiar localStorage antes de guardar datos del nuevo usuario
-          // Pero preservar el caché de imágenes para mejor rendimiento
-          clearLocalStoragePreservingImageCache();
-          localStorage.setItem("userId", userId);
-        } else {
-          // 3️⃣ Si login fue exitoso, guardar id_usuario desde usuario.id
-          // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
-          const loginUsuario = loginResponse.usuario;
-          if (!loginUsuario || typeof loginUsuario !== 'object' || !('id' in loginUsuario)) {
-            throw new Error("El servidor no devolvió ID de usuario");
-          }
-          // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-member-access
-          const userId = String(loginUsuario.id);
-          if (!userId) {
-            throw new Error("El servidor no devolvió ID de usuario");
-          }
-
-          //console.log("✅ Login exitoso con ID:", userId);
-          localStorage.setItem("userId", userId);
+          throw new Error(`Login falló: ${loginResponse.error}`);
         }
+
+        finalResponse = loginResponse;
+        console.log("✅ Login exitoso");
+
+        // 3️⃣ Guardar el id_usuario desde usuario.id
+        // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
+        const usuario = finalResponse.usuario;
+        if (!usuario || typeof usuario !== 'object' || !('id' in usuario)) {
+          throw new Error("El servidor no devolvió ID de usuario");
+        }
+        // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-member-access
+        const userId = String(usuario.id);
+        if (!userId) {
+          throw new Error("El servidor no devolvió ID de usuario");
+        }
+
+        // Limpiar localStorage antes de guardar datos del usuario
+        // Pero preservar el caché de imágenes para mejor rendimiento
+        clearLocalStoragePreservingImageCache();
+        localStorage.setItem("userId", userId);
 
         // Guardar datos locales
         localStorage.setItem("userName", nombre);
         localStorage.setItem("userEmail", email);
         if (mesaId) localStorage.setItem("mesaId", mesaId);
+
+        // Guardar tokens si están disponibles
+        if (finalResponse.access_token) {
+          localStorage.setItem("access_token", finalResponse.access_token);
+        }
+        if (finalResponse.refresh_token) {
+          localStorage.setItem("refresh_token", finalResponse.refresh_token);
+        }
+        if (finalResponse.token_type) {
+          localStorage.setItem("token_type", finalResponse.token_type);
+        }
+
+        // Log de tokens
+        console.log("🔑 Tokens guardados:", {
+          access_token: finalResponse.access_token ? `${finalResponse.access_token.substring(0, 20)}...` : "No disponible",
+          refresh_token: finalResponse.refresh_token ? "Disponible" : "No disponible",
+          token_type: finalResponse.token_type || "No disponible"
+        });
 
         router.push("/about"); // navega solo si no hubo error
       } catch (error) {
@@ -196,11 +228,11 @@ export default function LoginPage() {
           </h2>
 
           {/* Número de Mesa */}
-          {/*mesaId && (
+          {mesaNumero && (
             <p className="text-white text-lg md:text-2xl font-bold italic">
-              Mesa ID: {mesaId}
+              Mesa Nro. {mesaNumero}
             </p>
-          )*/}
+          )}
         </div>
 
         {/* Formulario */}

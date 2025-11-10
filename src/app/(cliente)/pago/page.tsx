@@ -30,7 +30,7 @@ interface PaymentGroup {
 }
 
 export default function PagoPage() {
-  const [paymentMode, setPaymentMode] = useState("partes-iguales")
+  const [paymentMode, setPaymentMode] = useState("pago-inmediato")
   const [orderHistory, setOrderHistory] = useState<OrderHistoryItem[]>([])
   const [totalAccumulated, setTotalAccumulated] = useState(0)
   const [peopleCount, setPeopleCount] = useState(2)
