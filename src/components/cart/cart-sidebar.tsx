@@ -6,43 +6,29 @@ import Link from "next/link"
 import { useState, useEffect } from "react"
 
 import { Button } from "@/components/ui/button"
+import { useOrderHistory } from "@/context/order-history-context"
 import { useCart } from "@/hooks/use-cart"
 import { sendOrderToKitchen } from "@/hooks/use-orden"
-
 
 interface CartSidebarProps {
   isOpen: boolean
   onClose: () => void
 }
 
-interface HistoryItem {
-  id: string
-  name: string
-  quantity: number
-  subtotal: number
-  comments?: string
-  additionals?: string[]
-  image?: string
-  date: string
-}
-
 export default function CartSidebar({ isOpen, onClose }: CartSidebarProps) {
   const { cart, updateQuantity, total, clearCart, itemCount } = useCart()
-  const [history, setHistory] = useState<HistoryItem[]>([])
-  const [totalAccumulated, setTotalAccumulated] = useState(0)
+  const { historial, isLoading, fetchHistorial } = useOrderHistory()
+  const [sending, setSending] = useState(false)
 
-  // Cargar historial desde localStorage al montar el componente
+  // Cargar historial del backend cuando el sidebar se abre
   useEffect(() => {
-    const savedHistory = localStorage.getItem('orderHistory')
-    if (savedHistory) {
-      const parsedHistory = JSON.parse(savedHistory) as HistoryItem[]
-      setHistory(parsedHistory)
-
-      // Calcular monto acumulado
-      const accumulated = parsedHistory.reduce((sum: number, item: HistoryItem) => sum + item.subtotal, 0)
-      setTotalAccumulated(accumulated)
+    if (isOpen) {
+      const tokenSesion = localStorage.getItem("token_sesion")
+      if (tokenSesion) {
+        void fetchHistorial(tokenSesion)
+      }
     }
-  }, [])
+  }, [isOpen, fetchHistorial])
 
   // Bloquear scroll del body cuando el sidebar está abierto
   useEffect(() => {
@@ -75,71 +61,38 @@ export default function CartSidebar({ isOpen, onClose }: CartSidebarProps) {
     }
   }, [isOpen])
 
-  // Función para enviar el pedido a cocina y manejar historial/localStorage
-  const [sending, setSending] = useState(false);
-
+  // Función para enviar el pedido al backend
   const handleSendOrder = async () => {
-    if (cart.length === 0 || sending) return;
-    setSending(true);
+    if (cart.length === 0 || sending) return
+    setSending(true)
     try {
-      const idMesa = localStorage.getItem("mesaId") || "";
-      const userId = localStorage.getItem("userId") || "";
-      //console.log("📦 Enviando pedido a la cocina...", { idMesa, userId, cartLength: cart.length });
-      await sendOrderToKitchen({ cart, idMesa, userId });
-      //console.log("✅ Pedido enviado correctamente");
+      const tokenSesion = localStorage.getItem("token_sesion")
+      if (!tokenSesion) {
+        alert("Error: Token de sesión no disponible")
+        return
+      }
 
-      // Convertir items del carrito a items de historial
-      const newHistoryItems: HistoryItem[] = cart.map(item => ({
-        id: item.id,
-        name: item.name,
-        quantity: item.quantity,
-        subtotal: item.totalPrice,
-        comments: item.comments || undefined,
-        additionals: item.selectedOptions.length > 0
-          ? item.selectedOptions.map(opt => opt.name).sort()
-          : undefined,
-        image: item.image,
-        date: new Date().toISOString()
-      }));
+      // Enviar pedido al backend
+      await sendOrderToKitchen({
+        cart,
+        tokenSesion,
+        notasCliente: "",
+        notasCocina: ""
+      })
 
-      // Combinar con historial existente
-      const updatedHistory = [...history, ...newHistoryItems];
-      // Agrupar items idénticos (mismo nombre, adicionales y comentarios)
-      const groupedHistory: HistoryItem[] = [];
-      updatedHistory.forEach(item => {
-        const existingIndex = groupedHistory.findIndex(grouped => {
-          const sameBasics = grouped.name === item.name && grouped.comments === item.comments;
-          const sameAdditionals = 
-            (!grouped.additionals && !item.additionals) ||
-            (grouped.additionals && item.additionals && 
-             grouped.additionals.length === item.additionals.length &&
-             grouped.additionals.every((add, idx) => add === item.additionals?.[idx]));
-          return sameBasics && sameAdditionals;
-        });
-        if (existingIndex >= 0) {
-          groupedHistory[existingIndex].quantity += item.quantity;
-          groupedHistory[existingIndex].subtotal += item.subtotal;
-          if (item.date > groupedHistory[existingIndex].date) {
-            groupedHistory[existingIndex].date = item.date;
-          }
-        } else {
-          groupedHistory.push({ ...item });
-        }
-      });
-      // Guardar en localStorage
-      localStorage.setItem('orderHistory', JSON.stringify(groupedHistory));
-      setHistory(groupedHistory);
-      // Calcular nuevo monto acumulado
-      const newTotal = groupedHistory.reduce((sum, item) => sum + item.subtotal, 0);
-      setTotalAccumulated(newTotal);
+      // Refrescar el historial para ver el nuevo pedido
+      await fetchHistorial(tokenSesion)
+
       // Limpiar el carrito
-      clearCart();
+      clearCart()
+
+      // Cerrar el sidebar
+      onClose()
     } catch (err: unknown) {
-      //console.error("❌ Error al enviar pedido:", err);
-      const errorMsg = err instanceof Error ? err.message : String(err);
-      alert(`Error al enviar pedido: ${errorMsg}`);
+      const errorMsg = err instanceof Error ? err.message : String(err)
+      alert(`Error al enviar pedido: ${errorMsg}`)
     } finally {
-      setSending(false);
+      setSending(false)
     }
   }
 
@@ -163,6 +116,24 @@ export default function CartSidebar({ isOpen, onClose }: CartSidebarProps) {
 
     return url
   }
+
+  // Calcular total acumulado del historial
+  const totalAccumulated = historial.reduce((sum, pedido) => {
+    return sum + parseFloat(pedido.total || "0")
+  }, 0)
+
+  // Convertir historial de pedidos a items individuales para el display
+  const historyItems = historial.flatMap(pedido =>
+    pedido.productos.map(producto => ({
+      id: producto.id,
+      name: producto.nombre_producto,
+      quantity: producto.cantidad,
+      subtotal: parseFloat(producto.subtotal || "0"),
+      additionals: producto.opciones.map(op => op.nombre_opcion),
+      comments: producto.notas_personalizacion,
+      image: producto.imagen_path || undefined,
+    }))
+  )
 
   return (
     <>
@@ -304,12 +275,6 @@ export default function CartSidebar({ isOpen, onClose }: CartSidebarProps) {
                 >
                   {sending ? 'Enviando...' : <>Enviar Pedido {cart.length > 0 && `S/ ${total.toFixed(2)}`}</>}
                 </Button>
-                {/*{sendSuccess && (
-                  <span className="text-green-600 text-sm font-semibold">¡Pedido enviado correctamente!</span>
-                )}
-                {sendError && (
-                  <span className="text-red-600 text-sm font-semibold">{sendError}</span>
-                )}*/}
               </div>
 
               {/* Imagen decorativa del pescado */}
@@ -323,7 +288,11 @@ export default function CartSidebar({ isOpen, onClose }: CartSidebarProps) {
               <div className="-mt-12 mx-3 border border-gray-300 rounded-xl p-4 bg-white relative z-10">
                 <h3 className="text-lg font-bold mb-3">Historial de pedido</h3>
 
-                {history.length === 0 ? (
+                {isLoading ? (
+                  <div className="text-center py-8">
+                    <p className="text-sm font-semibold text-gray-700">Cargando...</p>
+                  </div>
+                ) : historyItems.length === 0 ? (
                   <div className="text-center py-8">
                     <p className="text-sm font-semibold text-gray-700">Sin artículos registrados</p>
                   </div>
@@ -333,7 +302,7 @@ export default function CartSidebar({ isOpen, onClose }: CartSidebarProps) {
 
                     {/* Lista de pedidos del historial */}
                     <div className="space-y-3">
-                      {history.map((item, index) => (
+                      {historyItems.map((item, index) => (
                         <div key={`${item.id}-${index}`} className="flex justify-between items-start pb-3 border-b last:border-b-0">
                           <div className="flex-1">
                             <h4 className="text-sm font-semibold mb-1">{item.name}</h4>
@@ -367,36 +336,18 @@ export default function CartSidebar({ isOpen, onClose }: CartSidebarProps) {
                         Monto acumulado: S/ {totalAccumulated.toFixed(2)}
                       </p>
                     </div>
-
-                    {/* Botón para borrar historial */}
-                    {/*<div className="flex justify-end mt-3">
-                      <Button
-                        size="sm"
-                        variant="outline"
-                        className="text-xs px-3 py-1 border-gray-300"
-                        onClick={() => {
-                          localStorage.removeItem('orderHistory');
-                          localStorage.removeItem('cart');
-                          setHistory([]);
-                          setTotalAccumulated(0);
-                          clearCart();
-                        }}
-                      >
-                        Borrar historial
-                      </Button>
-                    </div>*/}
                   </div>
                 )}
               </div>
 
               {/* Botón Solicitar Cobro - visible solo si hay datos en historial, fuera del card */}
-              {history.length > 0 && (
+              {historial.length > 0 && (
                 <div className="mt-3 flex flex-col items-center gap-2">
                   <Link href="/pago" className="w-full flex justify-center">
                     <Button
                       className="w-[55%] bg-[#004166] hover:bg-[#003d5c] text-white py-3 text-base font-bold rounded-xl drop-shadow-[0_4px_8px_rgba(0,0,0,0.15)]"
                     >
-                      Solicitar Cobro{/* S/ {totalAccumulated.toFixed(2)}*/}
+                      Solicitar Cobro
                     </Button>
                   </Link>
                 </div>

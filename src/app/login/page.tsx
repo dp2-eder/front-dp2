@@ -7,9 +7,9 @@ import { useState, useEffect } from "react";
 
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { loginUser, registerUser, getClientRoleId, type RegisterResponse } from "@/hooks/use-login";
-import { clearLocalStoragePreservingImageCache } from "@/lib/image-cache";
+import { loginUser, type LoginResponse } from "@/hooks/use-login";
 import { API_BASE_URL } from "@/lib/api-config";
+import { clearLocalStoragePreservingImageCache } from "@/lib/image-cache";
 
 
 export default function LoginPage() {
@@ -43,7 +43,7 @@ export default function LoginPage() {
         }
       };
 
-      fetchMesaData();
+      void fetchMesaData();
     }
   }, [mesaId]);
 
@@ -91,91 +91,59 @@ export default function LoginPage() {
       setIsLoading(true);
 
       try {
-        const password = "password123"; // TODO: reemplazar por real
-        let finalResponse: RegisterResponse;
+        // ✅ NUEVO FLUJO SIMPLIFICADO
+        // El endpoint /api/v1/login maneja automáticamente:
+        // - Creación de usuario si no existe
+        // - Actualización del nombre si cambió
+        // - Manejo de sesiones de mesa compartidas
+        console.log("🔐 Intentando login con email:", email, "nombre:", nombre);
 
-        // 1️⃣ Intenta REGISTRAR primero
-        console.log("📝 Intentando registrar usuario con email:", email);
+        const loginResponse = await loginUser(
+          { email, nombre },
+          mesaId // Pasar el ID de la mesa
+        );
 
-        // Obtener dinámicamente el ID del rol "Cliente"
-        const clientRoleId = await getClientRoleId();
-
-        const registerPayload = {
-          email,
-          password,
-          nombre,
-          telefono: "000000000",              // TODO: reemplazar por real
-          id_rol: clientRoleId,
-        };
-
-        const registerResponseUnknown: unknown = await registerUser(registerPayload);
-        const registerResponse = registerResponseUnknown as RegisterResponse;
-
-        if (registerResponse.error && typeof registerResponse.error === 'string') {
-          // 2️⃣ Si falla el registro, registra el intento
-          console.log("❌ Registro falló:", registerResponse.error);
-        } else {
-          // ✅ Registro exitoso
-          console.log("✅ Registro exitoso");
-        }
-
-        // 3️⃣ LOGIN OBLIGATORIO - siempre se intenta, sin importar el registro
-        console.log("🔐 Intentando login con email:", email);
-        // eslint-disable-next-line @typescript-eslint/no-unsafe-call
-        const loginResponseUnknown: unknown = await loginUser({ email, password });
-        const loginResponse = loginResponseUnknown as RegisterResponse;
-
-        if (loginResponse.error && typeof loginResponse.error === 'string') {
+        // Verificar si hubo error
+        if (loginResponse && 'error' in loginResponse && loginResponse.error) {
           throw new Error(`Login falló: ${loginResponse.error}`);
         }
 
-        finalResponse = loginResponse;
+        // Castear a LoginResponse (sabemos que es válida si no tiene error)
+        const response = loginResponse as LoginResponse;
         console.log("✅ Login exitoso");
 
-        // 3️⃣ Guardar el id_usuario desde usuario.id
-        // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
-        const usuario = finalResponse.usuario;
-        if (!usuario || typeof usuario !== 'object' || !('id' in usuario)) {
-          throw new Error("El servidor no devolvió ID de usuario");
-        }
-        // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-member-access
-        const userId = String(usuario.id);
-        if (!userId) {
-          throw new Error("El servidor no devolvió ID de usuario");
+        // Verificar que tenemos el token_sesion
+        if (!response.token_sesion) {
+          throw new Error("El servidor no devolvió token_sesion");
         }
 
         // Limpiar localStorage antes de guardar datos del usuario
         // Pero preservar el caché de imágenes para mejor rendimiento
         clearLocalStoragePreservingImageCache();
-        localStorage.setItem("userId", userId);
+
+        // Guardar datos del nuevo login
+        localStorage.setItem("id_usuario", response.id_usuario);
+        localStorage.setItem("id_sesion_mesa", response.id_sesion_mesa);
+        localStorage.setItem("token_sesion", response.token_sesion);
+        localStorage.setItem("fecha_expiracion", response.fecha_expiracion);
 
         // Guardar datos locales
         localStorage.setItem("userName", nombre);
         localStorage.setItem("userEmail", email);
         if (mesaId) localStorage.setItem("mesaId", mesaId);
 
-        // Guardar tokens si están disponibles
-        if (finalResponse.access_token) {
-          localStorage.setItem("access_token", finalResponse.access_token);
-        }
-        if (finalResponse.refresh_token) {
-          localStorage.setItem("refresh_token", finalResponse.refresh_token);
-        }
-        if (finalResponse.token_type) {
-          localStorage.setItem("token_type", finalResponse.token_type);
-        }
-
-        // Log de tokens
-        console.log("🔑 Tokens guardados:", {
-          access_token: finalResponse.access_token ? `${finalResponse.access_token.substring(0, 20)}...` : "No disponible",
-          refresh_token: finalResponse.refresh_token ? "Disponible" : "No disponible",
-          token_type: finalResponse.token_type || "No disponible"
+        // Log de confirmación
+        console.log("🔑 Datos de sesión guardados:", {
+          id_usuario: response.id_usuario,
+          id_sesion_mesa: response.id_sesion_mesa,
+          token_sesion: `${response.token_sesion.substring(0, 20)}...`,
+          fecha_expiracion: response.fecha_expiracion,
         });
 
         router.push("/about"); // navega solo si no hubo error
       } catch (error) {
         const errorMsg = error instanceof Error ? error.message : "Error desconocido";
-        //console.error("❌ Error en login/registro:", errorMsg);
+        console.error("❌ Error en login:", errorMsg);
         alert(`Error: ${errorMsg}`);
       } finally {
         setIsLoading(false);

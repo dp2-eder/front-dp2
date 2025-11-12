@@ -3,8 +3,8 @@ import Link from "next/link"
 import { useEffect, useState } from "react"
 
 import { Badge } from "@/components/ui/badge"
-import { Root2 } from "@/types/menu"
 import { isImageCached, markImageAsCached } from "@/lib/image-cache"
+import { Root2 } from "@/types/menu"
 
 interface DishCardProps {
   dish: Root2

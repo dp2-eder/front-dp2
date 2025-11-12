@@ -6,34 +6,15 @@ import { useState } from "react"
 
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
+import {
+  OrderHistoryItem,
+  PaymentGroup,
+  PaymentGroupsProps,
+  SelectedItem
+} from "@/types/orders"
 
-interface OrderItem {
-  id: string
-  name: string
-  quantity: number
-  subtotal: number
-  image?: string
-  additionals?: string[]
-  comments?: string
-}
-
-interface PaymentGroup {
-  id: string
-  name: string
-  items: Array<OrderItem & { selectedQuantity: number }>
-  subtotal: number
-}
-
-interface PaymentGroupsProps {
-  orderHistory: OrderItem[]
-  onGroupsChange?: (groups: PaymentGroup[], paidGroupIds: string[]) => void
-}
-
-interface SelectedItem {
-  name: string
-  subtotal: number
-  quantity: number
-}
+// Alias para mantener compatibilidad con el código existente
+type OrderItem = OrderHistoryItem
 
 export function PaymentGroups({ orderHistory, onGroupsChange }: PaymentGroupsProps) {
   const [groupName, setGroupName] = useState("")

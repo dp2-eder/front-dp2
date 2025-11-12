@@ -1,22 +1,9 @@
 import { useState, useEffect } from 'react'
 
-export interface CartItem {
-  id: string
-  dishId: number
-  name: string
-  description: string
-  basePrice: number
-  quantity: number
-  image: string
-  selectedOptions: {
-    id: string
-    type: string
-    name: string
-    price: number
-  }[]
-  totalPrice: number
-  comments?: string
-}
+import { CartItem } from '@/types/orders'
+
+// Re-export para compatibilidad hacia atrás
+export type { CartItem }
 
 // Estado global del carrito
 let globalCart: CartItem[] = []

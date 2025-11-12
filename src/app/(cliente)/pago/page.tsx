@@ -11,44 +11,56 @@ import { PaymentGroups } from "@/components/payment/payment-groups"
 import { PaymentModeSelector } from "@/components/payment/payment-mode-selector"
 import { SplitBill } from "@/components/payment/split-bill"
 import { Button } from "@/components/ui/button"
+import { useOrderHistory } from "@/context/order-history-context"
+import { OrderHistoryItem, PaymentGroup } from "@/types/orders"
 
-interface OrderHistoryItem {
-  id: string
-  name: string
-  quantity: number
-  subtotal: number
-  additionals?: string[]
-  comments?: string
-  image?: string
-  date: string
-}
-
-interface PaymentGroup {
-  id: string
-  name: string
-  subtotal: number
-}
+const POLLING_INTERVAL = 10000 // 10 segundos
 
 export default function PagoPage() {
   const [paymentMode, setPaymentMode] = useState("pago-inmediato")
-  const [orderHistory, setOrderHistory] = useState<OrderHistoryItem[]>([])
-  const [totalAccumulated, setTotalAccumulated] = useState(0)
+  const { historial, fetchHistorial } = useOrderHistory()
   const [peopleCount, setPeopleCount] = useState(2)
   const [paidGroupIds, setPaidGroupIds] = useState<string[]>([])
   const [groups, setGroups] = useState<PaymentGroup[]>([])
 
-  // Cargar historial desde localStorage al montar el componente
-  useEffect(() => {
-    const savedHistory = localStorage.getItem('orderHistory')
-    if (savedHistory) {
-      const parsedHistory = JSON.parse(savedHistory) as OrderHistoryItem[]
-      setOrderHistory(parsedHistory)
+  // Calcular monto acumulado del historial
+  const totalAccumulated = historial.reduce((sum, pedido) => {
+    return sum + parseFloat(pedido.total || "0")
+  }, 0)
 
-      // Calcular monto acumulado
-      const accumulated = parsedHistory.reduce((sum: number, item: OrderHistoryItem) => sum + item.subtotal, 0)
-      setTotalAccumulated(accumulated)
+  // Convertir historial a formato compatible con PaymentGroups
+  const orderHistory: OrderHistoryItem[] = historial.flatMap(pedido =>
+    pedido.productos.map(producto => ({
+      id: producto.id,
+      name: producto.nombre_producto,
+      quantity: producto.cantidad,
+      subtotal: parseFloat(producto.subtotal || "0"),
+      additionals: producto.opciones.map(op => op.nombre_opcion),
+      comments: producto.notas_personalizacion,
+      image: producto.imagen_path || undefined,
+      date: pedido.fecha_creacion,
+      pedidoId: pedido.id
+    }))
+  )
+
+  // Cargar historial al montar y configurar polling
+  useEffect(() => {
+    const tokenSesion = localStorage.getItem("token_sesion")
+    if (!tokenSesion) return
+
+    // Cargar historial inicial (fetch manual, no polling)
+    void fetchHistorial(tokenSesion, false)
+
+    // Configurar polling cada 10 segundos (indicar que es polling)
+    const pollingInterval = setInterval(() => {
+      void fetchHistorial(tokenSesion, true)
+    }, POLLING_INTERVAL)
+
+    // Cleanup: detener polling al desmontar la página
+    return () => {
+      clearInterval(pollingInterval)
     }
-  }, [])
+  }, [fetchHistorial])
 
   return (
     <div className="min-h-screen bg-white flex flex-col">

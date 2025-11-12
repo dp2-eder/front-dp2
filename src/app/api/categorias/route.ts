@@ -1,4 +1,5 @@
 import { NextResponse } from 'next/server'
+
 import { API_BASE_URL } from '@/lib/api-config';
 
 // Configuración del segmento de ruta para habilitar cache

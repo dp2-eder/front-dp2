@@ -1,12 +1,7 @@
 "use client"
 
 import { Button } from "@/components/ui/button"
-
-interface SplitBillProps {
-  totalAmount: number
-  peopleCount: number
-  onPeopleCountChange: (count: number) => void
-}
+import { SplitBillProps } from "@/types/orders"
 
 export function SplitBill({ totalAmount, peopleCount, onPeopleCountChange }: SplitBillProps) {
   // Método de redondeo progresivo: la mayoría paga redondeado hacia abajo,
