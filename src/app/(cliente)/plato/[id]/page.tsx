@@ -4,14 +4,14 @@ import { LogIn } from "lucide-react"
 import Link from "next/link"
 import { useParams, useRouter } from "next/navigation"
 
-import Loading from "@/app/loading"
+import { PlatoSkeleton } from "@/components/custom/plato-skeleton"
 import Footer from "@/components/layout/footer"
 import Header from "@/components/layout/header"
 import { Button } from "@/components/ui/button"
 import SafeImage from "@/components/ui/safe-image"
 import { useAlergenos } from "@/hooks/use-alergenos"
 import { useProducto } from "@/hooks/use-producto"
-
+import { markImageAsCached } from "@/lib/image-cache"
 
 export default function PlatoDetailPage() {
   const params = useParams()
@@ -19,20 +19,32 @@ export default function PlatoDetailPage() {
   const { producto, loading, error } = useProducto(params.id as string)
   const { alergenos, loading: alergenosLoading } = useAlergenos(params.id as string);
 
-  if (loading) return <Loading />
+  // Usar skeleton rápido en lugar de Loading completo
+  if (loading && !producto) {
+    return <PlatoSkeleton />
+  }
+
+  // Mostrar contenido aunque los alérgenos sigan cargando
   if (error) return <div>Error: {error}</div>
   if (!producto) return <div>Producto no encontrado</div>
 
-  // Función para convertir URL de Google Drive:
-  const convertGoogleDriveUrl = (url: string): string => {
-    if (!url || url === 'null' || url === 'undefined' || !url.includes('drive.google.com')) {
+  // Función para convertir URL de Google Drive usando el proxy
+  const convertGoogleDriveUrl = (url: string | null | undefined): string => {
+    if (!url || url === 'null' || url === 'undefined' || typeof url !== 'string' || !url.includes('drive.google.com')) {
       return '/placeholder-image.png'
     }
 
     const match = url.match(/\/file\/d\/([a-zA-Z0-9-_]+)/)
     if (match) {
       const fileId = match[1]
-      return `https://drive.google.com/uc?export=view&id=${fileId}`
+      // Usar el proxy de Next.js para evitar fallos y mejorar velocidad
+      const googleDriveUrl = `https://drive.google.com/uc?export=view&id=${fileId}`
+      return `/api/image-proxy?url=${encodeURIComponent(googleDriveUrl)}`
+    }
+
+    // Si ya es una URL externa, usar proxy también
+    if (url.startsWith('http://') || url.startsWith('https://')) {
+      return `/api/image-proxy?url=${encodeURIComponent(url)}`
     }
 
     return url
@@ -57,10 +69,10 @@ export default function PlatoDetailPage() {
               {/* Nombre y Descripción */}
               <div>
                 <h1 className="text-3xl lg:text-2xl font-bold text-gray-800 mb-4 text-center">
-                  {String((producto as Record<string, unknown>)?.nombre || 'Sin nombre')}
+                  {producto.nombre || 'Sin nombre'}
                 </h1>
                 <p className="text-base lg:text-lg text-gray-800 leading-relaxed mb-6">
-                  {String((producto as Record<string, unknown>)?.descripcion || 'Sin descripción')}
+                  {producto.descripcion || 'Sin descripción'}
                 </p>
               </div>
 
@@ -72,7 +84,7 @@ export default function PlatoDetailPage() {
                   {/* Precio */}
                   <div className="flex justify-center md:justify-center">
                     <span className="text-xl font-bold text-gray-800 text-center md:text-left">
-                      Precio: S/. {String((producto as Record<string, unknown>)?.precio_base || '0.00')}
+                      Precio: S/. {producto.precio_base || '0.00'}
                     </span>
                   </div>
 
@@ -135,16 +147,29 @@ export default function PlatoDetailPage() {
 
             <div className="order-1 lg:order-2 space-y-6">
               <div className="relative">
-                <SafeImage
-                  src={convertGoogleDriveUrl(String((producto as Record<string, unknown>)?.imagen_path || ''))}
-                  alt={String((producto as Record<string, unknown>)?.nombre || 'Sin nombre')}
-                  className="w-full h-64 lg:h-96 object-cover rounded-2xl bg-gray-300"
-                  showIndicator={true}
-                  width={800}
-                  height={400}
-                  priority={false}
-                  quality={35}
-                />
+                <div className="w-full h-64 lg:h-96 rounded-2xl bg-gray-100 overflow-hidden flex items-center justify-center">
+                  <SafeImage
+                    src={convertGoogleDriveUrl(producto.imagen_path || '')}
+                    alt={producto.nombre || 'Sin nombre'}
+                    className="w-full h-full"
+                    showIndicator={true}
+                    width={800}
+                    height={600}
+                    priority={true}
+                    quality={75}
+                    objectFit="contain"
+                  onLoad={() => {
+                    // Marcar ambas URLs en caché cuando se carga
+                    if (producto.imagen_path) {
+                      const convertedUrl = convertGoogleDriveUrl(producto.imagen_path)
+                      markImageAsCached(convertedUrl)
+                      if (producto.imagen_path !== convertedUrl) {
+                        markImageAsCached(producto.imagen_path)
+                      }
+                    }
+                  }}
+                  />
+                </div>
               </div>
             </div>
           </div>

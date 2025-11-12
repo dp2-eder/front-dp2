@@ -1,9 +1,11 @@
 import { NextRequest, NextResponse } from 'next/server';
 
+import { API_BASE_URL } from '@/lib/api-config';
+
 export async function POST(req: NextRequest) {
   try {
     const body = await req.text();
-    const backendRes = await fetch('https://back-dp2.onrender.com/api/v1/pedidos/completo', {
+    const backendRes = await fetch(`${API_BASE_URL}/api/v1/pedidos/completo`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',

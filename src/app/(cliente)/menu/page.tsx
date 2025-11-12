@@ -45,7 +45,7 @@ export default function MenuPage() {
   //const [categorySearch, setCategorySearch] = useState("")
 
   // Usar el hook de la API
-  const { productos, loading, error, refetch } = useProductos()
+  const { productos, loading, fromCache, error, refetch } = useProductos()
   const [inputValue, setInputValue] = useState("")
   const debouncedSearchTerm = useDebounce(inputValue, 500)
 
@@ -159,17 +159,21 @@ export default function MenuPage() {
     }, {} as { [key: string]: Producto[] })
   }, [filteredDishes])
 
-  // OPTIMIZACIÓN: Precargar automáticamente las primeras 2 categorías
+  // OPTIMIZACIÓN: Precargar automáticamente las primeras 2 categorías SOLO si no están en caché
   useEffect(() => {
-    if (Object.keys(dishesByCategory).length > 0 && !loading) {
+    if (Object.keys(dishesByCategory).length > 0 && !loading && typeof window !== 'undefined') {
       const firstCategories = Object.entries(dishesByCategory).slice(0, 2)
 
       // Precargar las primeras 6 imágenes de cada una de las primeras 2 categorías
+      // Solo si no están en caché del navegador
       firstCategories.forEach(([_, dishes]) => {
         dishes.slice(0, 6).forEach(dish => {
           if (dish.imagen_path) {
-            const img = new Image()
+            // Verificar si ya está en caché antes de precargar
+            const img = new window.Image()
             img.src = dish.imagen_path
+            // Si ya está en caché del navegador, no hace nada (el navegador lo maneja)
+            // Si no está, se precarga
           }
         })
       })
@@ -187,7 +191,8 @@ export default function MenuPage() {
     )
   }
 
-  if (loading) {
+  // En lugar de mostrar <Loading />, solo hacerlo si no hay data previa
+  if (loading && productos.length === 0) {
     return <Loading />
   }
 
@@ -283,7 +288,7 @@ export default function MenuPage() {
             )}
           </div>
         </div>
-        
+
         {/* Menu Sections */}
         {filteredDishes.length > 0 ? (
           <>
@@ -318,7 +323,8 @@ export default function MenuPage() {
                           grupo_personalizacion: undefined
                         }}
                         className="pointer-events-none"
-                        priority={index < 3}
+                        priority={!fromCache && index < 3}
+                        disableAnimation={fromCache}
                       />
                     </div>
                   ))}
@@ -343,7 +349,8 @@ export default function MenuPage() {
                         grupo_personalizacion: []
                       }}
                       showPrice={true}
-                      priority={index < 5} // Solo las primeras 4 en mobile
+                      priority={!fromCache && index < 4}
+                      disableAnimation={fromCache}  // Solo las primeras 4 en mobile
                     />
                   ))}
                 </div>
@@ -406,14 +413,15 @@ export default function MenuPage() {
                                     grupo_personalizacion: []
                                   }}
                                   showPrice={true}
-                                  priority={shouldPrioritize}
+                                  priority={!fromCache && shouldPrioritize}
+                                  disableAnimation={fromCache}
                                 />
                               )
                             })}
 
                             {/* Card "Más opciones..." si hay más de 8 platos */}
                             {dishes.length > 8 && (
-                              <article 
+                              <article
                                 onClick={() => setSelectedCategory(category)}
                                 className="text-center cursor-pointer hover:scale-105 transition-transform duration-200 outline-none focus:outline-none focus-visible:outline-none border-0 hover:border-0 focus:border-0 focus-visible:border-0 ring-0 hover:ring-0 focus:ring-0 focus-visible:ring-0"
                               >
@@ -461,7 +469,8 @@ export default function MenuPage() {
                             grupo_personalizacion: []
                           }}
                           showPrice={true}
-                          priority={index < 6}
+                          priority={!fromCache && index < 6}
+                          disableAnimation={fromCache}
                         />
                       ))}
                     </div>

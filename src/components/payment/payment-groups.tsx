@@ -6,34 +6,15 @@ import { useState } from "react"
 
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
+import {
+  OrderHistoryItem,
+  PaymentGroup,
+  PaymentGroupsProps,
+  SelectedItem
+} from "@/types/orders"
 
-interface OrderItem {
-  id: string
-  name: string
-  quantity: number
-  subtotal: number
-  image?: string
-  additionals?: string[]
-  comments?: string
-}
-
-interface PaymentGroup {
-  id: string
-  name: string
-  items: Array<OrderItem & { selectedQuantity: number }>
-  subtotal: number
-}
-
-interface PaymentGroupsProps {
-  orderHistory: OrderItem[]
-  onGroupsChange?: (groups: PaymentGroup[], paidGroupIds: string[]) => void
-}
-
-interface SelectedItem {
-  name: string
-  subtotal: number
-  quantity: number
-}
+// Alias para mantener compatibilidad con el código existente
+type OrderItem = OrderHistoryItem
 
 export function PaymentGroups({ orderHistory, onGroupsChange }: PaymentGroupsProps) {
   const [groupName, setGroupName] = useState("")
@@ -58,7 +39,7 @@ export function PaymentGroups({ orderHistory, onGroupsChange }: PaymentGroupsPro
 
   // Agrupar items por nombre y subtotal
   const getGroupedAvailableItems = () => {
-    const grouped: Record<string, OrderItem & { totalQuantity: number; allIds: string[] }> = {}
+    const grouped: Record<string, OrderItem & { totalQuantity: number; allIds: string[]; image?: string }> = {}
 
     orderHistory.forEach(item => {
       // Crear key única basada en nombre y subtotal
@@ -68,7 +49,8 @@ export function PaymentGroups({ orderHistory, onGroupsChange }: PaymentGroupsPro
         grouped[key] = {
           ...item,
           totalQuantity: 0,
-          allIds: []
+          allIds: [],
+          image: item.image // Preservar explícitamente la imagen
         }
       }
 
@@ -89,7 +71,8 @@ export function PaymentGroups({ orderHistory, onGroupsChange }: PaymentGroupsPro
 
         return {
           ...item,
-          availableQuantity: item.totalQuantity - assignedInGroups
+          availableQuantity: item.totalQuantity - assignedInGroups,
+          image: item.image // Preservar explícitamente la imagen en el retorno
         }
       })
       .filter(item => item.availableQuantity > 0)
@@ -165,7 +148,8 @@ export function PaymentGroups({ orderHistory, onGroupsChange }: PaymentGroupsPro
           if (actualQtyToTake > 0) {
             newGroupItems.push({
               ...item,
-              selectedQuantity: actualQtyToTake
+              selectedQuantity: actualQtyToTake,
+              image: item.image // Preservar explícitamente la imagen
             })
             remainingQty -= actualQtyToTake
           }

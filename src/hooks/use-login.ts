@@ -1,65 +1,77 @@
 /* eslint-disable @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-unsafe-argument */
-export interface LoginRequest {
-  email: string;
-  password: string;
-}
+import { API_BASE_URL } from "@/lib/api-config";
+import {
+  LoginRequest,
+  RegisterRequest,
+  Usuario,
+  LoginResponse,
+  RegisterResponse
+} from "@/types/auth";
 
-export interface RegisterRequest {
-  email: string;
-  password: string;
-  nombre: string;
-  telefono: string;
-  id_rol: string;
-}
+// Re-export para compatibilidad hacia atrás
+export type { LoginRequest, RegisterRequest, Usuario, LoginResponse, RegisterResponse }
 
-export interface Usuario {
-  email: string;
-  nombre: string;
-  telefono: string;
-  id_rol: string;
-  id: string;
-  activo: boolean;
-  ultimo_acceso: string;
-  fecha_creacion: string;
-  fecha_modificacion: string;
-}
-
-export interface RegisterResponse {
-  status?: number;
-  code?: string;
-  message?: string;
-  success?: boolean;
-  error?: string;
-  usuario?: Usuario;
-  access_token?: string;
-  refresh_token?: string;
-  token_type?: string;
-  // campos para manejo de errores
-  id?: string;
-  id_usuario?: string;
-}
-
-export async function loginUser(data: LoginRequest): Promise<RegisterResponse> {
+/**
+ * Nuevo login simplificado usando el endpoint /api/v1/login
+ * Maneja automáticamente:
+ * - Creación de usuario si no existe
+ * - Actualización del nombre si cambió
+ * - Manejo de sesiones de mesa compartidas (mismo token para múltiples usuarios)
+ *
+ * @param data - LoginRequest con email y nombre
+ * @param idMesa - ID de la mesa (si no se proporciona, intenta obtener del localStorage)
+ * @returns LoginResponse con token_sesion y otros datos
+ */
+export async function loginUser(
+  data: LoginRequest,
+  idMesa?: string
+): Promise<LoginResponse | RegisterResponse> {
   try {
-    const response = await fetch("/api/auth/login", {
+    // Obtener id_mesa del parámetro o de localStorage
+    const mesas = idMesa || localStorage.getItem("mesaId");
+    if (!mesas) {
+      throw new Error("ID de mesa no encontrado. Por favor, selecciona una mesa primero.");
+    }
+
+    // Construir URL de la ruta proxy con query parameter
+    // La ruta proxy /api/auth/login llamará a /api/v1/login del backend
+    const url = new URL("/api/auth/login", window.location.origin);
+    url.searchParams.append("id_mesa", mesas);
+
+    const response = await fetch(url.toString(), {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
       },
-      body: JSON.stringify(data),
+      body: JSON.stringify({
+        email: data.email,
+        nombre: data.nombre,
+      }),
     });
 
     const text = await response.text();
-    let result: RegisterResponse = {};
+    let result: LoginResponse | RegisterResponse = {};
     try {
-      result = text ? JSON.parse(text) as RegisterResponse : {};
+      result = text ? JSON.parse(text) as LoginResponse : {};
     } catch {
       result = { error: text };
     }
 
     if (!response.ok) {
-      const errorMessage = (result as Record<string, string>)?.error || (result as Record<string, string>)?.detail || `Error ${response.status}`;
+      const errorMessage =
+        (result as Record<string, string>)?.error ||
+        (result as Record<string, string>)?.message ||
+        (result as Record<string, string>)?.detail ||
+        `Error ${response.status}`;
       throw new Error(errorMessage);
+    }
+
+    // Guardar token_sesion en localStorage si existe
+    if ((result as LoginResponse)?.token_sesion) {
+      localStorage.setItem("token_sesion", (result as LoginResponse).token_sesion);
+      localStorage.setItem("id_usuario", (result as LoginResponse).id_usuario);
+      localStorage.setItem("id_sesion_mesa", (result as LoginResponse).id_sesion_mesa);
+      localStorage.setItem("fecha_expiracion", (result as LoginResponse).fecha_expiracion);
     }
 
     return result;
@@ -69,7 +81,15 @@ export async function loginUser(data: LoginRequest): Promise<RegisterResponse> {
   }
 }
 
+/**
+ * DEPRECATED: Función de registro antigua
+ * Ya no es necesaria - loginUser maneja la creación/actualización de usuarios
+ * Se mantiene solo para compatibilidad hacia atrás
+ */
 export async function registerUser(data: RegisterRequest): Promise<RegisterResponse> {
+  console.warn(
+    "registerUser() está deprecado. Usa loginUser() en su lugar, que maneja creación y actualización de usuarios."
+  );
   try {
     const response = await fetch("/api/auth/register", {
       method: "POST",
@@ -88,7 +108,10 @@ export async function registerUser(data: RegisterRequest): Promise<RegisterRespo
     }
 
     if (!response.ok) {
-      const errorMessage = (result as Record<string, string>)?.error || (result as Record<string, string>)?.detail || `Error ${response.status}`;
+      const errorMessage =
+        (result as Record<string, string>)?.error ||
+        (result as Record<string, string>)?.detail ||
+        `Error ${response.status}`;
       throw new Error(errorMessage);
     }
 
@@ -96,5 +119,43 @@ export async function registerUser(data: RegisterRequest): Promise<RegisterRespo
   } catch (error) {
     const errorMessage = error instanceof Error ? error.message : "Unknown error";
     return { success: false, error: errorMessage };
+  }
+}
+
+interface RolResponse {
+  id: string;
+  nombre: string;
+  activo: boolean;
+}
+
+interface RolesApiResponse {
+  items: RolResponse[];
+  total: number;
+}
+
+export async function getClientRoleId(): Promise<string> {
+  try {
+    const response = await fetch(`${API_BASE_URL}/api/v1/roles?skip=0&limit=100`, {
+      method: "GET",
+      headers: {
+        "Content-Type": "application/json",
+      },
+    });
+
+    if (!response.ok) {
+      throw new Error(`Error obteniendo roles: ${response.status}`);
+    }
+
+    const result = await response.json() as RolesApiResponse;
+    const clientRole = result.items.find((rol: RolResponse) => rol.nombre === "Cliente");
+
+    if (!clientRole) {
+      throw new Error("No se encontró el rol 'Cliente'");
+    }
+
+    return clientRole.id;
+  } catch (error) {
+    const errorMessage = error instanceof Error ? error.message : "Error desconocido al obtener rol";
+    throw new Error(errorMessage);
   }
 }
