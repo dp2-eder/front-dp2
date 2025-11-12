@@ -1,117 +1,120 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect } from "react"
+import { ProductosResponse } from "@/types/productos"
 
-import { ProductosResponse } from '@/types/productos'
-
-// Cache global para los productos
-let cachedProductos: ProductosResponse['items'] | null = null
+// Cache global compartido entre montajes
+let cachedProductos: ProductosResponse["items"] | null = null
 let cacheTimestamp: number | null = null
-const CACHE_DURATION = 5 * 60 * 1000 // 5 minutos en milisegundos
+const CACHE_DURATION = 5 * 60 * 1000 // 5 minutos
 
-// Función para convertir URL de Google Drive a URL directa de imagen
+// 🔹 Helper: convierte URL de Google Drive en enlace directo
 const convertGoogleDriveUrl = (url: string | null | undefined): string => {
-  // Si la URL es null, undefined o una cadena vacía, devuelve un placeholder
-  if (!url || url === 'null' || url === 'undefined') {
-    return '/placeholder-image.png'
-  }
-  
-  // Si no es una URL de Google Drive, la devuelve tal cual
-  if (!url.includes('drive.google.com')) {
-    return url
-  }
-  
-  // Extraer el ID del archivo de la URL
+  if (!url || url === "null" || url === "undefined") return "/placeholder-image.png"
+  if (!url.includes("drive.google.com")) return url
   const match = url.match(/\/file\/d\/([a-zA-Z0-9-_]+)/)
-  if (match) {
-    const fileId = match[1]
-    return `https://drive.google.com/uc?export=view&id=${fileId}`
-  }
-  
-  return url
+  return match ? `https://drive.google.com/uc?export=view&id=${match[1]}` : url
 }
 
 export function useProductos() {
-  const [productos, setProductos] = useState<ProductosResponse['items']>(() => {
-    // Inicializar con cache si está disponible
-    return cachedProductos || []
-  })
-  const [loading, setLoading] = useState(() => {
-    // Si hay cache válido, no empezar en loading
-    if (cachedProductos && cacheTimestamp && Date.now() - cacheTimestamp < CACHE_DURATION) {
-      return false
-    }
-    return true
-  })
+  const [productos, setProductos] = useState<ProductosResponse["items"]>(cachedProductos || [])
+  const [loading, setLoading] = useState(
+    !cachedProductos || !cacheTimestamp || Date.now() - cacheTimestamp > CACHE_DURATION
+  )
   const [error, setError] = useState<string | null>(null)
+  const [fromCache, setFromCache] = useState<boolean>(!!cachedProductos)
 
   const fetchProductos = async (force = false) => {
     try {
-      // Si hay cache válido y no es forzado, usar cache
-      if (!force && cachedProductos && cacheTimestamp && Date.now() - cacheTimestamp < CACHE_DURATION) {
-        setProductos(cachedProductos)
+      const isCacheValid =
+        cachedProductos && cacheTimestamp && Date.now() - cacheTimestamp < CACHE_DURATION
+
+      // 🔹 Si hay cache válido y no es forzado, úsalo directamente
+      if (!force && isCacheValid) {
+        setProductos(cachedProductos ?? [])
+        setFromCache(true)
         setLoading(false)
         return
       }
 
-      setLoading(true)
-      setError(null)
-      
-      const response = await fetch('/api/productos', {
-        next: { revalidate: 300 } // Cache en el cliente también
-      })
-      const result = await response.json() as { success: boolean; data: ProductosResponse; error?: string }
-      
-      if (result.success) {
-        // Convertir URLs de Google Drive a URLs directas usando el proxy
-        const productosConImagenes = result.data.items.map(producto => {
-          const productoImagenUrl = convertGoogleDriveUrl(producto.imagen_path)
-          const categoriaImagenUrl = convertGoogleDriveUrl(producto.categoria.imagen_path)
-          
-          // Solo usar el proxy para URLs externas (Google Drive, http/https)
-          const shouldUseProxyProducto = productoImagenUrl.startsWith('http://') || 
-                                        productoImagenUrl.startsWith('https://') ||
-                                        productoImagenUrl.includes('drive.google.com')
-          
-          const shouldUseProxyCategoria = categoriaImagenUrl.startsWith('http://') || 
-                                         categoriaImagenUrl.startsWith('https://') ||
-                                         categoriaImagenUrl.includes('drive.google.com')
-          
-          return {
-            ...producto,
-            imagen_path: shouldUseProxyProducto 
-              ? `/api/image-proxy?url=${encodeURIComponent(productoImagenUrl)}`
-              : productoImagenUrl,
-            categoria: {
-              ...producto.categoria,
-              imagen_path: shouldUseProxyCategoria 
-                ? `/api/image-proxy?url=${encodeURIComponent(categoriaImagenUrl)}`
-                : categoriaImagenUrl
-            }
-          }
-        })
-        
-        // Actualizar cache global
-        cachedProductos = productosConImagenes
-        cacheTimestamp = Date.now()
-        
-        setProductos(productosConImagenes)
-      } else {
-        setError(result.error || 'Error al cargar los productos')
+      // 🔹 Si hay cache pero está vencido, mostrar los datos viejos mientras refresca
+      if (!force && cachedProductos && !isCacheValid) {
+        setProductos(cachedProductos ?? [])
+        setFromCache(true)
+        setLoading(true)
+      } else if (force) {
+        setFromCache(false)
+        setLoading(true)
       }
+
+      const response = await fetch("/api/productos", { next: { revalidate: 300 } })
+      const result = (await response.json()) as {
+        success: boolean
+        data: ProductosResponse
+        error?: string
+      }
+
+      if (!result.success) throw new Error(result.error || "Error al cargar los productos")
+
+      const productosConImagenes = result.data.items.map((producto) => {
+        const productoImagenUrl = convertGoogleDriveUrl(producto.imagen_path)
+        const categoriaImagenUrl = convertGoogleDriveUrl(producto.categoria.imagen_path)
+
+        const shouldUseProxyProducto =
+          productoImagenUrl.startsWith("http://") ||
+          productoImagenUrl.startsWith("https://") ||
+          productoImagenUrl.includes("drive.google.com")
+
+        const shouldUseProxyCategoria =
+          categoriaImagenUrl.startsWith("http://") ||
+          categoriaImagenUrl.startsWith("https://") ||
+          categoriaImagenUrl.includes("drive.google.com")
+
+        return {
+          ...producto,
+          imagen_path: shouldUseProxyProducto
+            ? `/api/image-proxy?url=${encodeURIComponent(productoImagenUrl)}`
+            : productoImagenUrl,
+          categoria: {
+            ...producto.categoria,
+            imagen_path: shouldUseProxyCategoria
+              ? `/api/image-proxy?url=${encodeURIComponent(categoriaImagenUrl)}`
+              : categoriaImagenUrl,
+          },
+        }
+      })
+
+      // 🔹 Actualiza el cache global
+      cachedProductos = productosConImagenes
+      cacheTimestamp = Date.now()
+
+      setProductos(productosConImagenes)
+      setFromCache(false)
+      setError(null)
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Error desconocido')
+      console.error(err)
+      setError(err instanceof Error ? err.message : "Error desconocido")
     } finally {
       setLoading(false)
     }
   }
 
+  // Cargar al montar (si no hay cache o está vencido)
   useEffect(() => {
     void fetchProductos()
+  }, [])
+
+  // 🔹 Auto refrescar en segundo plano cada 5 min sin borrar el estado
+  useEffect(() => {
+    const interval = setInterval(() => {
+      void fetchProductos(true)
+    }, CACHE_DURATION)
+    return () => clearInterval(interval)
   }, [])
 
   return {
     productos,
     loading,
+    fromCache,
     error,
-    refetch: () => void fetchProductos(true)
+    refetch: () => void fetchProductos(true),
   }
 }

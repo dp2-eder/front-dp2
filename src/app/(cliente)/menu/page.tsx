@@ -45,7 +45,7 @@ export default function MenuPage() {
   //const [categorySearch, setCategorySearch] = useState("")
 
   // Usar el hook de la API
-  const { productos, loading, error, refetch } = useProductos()
+  const { productos, loading, fromCache, error, refetch } = useProductos()
   const [inputValue, setInputValue] = useState("")
   const debouncedSearchTerm = useDebounce(inputValue, 500)
 
@@ -187,7 +187,8 @@ export default function MenuPage() {
     )
   }
 
-  if (loading) {
+  // En lugar de mostrar <Loading />, solo hacerlo si no hay data previa
+  if (loading && productos.length === 0) {
     return <Loading />
   }
 
@@ -283,7 +284,7 @@ export default function MenuPage() {
             )}
           </div>
         </div>
-        
+
         {/* Menu Sections */}
         {filteredDishes.length > 0 ? (
           <>
@@ -318,7 +319,8 @@ export default function MenuPage() {
                           grupo_personalizacion: undefined
                         }}
                         className="pointer-events-none"
-                        priority={index < 3}
+                        priority={!fromCache && index < 3}
+                        disableAnimation={fromCache}
                       />
                     </div>
                   ))}
@@ -343,7 +345,8 @@ export default function MenuPage() {
                         grupo_personalizacion: []
                       }}
                       showPrice={true}
-                      priority={index < 5} // Solo las primeras 4 en mobile
+                      priority={!fromCache && index < 4}
+                      disableAnimation={fromCache}  // Solo las primeras 4 en mobile
                     />
                   ))}
                 </div>
@@ -406,14 +409,15 @@ export default function MenuPage() {
                                     grupo_personalizacion: []
                                   }}
                                   showPrice={true}
-                                  priority={shouldPrioritize}
+                                  priority={!fromCache && shouldPrioritize}
+                                  disableAnimation={fromCache}
                                 />
                               )
                             })}
 
                             {/* Card "Más opciones..." si hay más de 8 platos */}
                             {dishes.length > 8 && (
-                              <article 
+                              <article
                                 onClick={() => setSelectedCategory(category)}
                                 className="text-center cursor-pointer hover:scale-105 transition-transform duration-200 outline-none focus:outline-none focus-visible:outline-none border-0 hover:border-0 focus:border-0 focus-visible:border-0 ring-0 hover:ring-0 focus:ring-0 focus-visible:ring-0"
                               >
@@ -461,7 +465,8 @@ export default function MenuPage() {
                             grupo_personalizacion: []
                           }}
                           showPrice={true}
-                          priority={index < 6}
+                          priority={!fromCache && index < 6}
+                          disableAnimation={fromCache}
                         />
                       ))}
                     </div>

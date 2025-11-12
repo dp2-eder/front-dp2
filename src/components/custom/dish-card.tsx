@@ -11,12 +11,14 @@ interface DishCardProps {
   showPrice?: boolean
   className?: string
   priority?: boolean // Nuevo prop para controlar prioridad de carga
+  disableAnimation?: boolean // Nuevo prop para desactivar animación
 }
 
 export function DishCard({
   dish,
   className = "",
-  priority = false
+  priority = false,
+  disableAnimation = false
 }: DishCardProps) {
   const [imageLoaded, setImageLoaded] = useState(false)
   const [isCached, setIsCached] = useState(false)
@@ -98,11 +100,16 @@ export function DishCard({
 
   return (
     <Link href={`/plato/${dish.id}`} className={className}>
-      <article className="text-center cursor-pointer hover:scale-105 transition-transform duration-200" data-cy="plate-card">
-        {/* Image Container */}
+      <article
+        className={`text-center cursor-pointer transition-transform duration-200 hover:scale-105 ${
+          disableAnimation ? "opacity-100" : "animate-fade-in"
+        }`}
+        data-cy="plate-card"
+      >
+        {/* Contenedor de imagen */}
         <div className="relative">
-          {/* Loading Skeleton - solo si no está en caché */}
-          {!imageLoaded && !isCached && (
+          {/* 🔸 Skeleton solo si no está cacheado ni se desactivó animación */}
+          {!disableAnimation && !imageLoaded && !isCached && (
             <div className="absolute inset-0 bg-gradient-to-br from-gray-200 to-gray-300 animate-pulse rounded-t-3xl flex items-center justify-center">
               <div className="w-12 h-12 border-4 border-gray-400 border-t-transparent rounded-full animate-spin"></div>
             </div>
@@ -113,18 +120,17 @@ export function DishCard({
             alt={dish.nombre || "Imagen no disponible"}
             width={300}
             height={169}
-            priority={priority} // Usar priority en lugar de loading
-            loading={priority ? "eager" : "lazy"} // Lazy loading para el resto
-            className={`w-full object-cover rounded-t-3xl bg-gray-300 aspect-[16/9] transition-opacity duration-300 ${
-              imageLoaded ? 'opacity-100' : 'opacity-0'
+            priority={priority}
+            loading={priority ? "eager" : "lazy"}
+            className={`w-full object-cover rounded-t-3xl bg-gray-300 aspect-[16/9] ${
+              disableAnimation
+                ? "opacity-100 transition-none"
+                : `transition-opacity duration-300 ${imageLoaded ? "opacity-100" : "opacity-0"}`
             }`}
             data-cy="plate-image"
             onLoad={() => {
               setImageLoaded(true)
-              // Marcar imagen como cacheada cuando se carga
-              if (dish.imagen) {
-                markImageAsCached(dish.imagen)
-              }
+              if (dish.imagen) markImageAsCached(dish.imagen)
             }}
             onError={(e) => {
               const target = e.target as HTMLImageElement
@@ -132,6 +138,8 @@ export function DishCard({
               setImageLoaded(true)
             }}
           />
+
+          {/* Badge de disponibilidad */}
           {!dish.disponible && (
             <Badge className="absolute top-2 left-2 bg-red-500 hover:bg-red-600 text-white text-xs">
               Agotado
@@ -139,7 +147,7 @@ export function DishCard({
           )}
         </div>
 
-        {/* Dish Name */}
+        {/* Nombre del plato */}
         <h3
           className="bg-[#004166] text-white px-3 py-2 rounded-b-3xl text-sm font-medium truncate whitespace-nowrap overflow-hidden"
           title={dish.nombre}
