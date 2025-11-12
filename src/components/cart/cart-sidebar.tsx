@@ -72,6 +72,24 @@ export default function CartSidebar({ isOpen, onClose }: CartSidebarProps) {
         return
       }
 
+      // Guardar mapeo de imágenes antes de enviar (para recuperarlas después)
+      // Obtener imágenes existentes para no perderlas
+      const existingImagesStr = localStorage.getItem('productImages')
+      let productImageMap: Record<string, string> = existingImagesStr ? JSON.parse(existingImagesStr) : {}
+
+      // Agregar nuevas imágenes sin sobrescribir las existentes
+      cart.forEach(item => {
+        const productId = String(item.id).split("-")[0] // Obtener el ID base del producto
+        if (item.image && !productImageMap[productId]) {
+          productImageMap[productId] = item.image
+        }
+      })
+
+      // Guardar el mapeo actualizado
+      if (Object.keys(productImageMap).length > 0) {
+        localStorage.setItem('productImages', JSON.stringify(productImageMap))
+      }
+
       // Enviar pedido al backend
       await sendOrderToKitchen({
         cart,
@@ -80,14 +98,11 @@ export default function CartSidebar({ isOpen, onClose }: CartSidebarProps) {
         notasCocina: ""
       })
 
-      // Refrescar el historial para ver el nuevo pedido
-      await fetchHistorial(tokenSesion)
-
       // Limpiar el carrito
       clearCart()
 
-      // Cerrar el sidebar
-      onClose()
+      // Refrescar el historial para ver el nuevo pedido (sin cerrar el sidebar)
+      await fetchHistorial(tokenSesion)
     } catch (err: unknown) {
       const errorMsg = err instanceof Error ? err.message : String(err)
       alert(`Error al enviar pedido: ${errorMsg}`)

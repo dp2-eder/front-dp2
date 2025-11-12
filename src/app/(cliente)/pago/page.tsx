@@ -22,6 +22,21 @@ export default function PagoPage() {
   const [peopleCount, setPeopleCount] = useState(2)
   const [paidGroupIds, setPaidGroupIds] = useState<string[]>([])
   const [groups, setGroups] = useState<PaymentGroup[]>([])
+  const [productImages, setProductImages] = useState<Record<string, string>>({})
+
+  // Cargar mapeo de imágenes desde localStorage
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      const savedImages = localStorage.getItem('productImages')
+      if (savedImages) {
+        try {
+          setProductImages(JSON.parse(savedImages))
+        } catch (error) {
+          console.error('Error al cargar imágenes:', error)
+        }
+      }
+    }
+  }, [])
 
   // Calcular monto acumulado del historial
   const totalAccumulated = historial.reduce((sum, pedido) => {
@@ -30,17 +45,23 @@ export default function PagoPage() {
 
   // Convertir historial a formato compatible con PaymentGroups
   const orderHistory: OrderHistoryItem[] = historial.flatMap(pedido =>
-    pedido.productos.map(producto => ({
-      id: producto.id,
-      name: producto.nombre_producto,
-      quantity: producto.cantidad,
-      subtotal: parseFloat(producto.subtotal || "0"),
-      additionals: producto.opciones.map(op => op.nombre_opcion),
-      comments: producto.notas_personalizacion,
-      image: producto.imagen_path || undefined,
-      date: pedido.fecha_creacion,
-      pedidoId: pedido.id
-    }))
+    pedido.productos.map(producto => {
+      // Obtener el ID base del producto para buscar la imagen
+      const productId = String(producto.id_producto || producto.id).split("-")[0]
+      const imageUrl = productImages[productId] || producto.imagen_path || undefined
+
+      return {
+        id: producto.id,
+        name: producto.nombre_producto,
+        quantity: producto.cantidad,
+        subtotal: parseFloat(producto.subtotal || "0"),
+        additionals: producto.opciones.map(op => op.nombre_opcion),
+        comments: producto.notas_personalizacion,
+        image: imageUrl,
+        date: pedido.fecha_creacion,
+        pedidoId: pedido.id
+      }
+    })
   )
 
   // Cargar historial al montar y configurar polling
