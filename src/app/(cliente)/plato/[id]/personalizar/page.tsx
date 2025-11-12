@@ -28,7 +28,7 @@ export default function PersonalizarPage() {
   // Usar solo la nueva API
   const { producto, loading, error } = useOpcionesProducto(params.id as string)
 
-  // Función para convertir URL de Google Drive
+  // Función para convertir URL de Google Drive usando el proxy
   const convertGoogleDriveUrl = (url: string | null): string => {
     if (!url || url === 'null' || url === 'undefined' || !url.includes('drive.google.com')) {
       return '/placeholder-image.png'
@@ -37,7 +37,14 @@ export default function PersonalizarPage() {
     const match = url.match(/\/file\/d\/([a-zA-Z0-9-_]+)/)
     if (match) {
       const fileId = match[1]
-      return `https://drive.google.com/uc?export=view&id=${fileId}`
+      // Usar el proxy para evitar fallos
+      const googleDriveUrl = `https://drive.google.com/uc?export=view&id=${fileId}`
+      return `/api/image-proxy?url=${encodeURIComponent(googleDriveUrl)}`
+    }
+    
+    // Si ya es una URL externa, usar proxy también
+    if (url.startsWith('http://') || url.startsWith('https://')) {
+      return `/api/image-proxy?url=${encodeURIComponent(url)}`
     }
     
     return url
@@ -101,28 +108,36 @@ export default function PersonalizarPage() {
   }
 
   const handleAddToCart = () => {
-    const cartItem: CartItem = {
-      id: `${producto.id}-${Date.now()}`,
-      dishId: parseInt(producto.id),
-      name: producto.nombre,
-      description: producto.descripcion,
-      basePrice: parseFloat(producto.precio_base),
-      quantity,
-      image: convertGoogleDriveUrl(producto.imagen_path),
-      selectedOptions: selectedExtras.map(extraId => {
-        const opcion = findOpcionById(extraId)
-        return {
-          id: opcion?.id || '', // id_producto_opcion
-          type: 'extra',
-          name: opcion?.nombre || '',
-          price: parseFloat(opcion?.precio_adicional || '0') * (extraQuantities[extraId] || 1)
-        }
-      }),
-      totalPrice: calculateTotal(),
-      comments
+    try {
+      // Convertir dishId de forma segura (producto.id es UUID, no número)
+      // Extraer solo los dígitos del inicio o usar 0 como fallback
+      const dishIdNum = Number(producto.id.replace(/\D/g, '').slice(0, 10)) || 0
+      
+      const cartItem: CartItem = {
+        id: `${producto.id}-${Date.now()}`,
+        dishId: dishIdNum,
+        name: producto.nombre,
+        description: producto.descripcion,
+        basePrice: parseFloat(producto.precio_base) || 0,
+        quantity,
+        image: convertGoogleDriveUrl(producto.imagen_path),
+        selectedOptions: selectedExtras.map(extraId => {
+          const opcion = findOpcionById(extraId)
+          return {
+            id: opcion?.id || '', // id_producto_opcion
+            type: 'extra',
+            name: opcion?.nombre || '',
+            price: parseFloat(opcion?.precio_adicional || '0') * (extraQuantities[extraId] || 1)
+          }
+        }),
+        totalPrice: calculateTotal(),
+        comments
+      }
+      addToCart(cartItem)
+      router.push('/menu')
+    } catch (error) {
+      alert('Error al agregar el producto al carrito. Por favor, intenta de nuevo.')
     }
-    addToCart(cartItem)
-    router.push('/menu')
   }
 
   return (
@@ -139,23 +154,42 @@ export default function PersonalizarPage() {
           <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
             {/* Left Column */}
             <div className="lg:col-span-8 space-y-6">
-              {/* Product Summary Card */}
-              <Card className="p-6 bg-white border border-[#99A1AF] rounded-xl shadow-sm">
-                <div className="flex items-start space-x-4">
-                  <SafeImage
-                    src={convertGoogleDriveUrl(producto.imagen_path)}
-                    alt={producto.nombre}
-                    className="w-20 h-20 rounded-[30px] object-cover flex-shrink-0"
-                    showIndicator={true}
-                    width={80}
-                    height={80}
-                    priority={false}
-                    quality={40}
-                  />
-                  <div className="flex-1">
-                    <h2 className="text-base font-semibold text-gray-900 mb-1">{producto.nombre}</h2>
-                    <p className="text-sm text-[#8C8CA1] mb-2">{producto.descripcion}</p>
-                    <p className="text-base font-semibold text-gray-900">{formatPrice(parseFloat(producto.precio_base))}</p>
+              {/* Product Summary Card - Cuadrito pequeño */}
+              <Card className="p-3 bg-white border border-[#99A1AF] rounded-lg shadow-sm">
+                <div className="flex items-center space-x-3">
+                  <div 
+                    className="flex-shrink-0 overflow-hidden"
+                    style={{ 
+                      width: '56px', 
+                      height: '56px',
+                      minWidth: '56px',
+                      minHeight: '56px',
+                      maxWidth: '56px',
+                      maxHeight: '56px',
+                      position: 'relative',
+                      boxSizing: 'border-box',
+                      borderRadius: '8px',
+                      contain: 'strict',
+                      isolation: 'isolate',
+                      transform: 'translateZ(0)',
+                      WebkitTransform: 'translateZ(0)'
+                    }}
+                  >
+                    <SafeImage
+                      src={convertGoogleDriveUrl(producto.imagen_path)}
+                      alt={producto.nombre}
+                      className=""
+                      showIndicator={true}
+                      width={56}
+                      height={56}
+                      priority={true}
+                      quality={75}
+                    />
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <h2 className="text-sm font-semibold text-gray-900 mb-0.5 truncate">{producto.nombre}</h2>
+                    <p className="text-xs text-[#8C8CA1] mb-1 line-clamp-1">{producto.descripcion}</p>
+                    <p className="text-sm font-semibold text-gray-900">{formatPrice(parseFloat(producto.precio_base))}</p>
                   </div>
                 </div>
               </Card>

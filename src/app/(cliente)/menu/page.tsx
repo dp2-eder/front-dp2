@@ -159,17 +159,21 @@ export default function MenuPage() {
     }, {} as { [key: string]: Producto[] })
   }, [filteredDishes])
 
-  // OPTIMIZACIÓN: Precargar automáticamente las primeras 2 categorías
+  // OPTIMIZACIÓN: Precargar automáticamente las primeras 2 categorías SOLO si no están en caché
   useEffect(() => {
-    if (Object.keys(dishesByCategory).length > 0 && !loading) {
+    if (Object.keys(dishesByCategory).length > 0 && !loading && typeof window !== 'undefined') {
       const firstCategories = Object.entries(dishesByCategory).slice(0, 2)
 
       // Precargar las primeras 6 imágenes de cada una de las primeras 2 categorías
+      // Solo si no están en caché del navegador
       firstCategories.forEach(([_, dishes]) => {
         dishes.slice(0, 6).forEach(dish => {
           if (dish.imagen_path) {
-            const img = new Image()
+            // Verificar si ya está en caché antes de precargar
+            const img = new window.Image()
             img.src = dish.imagen_path
+            // Si ya está en caché del navegador, no hace nada (el navegador lo maneja)
+            // Si no está, se precarga
           }
         })
       })

@@ -10,20 +10,64 @@ interface ImageCacheEntry {
 const CACHE_KEY = 'imageCache'
 const CACHE_DURATION = 24 * 60 * 60 * 1000 // 24 horas
 
+// Función auxiliar para normalizar URLs de Google Drive
+function normalizeImageUrl(url: string): string[] {
+  const urls = [url]
+  
+  // Si es URL de Google Drive, generar variaciones
+  if (url.includes('drive.google.com')) {
+    // Formato: /file/d/ID
+    const match1 = url.match(/\/file\/d\/([a-zA-Z0-9-_]+)/)
+    if (match1) {
+      const fileId = match1[1]
+      // Agregar formato convertido
+      urls.push(`https://drive.google.com/uc?export=view&id=${fileId}`)
+      // Agregar formato original completo
+      urls.push(`https://drive.google.com/file/d/${fileId}/view`)
+    }
+    
+    // Si es formato uc?export=view, generar formato /file/d/
+    const match2 = url.match(/uc\?export=view&id=([a-zA-Z0-9-_]+)/)
+    if (match2) {
+      const fileId = match2[1]
+      urls.push(`https://drive.google.com/file/d/${fileId}/view`)
+      urls.push(`https://drive.google.com/file/d/${fileId}`)
+    }
+  }
+  
+  return urls
+}
+
 export function isImageCached(imageUrl: string | null | undefined): boolean {
   if (!imageUrl) return false
 
   try {
     const cache = JSON.parse(localStorage.getItem(CACHE_KEY) || '{}') as Record<string, ImageCacheEntry>
-    const entry = cache[imageUrl]
-
+    
+    // Verificar URL exacta
+    let entry = cache[imageUrl]
+    
+    // Si no está, verificar variaciones de Google Drive
+    if (!entry) {
+      const normalizedUrls = normalizeImageUrl(imageUrl)
+      for (const normalizedUrl of normalizedUrls) {
+        entry = cache[normalizedUrl]
+        if (entry) break
+      }
+    }
+    
     if (!entry) return false
 
     // Verificar si el caché sigue siendo válido
     const age = Date.now() - entry.timestamp
     if (age > CACHE_DURATION) {
       // El caché expiró, eliminarlo
-      delete cache[imageUrl]
+      const normalizedUrls = normalizeImageUrl(imageUrl)
+      normalizedUrls.forEach(url => {
+        if (cache[url]) {
+          delete cache[url]
+        }
+      })
       localStorage.setItem(CACHE_KEY, JSON.stringify(cache))
       return false
     }
@@ -39,9 +83,17 @@ export function markImageAsCached(imageUrl: string | null | undefined): void {
 
   try {
     const cache = JSON.parse(localStorage.getItem(CACHE_KEY) || '{}') as Record<string, ImageCacheEntry>
-    cache[imageUrl] = {
-      timestamp: Date.now()
-    }
+    const timestamp = Date.now()
+    
+    // Marcar URL exacta
+    cache[imageUrl] = { timestamp }
+    
+    // Si es URL de Google Drive, marcar también las variaciones
+    const normalizedUrls = normalizeImageUrl(imageUrl)
+    normalizedUrls.forEach(url => {
+      cache[url] = { timestamp }
+    })
+    
     localStorage.setItem(CACHE_KEY, JSON.stringify(cache))
   } catch {
     // Silenciar errores de localStorage (podría estar lleno)

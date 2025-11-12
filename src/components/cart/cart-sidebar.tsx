@@ -75,7 +75,7 @@ export default function CartSidebar({ isOpen, onClose }: CartSidebarProps) {
       // Guardar mapeo de imágenes antes de enviar (para recuperarlas después)
       // Obtener imágenes existentes para no perderlas
       const existingImagesStr = localStorage.getItem('productImages')
-      let productImageMap: Record<string, string> = existingImagesStr ? JSON.parse(existingImagesStr) : {}
+      const productImageMap: Record<string, string> = existingImagesStr ? JSON.parse(existingImagesStr) as Record<string, string> : {}
 
       // Agregar nuevas imágenes sin sobrescribir las existentes
       cart.forEach(item => {

@@ -30,9 +30,9 @@ export default function PagoPage() {
       const savedImages = localStorage.getItem('productImages')
       if (savedImages) {
         try {
-          setProductImages(JSON.parse(savedImages))
+          setProductImages(JSON.parse(savedImages) as Record<string, string>)
         } catch (error) {
-          console.error('Error al cargar imágenes:', error)
+          //console.error('Error al cargar imágenes:', error)
         }
       }
     }

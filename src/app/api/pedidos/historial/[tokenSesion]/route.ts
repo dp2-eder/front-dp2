@@ -43,7 +43,7 @@ export async function GET(
 
     return NextResponse.json(data, { status: backendRes.status })
   } catch (error: unknown) {
-    console.error('Error al obtener historial de pedidos:', error)
+    //console.error('Error al obtener historial de pedidos:', error)
     return NextResponse.json(
       { error: error instanceof Error ? error.message : 'Error al obtener historial' },
       { status: 500 }

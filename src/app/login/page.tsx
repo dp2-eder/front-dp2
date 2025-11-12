@@ -39,7 +39,7 @@ export default function LoginPage() {
             setMesaNumero(data.numero);
           }
         } catch (error) {
-          console.error("Error fetching mesa data:", error);
+          //console.error("Error fetching mesa data:", error);
         }
       };
 
@@ -143,7 +143,7 @@ export default function LoginPage() {
         router.push("/about"); // navega solo si no hubo error
       } catch (error) {
         const errorMsg = error instanceof Error ? error.message : "Error desconocido";
-        console.error("❌ Error en login:", errorMsg);
+        //console.error("❌ Error en login:", errorMsg);
         alert(`Error: ${errorMsg}`);
       } finally {
         setIsLoading(false);

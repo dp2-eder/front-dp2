@@ -3,6 +3,8 @@ import Link from "next/link"
 import { useEffect, useState } from "react"
 
 import { Badge } from "@/components/ui/badge"
+import { prefetchAlergenos } from "@/hooks/use-alergenos"
+import { prefetchProducto } from "@/hooks/use-producto"
 import { isImageCached, markImageAsCached } from "@/lib/image-cache"
 import { Root2 } from "@/types/menu"
 
@@ -98,8 +100,28 @@ export function DishCard({
     return localImages[imageIndex]
   }
 
+  // Prefetch de datos cuando el usuario hace hover (precarga silenciosa)
+  const handleMouseEnter = () => {
+    // Usar las funciones de prefetch que guardan en caché
+    // Esto evita llamadas duplicadas cuando el componente se monta
+    // Si ya está en caché o hay un request pendiente, no hace nada
+    void prefetchProducto(dish.id)
+    void prefetchAlergenos(dish.id)
+    
+    // Precargar imagen también (usar window.Image para evitar conflicto con Next.js Image)
+    if (dish.imagen && typeof window !== 'undefined') {
+      const img = new window.Image()
+      img.src = dish.imagen
+    }
+  }
+
   return (
-    <Link href={`/plato/${dish.id}`} className={className}>
+    <Link 
+      href={`/plato/${dish.id}`} 
+      className={className}
+      onMouseEnter={handleMouseEnter}
+      prefetch={true}
+    >
       <article
         className={`text-center cursor-pointer transition-transform duration-200 hover:scale-105 ${
           disableAnimation ? "opacity-100" : "animate-fade-in"

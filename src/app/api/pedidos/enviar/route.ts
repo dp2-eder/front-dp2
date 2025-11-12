@@ -65,7 +65,7 @@ export async function POST(req: NextRequest) {
 
     return NextResponse.json(data, { status: backendRes.status })
   } catch (error: unknown) {
-    console.error('Error al enviar pedido:', error)
+    //console.error('Error al enviar pedido:', error)
     return NextResponse.json(
       { error: error instanceof Error ? error.message : 'Error al enviar pedido' },
       { status: 500 }

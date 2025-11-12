@@ -29,7 +29,7 @@ const convertGoogleDriveUrl = (url: string | null | undefined): string => {
   return url
 }
 
-export function useCategorias(limit = 12) {
+export function useCategorias(limit = 100) { // Aumentado a 100 para cargar todas las categorías (hay 23)
   const [categorias, setCategorias] = useState<CategoriasResponse['items']>(() => {
     // Inicializar con cache si está disponible
     return cachedCategorias || []

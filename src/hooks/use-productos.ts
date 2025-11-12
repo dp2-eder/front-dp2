@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react"
+
 import { ProductosResponse } from "@/types/productos"
 
 // Cache global compartido entre montajes
@@ -97,8 +98,20 @@ export function useProductos() {
     }
   }
 
-  // Cargar al montar (si no hay cache o está vencido)
+  // Cargar al montar SOLO si no hay cache válido
   useEffect(() => {
+    const isCacheValid =
+      cachedProductos && cacheTimestamp && Date.now() - cacheTimestamp < CACHE_DURATION
+    
+    // Si hay cache válido, solo actualizar el estado sin hacer fetch
+    if (isCacheValid) {
+      setProductos(cachedProductos ?? [])
+      setFromCache(true)
+      setLoading(false)
+      return
+    }
+    
+    // Solo hacer fetch si no hay cache o está vencido
     void fetchProductos()
   }, [])
 
