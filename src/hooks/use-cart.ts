@@ -1,37 +1,45 @@
 import { useState, useEffect } from 'react'
 
-export interface CartItem {
-  id: string
-  dishId: number
-  name: string
-  description: string
-  basePrice: number
-  quantity: number
-  image: string
-  selectedOptions: {
-    type: string
-    name: string
-    price: number
-  }[]
-  totalPrice: number
-  comments?: string
+import { CartItem } from '@/types/orders'
+
+// Re-export para compatibilidad hacia atrás
+export type { CartItem }
+
+// Estado global del carrito
+let globalCart: CartItem[] = []
+let cartListeners: Array<() => void> = []
+
+// Función para notificar a todos los listeners
+const notifyListeners = () => {
+  cartListeners.forEach(listener => listener())
 }
 
 export function useCart() {
-  const [cart, setCart] = useState<CartItem[]>([])
+  const [cart, setCart] = useState<CartItem[]>(globalCart)
   const [isInitialized, setIsInitialized] = useState(false)
+
+  // Listener para cambios globales
+  useEffect(() => {
+    const listener = () => {
+      setCart([...globalCart])
+    }
+    cartListeners.push(listener)
+    
+    return () => {
+      cartListeners = cartListeners.filter(l => l !== listener)
+    }
+  }, [])
 
   // Cargar carrito desde localStorage al inicializar
   useEffect(() => {
     if (typeof window !== 'undefined' && !isInitialized) {
       const savedCart = localStorage.getItem('cart')
-      //console.log('Loading cart from localStorage:', savedCart)
       if (savedCart) {
         try {
           const parsedCart = JSON.parse(savedCart) as CartItem[]
           if (Array.isArray(parsedCart)) {
+            globalCart = parsedCart
             setCart(parsedCart)
-            //console.log('Cart loaded successfully:', parsedCart)
           }
         } catch (error) {
           //console.error('Error loading cart:', error)
@@ -41,25 +49,46 @@ export function useCart() {
     }
   }, [isInitialized])
 
+  // Escuchar cambios en localStorage
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      const handleStorageChange = (e: StorageEvent) => {
+        if (e.key === 'cart' && e.newValue) {
+          try {
+            const newCart = JSON.parse(e.newValue) as CartItem[]
+            if (Array.isArray(newCart)) {
+              setCart(newCart)
+            }
+          } catch (error) {
+            //console.error('Error parsing cart from localStorage:', error)
+          }
+        }
+      }
+
+      window.addEventListener('storage', handleStorageChange)
+      return () => window.removeEventListener('storage', handleStorageChange)
+    }
+  }, [])
+
   // Guardar carrito en localStorage cuando cambie (solo después de inicializar)
   useEffect(() => {
     if (typeof window !== 'undefined' && isInitialized) {
-      //console.log('Saving cart to localStorage:', cart)
       localStorage.setItem('cart', JSON.stringify(cart))
     }
   }, [cart, isInitialized])
 
   const addToCart = (item: CartItem) => {
-    //console.log('Adding to cart:', item)
-    setCart(prevCart => {
-      const newCart = [...prevCart, item]
-      //console.log('New cart state:', newCart)
-      return newCart
-    })
+    const newCart = [...globalCart, item]
+    globalCart = newCart
+    setCart(newCart)
+    notifyListeners()
   }
 
   const removeFromCart = (itemId: string) => {
-    setCart(prevCart => prevCart.filter(item => item.id !== itemId))
+    const newCart = globalCart.filter(item => item.id !== itemId)
+    globalCart = newCart
+    setCart(newCart)
+    notifyListeners()
   }
 
   const updateQuantity = (itemId: string, quantity: number) => {
@@ -68,18 +97,20 @@ export function useCart() {
       return
     }
 
-    setCart(prevCart => {
-      const newCart = prevCart.map(item => 
-        item.id === itemId 
-          ? { ...item, quantity, totalPrice: (item.basePrice + item.selectedOptions.reduce((sum, opt) => sum + opt.price, 0)) * quantity }
-          : item
-      )
-      return newCart
-    })
+    const newCart = globalCart.map(item => 
+      item.id === itemId 
+        ? { ...item, quantity, totalPrice: (item.basePrice + item.selectedOptions.reduce((sum, opt) => sum + opt.price, 0)) * quantity }
+        : item
+    )
+    globalCart = newCart
+    setCart(newCart)
+    notifyListeners()
   }
 
   const clearCart = () => {
+    globalCart = []
     setCart([])
+    notifyListeners()
   }
 
   const getTotal = () => {
@@ -87,7 +118,8 @@ export function useCart() {
   }
 
   const getItemCount = () => {
-    return cart.reduce((sum, item) => sum + item.quantity, 0)
+    const count = cart.reduce((sum, item) => sum + item.quantity, 0)
+    return count
   }
 
   return {

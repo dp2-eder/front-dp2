@@ -1,80 +1,65 @@
 "use client"
 
 import { Facebook, Instagram } from "lucide-react"
+import Image from "next/image"
+import Link from "next/link"
 
 
 export default function Footer() {
   return (
-    <footer className="bg-[url('/Footer.png')] bg-cover bg-center bg-no-repeat text-white relative">
-      <div className="absolute inset-0"></div>
-      <div className="max-w-[1110px] mx-auto px-4 py-8 relative z-10">
+    <footer className="bg-[url('/Footer.jpg')] bg-cover bg-center bg-no-repeat text-white relative">
+      <div className="absolute inset-0" />
 
-        {/* Desktop Navigation */}
-        <nav className="hidden md:flex items-center justify-center space-x-12 mb-6">
-          <a href="/about" className="text-sm font-medium hover:text-[#5CEFFA]">
-            Nosotros
-          </a>
-          <a href="/menu" className="text-sm font-medium hover:text-[#5CEFFA]">
-            Menú
-          </a>
-          <a href="/carrito" className="text-sm font-medium hover:text-[#5CEFFA]">
-            Mi Orden
-          </a>
-          <a href="/contacto" className="text-sm font-medium hover:text-[#5CEFFA]">
-            Contáctanos
-          </a>
-        </nav>
+      {/* 🌟 Logo centrado sobresaliendo del borde superior (solo desktop) */}
+      <div className="absolute left-1/2 top-0 transform -translate-x-1/2 -translate-y-1/2 hidden md:flex items-center z-20">
+        {/* Línea izquierda */}
+        <div className="h-px bg-white/30 w-36 md:w-48 lg:w-64" />
 
-        {/* Mobile Navigation */}
-        <div className="md:hidden space-y-3 mb-5">
-          <div className="border-b-2 border-white/20 pb-4">
-            <button className="flex justify-center w-full">
-              <span className="text-lg font-bold">Nosotros</span>
-            </button>
-          </div>
-          <div className="border-b-2 border-white/20 pb-4">
-            <button className="flex justify-center w-full">
-              <span className="text-lg font-bold">Menú</span>
-            </button>
-          </div>
-          <div className="border-b-2 border-white/20 pb-4">
-            <button className="flex justify-center w-full">
-              <span className="text-lg font-bold">Mi Orden</span>
-            </button>
-          </div>
-          <div className="border-b-2 border-white/20 pb-4">
-            <button className="flex justify-center w-full">
-              <span className="text-lg font-bold">Contáctanos</span>
-            </button>
-          </div>
+        {/* Logo */}
+        <div className="mx-3 bg-white rounded-[25px] p-1.5 overflow-hidden" style={{
+          boxShadow: '0 15px 35px rgba(0,0,0,0.25), 0 5px 15px rgba(0,0,0,0.15)'
+        }}>
+          <Link href="/about" data-cy="logo">
+            <Image
+              src="/dineline2.svg"
+              alt="DINE LINE"
+              width={90}
+              height={90}
+              className="h-16 w-auto"
+              priority
+            />
+          </Link>
         </div>
 
+        {/* Línea derecha */}
+        <div className="h-px bg-white/30 w-36 md:w-48 lg:w-64" />
+      </div>
+
+      <div className="max-w-[1110px] mx-auto px-4 py-12 relative z-10">
         {/* Tagline */}
         <div className="text-center mb-6">
-          <p className="text-sm text-white/80">Sabores Auténticos, Momentos Inolvidables.</p>
+          <p className="text-sm text-white/80">
+            Sabores Auténticos, Momentos Inolvidables.
+          </p>
         </div>
-
-        {/* Action Buttons */}
-        {/*<div className="flex flex-col sm:flex-row gap-4 justify-center mb-8">
-          <Button className="bg-[#5CEFFA] hover:bg-[#4DD8E8] text-black font-semibold px-8 py-3 rounded-xl">
-            Ordene Ahora
-          </Button>
-          <Button className="bg-[#5CEFFA] hover:bg-[#4DD8E8] text-black font-semibold px-8 py-3 rounded-xl">
-            Reserve Ahora
-          </Button>
-        </div>*/}
 
         {/* Social Media */}
         <div className="flex justify-center space-x-6 mb-3">
           <a
-            href="https://facebook.com"
+            href="https://www.facebook.com/BarraArenaPeru/?locale=es_LA"
+            target="_blank"
+            rel="noopener noreferrer"
             className="w-10 h-10 bg-white/10 rounded-full flex items-center justify-center hover:bg-white/20 transition-colors"
+            aria-label="Facebook"
           >
             <Facebook className="w-5 h-5" />
           </a>
           <a
-            href="https://instagram.com"
+            href="https://www.instagram.com/barraarenaperu/"
+            target="_blank"
+            rel="noopener noreferrer"
             className="w-10 h-10 bg-white/10 rounded-full flex items-center justify-center hover:bg-white/20 transition-colors"
+            aria-label="Instagram"
           >
             <Instagram className="w-5 h-5" />
           </a>
@@ -82,9 +67,11 @@ export default function Footer() {
 
         {/* Social Media Text */}
         <div className="text-center">
-          <p className="text-xs text-white/60">Síguenos En Nuestras Redes Sociales</p>
+          <p className="text-xs text-white/60">
+            Síguenos En Nuestras Redes Sociales
+          </p>
         </div>
       </div>
     </footer>
-  )
+  );
 }

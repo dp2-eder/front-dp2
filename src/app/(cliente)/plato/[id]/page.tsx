@@ -1,93 +1,181 @@
 "use client"
 
+import { LogIn } from "lucide-react"
+import Link from "next/link"
 import { useParams, useRouter } from "next/navigation"
 
-import Loading from "@/app/loading"
+import { PlatoSkeleton } from "@/components/custom/plato-skeleton"
 import Footer from "@/components/layout/footer"
 import Header from "@/components/layout/header"
-import BackButton from "@/components/ui/back-button"
 import { Button } from "@/components/ui/button"
 import SafeImage from "@/components/ui/safe-image"
-import { useProducto } from '@/hooks/use-producto'
+import { useAlergenos } from "@/hooks/use-alergenos"
+import { useProducto } from "@/hooks/use-producto"
+import { markImageAsCached } from "@/lib/image-cache"
 
 export default function PlatoDetailPage() {
   const params = useParams()
   const router = useRouter()
   const { producto, loading, error } = useProducto(params.id as string)
+  const { alergenos, loading: alergenosLoading } = useAlergenos(params.id as string);
 
-  if (loading) return <Loading />
+  // Usar skeleton rápido en lugar de Loading completo
+  if (loading && !producto) {
+    return <PlatoSkeleton />
+  }
+
+  // Mostrar contenido aunque los alérgenos sigan cargando
   if (error) return <div>Error: {error}</div>
   if (!producto) return <div>Producto no encontrado</div>
 
-  // Función para convertir URL de Google Drive:
-  const convertGoogleDriveUrl = (url: string): string => {
-    if (!url || url === 'null' || url === 'undefined' || !url.includes('drive.google.com')) {
+  // Función para convertir URL de Google Drive usando el proxy
+  const convertGoogleDriveUrl = (url: string | null | undefined): string => {
+    if (!url || url === 'null' || url === 'undefined' || typeof url !== 'string' || !url.includes('drive.google.com')) {
       return '/placeholder-image.png'
     }
-    
+
     const match = url.match(/\/file\/d\/([a-zA-Z0-9-_]+)/)
     if (match) {
       const fileId = match[1]
-      return `https://drive.google.com/uc?export=view&id=${fileId}`
+      // Usar el proxy de Next.js para evitar fallos y mejorar velocidad
+      const googleDriveUrl = `https://drive.google.com/uc?export=view&id=${fileId}`
+      return `/api/image-proxy?url=${encodeURIComponent(googleDriveUrl)}`
     }
-    
+
+    // Si ya es una URL externa, usar proxy también
+    if (url.startsWith('http://') || url.startsWith('https://')) {
+      return `/api/image-proxy?url=${encodeURIComponent(url)}`
+    }
+
     return url
   }
+
 
   return (
     <div className="min-h-screen bg-[#FAFCFE] flex flex-col">
       <Header showFullNavigation={true} />
-      
+
       <main className="flex-1">
         <div className="max-w-[1110px] mx-auto px-4 py-8">
-          <div className="mb-8">
-            <BackButton href="/menu" text="Volver Al Menú" />
+          <div className="mb-16">
+            <Link href="/menu" className="flex items-center gap-2 mb-6">
+              <LogIn className="w-7 h-7" style={{ transform: 'scaleX(-1)' }} />
+            </Link>
+
           </div>
 
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
             <div className="order-2 lg:order-1 space-y-6">
+              {/* Nombre y Descripción */}
               <div>
-                <h1 className="text-3xl lg:text-4xl font-bold text-gray-800 mb-4">
-                  {String((producto as Record<string, unknown>)?.nombre || 'Sin nombre')}
+                <h1 className="text-3xl lg:text-2xl font-bold text-gray-800 mb-4 text-center">
+                  {producto.nombre || 'Sin nombre'}
                 </h1>
-
-                {/* Precio */}
-                <div className="mb-4">
-                  <span className="text-2xl font-bold text-[#0056C6]">
-                    S/ {String((producto as Record<string, unknown>)?.precio_base || '0.00')}
-                  </span>
-                </div>
-
-                <p className="text-base lg:text-lg text-gray-600 leading-relaxed mb-6">
-                  {String((producto as Record<string, unknown>)?.descripcion || 'Sin descripción')}
+                <p className="text-base lg:text-lg text-gray-800 leading-relaxed mb-6">
+                  {producto.descripcion || 'Sin descripción'}
                 </p>
               </div>
 
-              <div className="flex justify-center">
-                <Button
-                  className="w-full max-w-md h-12 bg-[#0056C6] hover:bg-[#004299] text-white text-lg font-semibold rounded-xl"
-                  onClick={() => {
-                    router.push(`/plato/${String(params.id)}/personalizar`)
-                  }}
-                >
-                  Ordene Ahora
-                </Button>
+              {/* Precio y Ordenar Ahora */}
+              <div className="flex flex-col items-center">
+                {/* Contenedor responsive: 1 columna en móvil, 2 columnas en pantallas md+ */}
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6 w-full max-w-2xl items-center">
+
+                  {/* Precio */}
+                  <div className="flex justify-center md:justify-center">
+                    <span className="text-xl font-bold text-gray-800 text-center md:text-left">
+                      Precio: S/. {producto.precio_base || '0.00'}
+                    </span>
+                  </div>
+
+                  {/* Botón */}
+                  <div className="flex justify-center md:justify-center">
+                    <Button
+                      className="w-32 h-12 bg-[#004166] hover:bg-[#004299] text-white text-lg font-semibold rounded-xl"
+                      onClick={() => {
+                        router.push(`/plato/${String(params.id)}/personalizar`)
+                      }}
+                    >
+                      Ordenar
+                    </Button>
+                  </div>
+                </div>
               </div>
+
+              {/* Alergenos */}
+              <div>
+                <h2 className="hidden md:block text-xl font-normal text-gray-800 mb-4 text-left">
+                  Lista de Alergenos presentes:</h2>
+
+                {alergenosLoading ? (
+                  <div className="flex justify-center md:justify-start mt-6">
+                    <div className="flex flex-wrap justify-center items-center bg-[#FAFCFE] rounded-2xl shadow-md px-6 py-4 max-w-3xl gap-2">
+                      {[1, 2, 3].map((i) => (
+                        <div key={i} className="flex flex-col items-center justify-center text-center mx-2 my-1 animate-pulse">
+                          <span className="text-xl mb-1 text-gray-300 w-6 h-6 rounded-full bg-gray-200"></span>
+                          <span className="text-xs font-medium text-gray-300 h-3 w-12 bg-gray-200 rounded"></span>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                ) : alergenos.length > 0 ? (
+                  <div className="w-full flex justify-center md:justify-start mt-6">
+                    <div className="flex flex-wrap justify-center items-center bg-[#FAFCFE] rounded-2xl shadow-md px-6 py-4 max-w-3xl">
+                      {alergenos.map((item) => (
+                        <div
+                          key={item.nombre}
+                          className="flex flex-col items-center justify-center text-center mx-2 my-1"
+                        >
+                          {item.icono && (
+                            <span className="text-xl mb-1 filter grayscale">{item.icono}</span>
+                          )}
+                          <span className="text-xs font-medium text-[#0D1030]">
+                            {item.nombre}
+                          </span>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                ) : (
+                  <div className="text-gray-500 text-sm mt-2">
+                    No hay alérgenos registrados para este producto.
+                  </div>
+                )}
+              </div>
+
             </div>
 
             <div className="order-1 lg:order-2 space-y-6">
               <div className="relative">
-                <SafeImage
-                  src={convertGoogleDriveUrl(String((producto as Record<string, unknown>)?.imagen_path || ''))}
-                  alt={String((producto as Record<string, unknown>)?.nombre || 'Sin nombre')}
-                  className="w-full h-64 lg:h-96 object-cover rounded-2xl bg-gray-300"
-                  showIndicator={true}
-                />
+                <div className="w-full h-64 lg:h-96 rounded-2xl bg-gray-100 overflow-hidden flex items-center justify-center">
+                  <SafeImage
+                    src={convertGoogleDriveUrl(producto.imagen_path || '')}
+                    alt={producto.nombre || 'Sin nombre'}
+                    className="w-full h-full"
+                    showIndicator={true}
+                    width={800}
+                    height={600}
+                    priority={true}
+                    quality={75}
+                    objectFit="contain"
+                  onLoad={() => {
+                    // Marcar ambas URLs en caché cuando se carga
+                    if (producto.imagen_path) {
+                      const convertedUrl = convertGoogleDriveUrl(producto.imagen_path)
+                      markImageAsCached(convertedUrl)
+                      if (producto.imagen_path !== convertedUrl) {
+                        markImageAsCached(producto.imagen_path)
+                      }
+                    }
+                  }}
+                  />
+                </div>
               </div>
             </div>
           </div>
         </div>
       </main>
+      <br></br><br></br>
 
       <Footer />
     </div>

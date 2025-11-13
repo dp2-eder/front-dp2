@@ -1,24 +1,18 @@
 "use client"
 import Image from "next/image"
 import Link from "next/link"
-import { useRouter } from "next/navigation"
 
+import { CategoryCarousel } from "@/components/custom/category-carousel"
+import { CategoryCarouselSkeleton } from "@/components/custom/category-skeleton"
 import Footer from "@/components/layout/footer"
 import Header from "@/components/layout/header"
 import { Button } from "@/components/ui/button"
-import { Card, CardContent } from "@/components/ui/card"
-import {
-  Carousel,
-  CarouselContent,
-  CarouselItem,
-  CarouselNext,
-  CarouselPrevious,
-} from "@/components/ui/carousel"
 import { useCategorias } from '@/hooks/use-categorias'
 
 export default function AboutPage() {
-  const router = useRouter()
-  const { categorias } = useCategorias()
+  // Para el carrusel de about, cargar todas las categorías disponibles
+  // 100 es suficiente para mostrar todas las categorías en el carrusel
+  const { categorias, loading } = useCategorias(100)
 
   return (
     <div className="min-h-screen bg-background">
@@ -27,7 +21,7 @@ export default function AboutPage() {
       {/* Hero Section */}
       <section className="lg:bg-gradient-to-br lg:from-[#0B4F6C] lg:to-[#0B4F6C]/90 lg:text-white lg:relative lg:overflow-hidden">
         {/* Fondo solo en desktop */}
-        <div className="hidden lg:block absolute inset-0 bg-[url('/fondo-inicio.png')] bg-cover bg-center"></div>
+        <div className="hidden lg:block absolute inset-0 bg-[url('/fondo-inicio.webp')] bg-cover bg-center"></div>
         
         {/* Layout para móvil y tablet - Imagen arriba */}
         <div className="lg:hidden">
@@ -40,15 +34,52 @@ export default function AboutPage() {
               className="object-cover"
             />
           </div>
-          <div className="bg-white py-8 px-4">
-            <div className="container mx-auto text-center">
+          <div className="bg-white py-8 px-4 sm:px-8 md:px-12 relative overflow-visible">
+            {/* Pescado - izquierda (mobile y tablet) - fondo absoluto */}
+            <div className="lg:hidden absolute left-0 -bottom-24 w-56 sm:w-72 md:w-80 h-56 sm:h-72 md:h-80 opacity-50 z-0 pointer-events-none">
+              <Image
+                src="/pescado-inicio.jpg"
+                alt="Decoración pescado"
+                width={400}
+                height={400}
+                className="object-contain"
+              />
+            </div>
+            
+            {/* Cangrejo - derecha MOBILE - fondo absoluto */}
+            <div className="sm:hidden absolute right-0 -bottom-12 w-56 h-56 opacity-50 z-0 pointer-events-none">
+              <Image
+                src="/cangrejo.png"
+                alt="Decoración cangrejo"
+                width={400}
+                height={400}
+                className="object-contain"
+              />
+            </div>
+            
+            {/* Cangrejo - derecha TABLET - fondo absoluto */}
+            <div className="hidden sm:block lg:hidden absolute right-0 -bottom-20 w-72 md:w-80 h-72 md:h-80 opacity-50 z-0 pointer-events-none">
+              <Image
+                src="/cangrejo.png"
+                alt="Decoración cangrejo"
+                width={400}
+                height={400}
+                className="object-contain"
+              />
+            </div>
+            
+            <div className="container mx-auto text-center relative z-10">
               <h1 className="scroll-m-20 text-3xl md:text-4xl font-bold tracking-tight text-[#0B4F6C] mb-4">
                 Bienvenido a Dine Line
               </h1>
-              <p className="text-base md:text-lg text-gray-700 mb-6 leading-relaxed italic max-w-2xl mx-auto">
-                &ldquo;Reconocido por su innovadora modalidad para brindarte
-                una experiencia única y personalizada&rdquo;
-              </p>
+              
+              <div className="relative max-w-2xl mx-auto mb-6">
+                <p className="text-base md:text-lg text-gray-700 leading-relaxed italic">
+                  &ldquo;Reconocido por su innovadora modalidad para brindarte
+                  una experiencia única y personalizada&rdquo;
+                </p>
+              </div>
+              
               <Link href="/menu">
                 <Button
                   size="lg"
@@ -88,95 +119,21 @@ export default function AboutPage() {
       </section>
 
       {/* Categories Section */}
-      <section className="py-16 md:py-20 bg-white relative">
-        <div className="hidden lg:block absolute inset-0 bg-[url('/pescado-inicio.jpg')] bg-no-repeat bg-left-top opacity-50 pointer-events-none" style={{ backgroundSize: '300px' }}></div>
+      <section className="py-16 md:py-20 bg-white relative overflow-hidden">
+        <div className="hidden lg:block absolute left-0 top-0 opacity-50 pointer-events-none" style={{ width: 'clamp(300px, 35vw, 450px)', height: 'clamp(300px, 35vw, 450px)' }}>
+          <div className="w-full h-full bg-[url('/pescado-inicio.jpg')] bg-no-repeat bg-contain bg-left-top"></div>
+        </div>
         
         <div className="container mx-auto px-4 relative z-10">
           <h2 className="scroll-m-20 text-3xl md:text-4xl font-bold tracking-tight text-center text-[#0B4F6C] mb-12 md:mb-16">
             Nuestras Categorías
           </h2>
 
-          {/* Carrusel para móvil y tablet */}
-          <div className="block lg:hidden">
-            <Carousel
-              opts={{
-                align: "start",
-                loop: true,
-              }}
-              className="w-full max-w-full mx-auto"
-            >
-              <CarouselContent className="-ml-3 md:-ml-4">
-                {categorias.map((category) => (
-                  <CarouselItem
-                    key={category.nombre}
-                    className="pl-3 md:pl-4 basis-1/2 md:basis-1/3"
-                  >
-                    <div
-                      className="group block cursor-pointer"
-                      onClick={() =>
-                        router.push(`/menu?categoria=${encodeURIComponent(category.nombre)}`)
-                      }
-                    >
-                      <Card className="overflow-hidden border-0 shadow-xl hover:shadow-2xl transition-all duration-300 group-hover:scale-105 rounded-3xl">
-                        <CardContent className="p-0">
-                          <div className="relative h-64">
-                            <Image
-                              src={category.imagen_path}
-                              alt={category.nombre}
-                              fill
-                              priority={true}
-                              sizes="(max-width: 768px) 50vw, (max-width: 1024px) 33vw, 20vw"
-                              className="object-cover group-hover:scale-110 transition-transform duration-500"
-                            />
-                          </div>
-                          <div className="bg-[#0B4F6C] py-3 px-3">
-                            <h3 className="text-base font-bold text-white text-center">
-                              {category.nombre}
-                            </h3>
-                          </div>
-                        </CardContent>
-                      </Card>
-                    </div>
-                  </CarouselItem>
-                ))}
-              </CarouselContent>
-              <CarouselPrevious className="hidden md:flex -left-4" />
-              <CarouselNext className="hidden md:flex -right-4" />
-            </Carousel>
-          </div>
-
-          {/* Grid para desktop */}
-          <div className="hidden lg:grid grid-cols-5 gap-8 max-w-7xl mx-auto">
-            {categorias.map((category) => (
-              <div
-                key={category.nombre}
-                className="group block cursor-pointer"
-                onClick={() =>
-                  router.push(`/menu?categoria=${encodeURIComponent(category.nombre)}`)
-                }
-              >
-                <Card className="overflow-hidden border-0 shadow-xl hover:shadow-2xl transition-all duration-300 group-hover:scale-105 rounded-3xl">
-                  <CardContent className="p-0">
-                    <div className="relative h-72">
-                      <Image
-                        src={category.imagen_path}
-                        alt={category.nombre}
-                        fill
-                        priority={true}
-                        sizes="(max-width: 1024px) 0px, 20vw"
-                        className="object-cover group-hover:scale-110 transition-transform duration-500"
-                      />
-                    </div>
-                    <div className="bg-[#0B4F6C] py-4 px-4">
-                      <h3 className="text-xl font-bold text-white text-center">
-                        {category.nombre}
-                      </h3>
-                    </div>
-                  </CardContent>
-                </Card>
-              </div>
-            ))}
-          </div>
+          {loading && categorias.length === 0 ? (
+            <CategoryCarouselSkeleton />
+          ) : (
+            <CategoryCarousel categories={categorias} />
+          )}
         </div>
       </section>
       
