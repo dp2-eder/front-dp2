@@ -16,11 +16,21 @@ import {
 // Alias para mantener compatibilidad con el código existente
 type OrderItem = OrderHistoryItem
 
-export function PaymentGroups({ orderHistory, onGroupsChange }: PaymentGroupsProps) {
+interface PaymentGroupsExtendedProps extends PaymentGroupsProps {
+  initialGroups?: PaymentGroup[]
+  initialPaidGroupIds?: string[]
+}
+
+export function PaymentGroups({
+  orderHistory,
+  onGroupsChange,
+  initialGroups = [],
+  initialPaidGroupIds = []
+}: PaymentGroupsExtendedProps) {
   const [groupName, setGroupName] = useState("")
-  const [groups, setGroups] = useState<PaymentGroup[]>([])
+  const [groups, setGroups] = useState<PaymentGroup[]>(initialGroups)
   const [selectedItems, setSelectedItems] = useState<SelectedItem[]>([])
-  const [paidGroupIds, setPaidGroupIds] = useState<Set<string>>(new Set())
+  const [paidGroupIds, setPaidGroupIds] = useState<Set<string>>(new Set(initialPaidGroupIds))
 
   // Función para convertir URL de Google Drive
   const convertGoogleDriveUrl = (url?: string): string => {
