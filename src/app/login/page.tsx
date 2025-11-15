@@ -28,6 +28,8 @@ export default function LoginPage() {
   const mesaId =
     searchParams.get("mesa") ?? Array.from(searchParams.keys())[0] ?? "";
 
+
+
   // Fetch del número de mesa cuando el componente se monta
   useEffect(() => {
     if (mesaId) {
@@ -86,6 +88,27 @@ export default function LoginPage() {
     e.preventDefault();
     const isNombreValid = validateNombre(nombre);
     const isEmailValid = validateEmail(email);
+
+    //Afoto maximo
+    const fetchAforo = async () => {
+      try {
+        const res = await fetch("https://back-dp2.onrender.com/api/v1/mesas?skip=0&limit=100")
+        const data = await res.json()
+
+        const aforoTotal = data.items.reduce(
+          (sum: number, mesa: any) => sum + (mesa.capacidad || 0),
+          0
+        )
+
+        localStorage.setItem("aforoTotal", String(aforoTotal))
+
+      } catch (error) {
+        console.error("Error obteniendo aforo:", error)
+      }
+    }
+
+    fetchAforo()
+
 
     if (isNombreValid && isEmailValid) {
       setIsLoading(true);
