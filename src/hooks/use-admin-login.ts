@@ -1,5 +1,4 @@
 /* eslint-disable @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-unsafe-argument */
-import { API_BASE_URL } from "@/lib/api-config";
 
 export interface AdminLoginRequest {
   usuario: string;
@@ -57,11 +56,11 @@ export async function loginAdmin(
     }
 
     // Guardar token_sesion en localStorage si existe
-    if ((result as AdminLoginResponse)?.token_sesion) {
-      localStorage.setItem("token_sesion", (result as AdminLoginResponse).token_sesion);
-      localStorage.setItem("id_usuario", (result as AdminLoginResponse).id_usuario || "");
-      localStorage.setItem("fecha_expiracion", (result as AdminLoginResponse).fecha_expiracion || "");
-      localStorage.setItem("usuario", (result as AdminLoginResponse).usuario || "");
+    if ((result)?.token_sesion) {
+      localStorage.setItem("token_sesion", (result).token_sesion);
+      localStorage.setItem("id_usuario", (result).id_usuario || "");
+      localStorage.setItem("fecha_expiracion", (result).fecha_expiracion || "");
+      localStorage.setItem("usuario", (result).usuario || "");
       localStorage.setItem("userRole", "admin");
     }
 

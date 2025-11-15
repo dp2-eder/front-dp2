@@ -7,7 +7,6 @@ import { useState, useEffect } from "react";
 
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { loginAdmin, type AdminLoginResponse } from "@/hooks/use-admin-login";
 import { clearLocalStoragePreservingImageCache } from "@/lib/image-cache";
 
 export default function AdminLoginPage() {
@@ -88,7 +87,7 @@ export default function AdminLoginPage() {
 
         // Guardar datos de sesión (demo)
         const demoToken = `demo_token_${Date.now()}`;
-        localStorage.setItem("id_usuario", "admin_" + usuario);
+        localStorage.setItem("id_usuario", `admin_${  usuario}`);
         localStorage.setItem("token_sesion", demoToken);
         localStorage.setItem("fecha_expiracion", new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString());
         localStorage.setItem("usuario", usuario);
