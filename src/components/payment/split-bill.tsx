@@ -2,11 +2,13 @@
 
 import { Button } from "@/components/ui/button"
 import { SplitBillProps } from "@/types/orders"
+import { useAforo } from "@/context/aforo-context"
 
 export function SplitBill({ totalAmount, peopleCount, onPeopleCountChange }: SplitBillProps) {
+  const { aforoTotal } = useAforo()
+
   // Método de redondeo progresivo: la mayoría paga redondeado hacia abajo,
   // la última persona paga la diferencia para que el total sea exacto
-  const aforoTotal = Number(localStorage.getItem("aforoTotal") || 0)
   const calculateSplitAmounts = () => {
     if (peopleCount === 0) {
       return { baseAmount: 0, lastPersonAmount: 0 }

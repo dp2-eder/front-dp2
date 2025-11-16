@@ -10,11 +10,13 @@ import { Input } from "@/components/ui/input";
 import { loginUser, type LoginResponse } from "@/hooks/use-login";
 import { API_BASE_URL } from "@/lib/api-config";
 import { clearLocalStoragePreservingImageCache } from "@/lib/image-cache";
+import { useAforo } from "@/context/aforo-context";
 
 
 export default function LoginPage() {
   const router = useRouter();
   const searchParams = useSearchParams();
+  const { fetchAforo } = useAforo();
 
   const [nombre, setNombre] = useState("");
   const [email, setEmail] = useState("");
@@ -89,25 +91,8 @@ export default function LoginPage() {
     const isNombreValid = validateNombre(nombre);
     const isEmailValid = validateEmail(email);
 
-    //Afoto maximo
-    const fetchAforo = async () => {
-      try {
-        const res = await fetch("https://back-dp2.onrender.com/api/v1/mesas?skip=0&limit=100")
-        const data = await res.json()
-
-        const aforoTotal = data.items.reduce(
-          (sum: number, mesa: any) => sum + (mesa.capacidad || 0),
-          0
-        )
-
-        localStorage.setItem("aforoTotal", String(aforoTotal))
-
-      } catch (error) {
-        console.error("Error obteniendo aforo:", error)
-      }
-    }
-
-    fetchAforo()
+    // Obtener aforo total del contexto
+    void fetchAforo()
 
 
     if (isNombreValid && isEmailValid) {
