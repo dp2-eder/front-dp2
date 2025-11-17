@@ -39,7 +39,8 @@ module.exports = {
 					accent: 'hsl(var(--sidebar-accent))',
 					'accent-foreground': 'hsl(var(--sidebar-accent-foreground))',
 					border: 'hsl(var(--sidebar-border))',
-					ring: 'hsl(var(--sidebar-ring))'
+					ring: 'hsl(var(--sidebar-ring))',
+					customBorder: '#99A1AF',
 				},
 				background: 'hsl(var(--background))',
 				foreground: 'hsl(var(--foreground))',
