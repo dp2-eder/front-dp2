@@ -13,6 +13,7 @@ import { SplitBill } from "@/components/payment/split-bill"
 import { Button } from "@/components/ui/button"
 import { useOrderHistory } from "@/context/order-history-context"
 import { OrderHistoryItem, PaymentGroup } from "@/types/orders"
+import { toast } from "sonner"
 
 const POLLING_INTERVAL = 10000 // 10 segundos
 
@@ -33,7 +34,8 @@ export default function PagoPage() {
         try {
           setProductImages(JSON.parse(savedImages) as Record<string, string>)
         } catch (error) {
-          //console.error('Error al cargar imágenes:', error)
+          console.error('Error:', error)
+          toast.error('Error al cargar imágenes de productos')
         }
       }
 
@@ -56,14 +58,16 @@ export default function PagoPage() {
         try {
           setGroups(JSON.parse(savedGroups) as PaymentGroup[])
         } catch (error) {
-          //console.error('Error al cargar grupos:', error)
+          toast.error('Error al cargar grupos de pago')
+          console.error('Error al cargar grupos:', error)
         }
       }
       if (savedPaidGroupIds) {
         try {
           setPaidGroupIds(JSON.parse(savedPaidGroupIds) as string[])
         } catch (error) {
-          //console.error('Error al cargar IDs pagados:', error)
+          toast.error('Error al cargar')
+          console.error('Error al cargar IDs pagados:', error)
         }
       }
     }
@@ -101,6 +105,7 @@ export default function PagoPage() {
       try {
         localStorage.setItem('paymentMode', paymentMode)
       } catch (error) {
+        toast.error('Error en el pago')
         console.error('Error al guardar modo de pago:', error)
       }
     }
@@ -113,6 +118,7 @@ export default function PagoPage() {
         try {
           localStorage.setItem('paymentConfig_peopleCount', String(peopleCount))
         } catch (error) {
+          toast.error('Error en la forma de pago')
           console.error('Error al guardar peopleCount:', error)
         }
       }, 100)
@@ -129,6 +135,7 @@ export default function PagoPage() {
           localStorage.setItem('paymentConfig_groups', JSON.stringify(groups))
           localStorage.setItem('paymentConfig_paidGroupIds', JSON.stringify(paidGroupIds))
         } catch (error) {
+          toast.error('Error al guadar grupos')
           console.error('Error al guardar grupos:', error)
         }
       }, 100)

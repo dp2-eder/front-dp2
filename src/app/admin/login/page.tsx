@@ -8,6 +8,7 @@ import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { clearLocalStoragePreservingImageCache } from "@/lib/image-cache";
+import { toast } from "sonner";
 
 export default function AdminLoginPage() {
   const router = useRouter();
@@ -100,7 +101,8 @@ export default function AdminLoginPage() {
       } catch (error) {
         const errorMsg = error instanceof Error ? error.message : "Error desconocido";
         console.error("❌ Error en login de admin:", errorMsg);
-        alert(`Error: ${errorMsg}`);
+        toast.error ("Error en el login de admin");
+        //alert(`Error: ${errorMsg}`);
       } finally {
         setIsLoading(false);
       }

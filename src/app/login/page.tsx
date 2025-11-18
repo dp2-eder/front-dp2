@@ -12,6 +12,8 @@ import { API_BASE_URL } from "@/lib/api-config";
 import { clearLocalStoragePreservingImageCache } from "@/lib/image-cache";
 import { useAforo } from "@/context/aforo-context";
 
+import { toast } from "sonner"
+
 
 export default function LoginPage() {
   const router = useRouter();
@@ -38,12 +40,20 @@ export default function LoginPage() {
       const fetchMesaData = async () => {
         try {
           const response = await fetch(`${API_BASE_URL}/api/v1/mesas/${mesaId}`);
-          if (response.ok) {
-            const data = await response.json() as { numero: string };
-            setMesaNumero(data.numero);
+
+          if (!response.ok) {
+            // Manejo de errores HTTP como 404, 400, 500, etc.
+            toast.error("La mesa no existe o no se encontró.");
+            return;
           }
+
+          const data = await response.json() as { numero: string };
+          setMesaNumero(data.numero);
+
         } catch (error) {
-          //console.error("Error fetching mesa data:", error);
+          // Errores de red (sin conexión, CORS, timeout, etc.)
+          console.log(error);
+          toast.error("Error con la conexión al sistema.");
         }
       };
 
@@ -113,7 +123,8 @@ export default function LoginPage() {
 
         // Verificar si hubo error
         if (loginResponse && 'error' in loginResponse && loginResponse.error) {
-          throw new Error(`Login falló: ${loginResponse.error}`);
+          toast.error("Fallo en el login");
+          console.log(`Login falló: ${loginResponse.error}`);
         }
 
         // Castear a LoginResponse (sabemos que es válida si no tiene error)
@@ -122,7 +133,8 @@ export default function LoginPage() {
 
         // Verificar que tenemos el token_sesion
         if (!response.token_sesion) {
-          throw new Error("El servidor no devolvió token_sesion");
+          toast.error("Error de servidor");
+          console.log ("El servidor no devolvió token_sesion")
         }
 
         // Limpiar localStorage antes de guardar datos del usuario
@@ -152,7 +164,8 @@ export default function LoginPage() {
       } catch (error) {
         const errorMsg = error instanceof Error ? error.message : "Error desconocido";
         //console.error("❌ Error en login:", errorMsg);
-        alert(`Error: ${errorMsg}`);
+        console.log(`Error: ${errorMsg}`)
+        toast.error(`Error desconocido`);
       } finally {
         setIsLoading(false);
       }
