@@ -10,9 +10,9 @@ interface PaymentModeSelectorProps {
 
 export function PaymentModeSelector({ value, onChange }: PaymentModeSelectorProps) {
   const modes = [
+    { id: "pago-inmediato", label: "Pago inmediato" },
     { id: "partes-iguales", label: "Partes iguales" },
     { id: "grupos-pago", label: "Grupos de pago" },
-    { id: "pago-inmediato", label: "Pago inmediato" },
   ]
 
   return (

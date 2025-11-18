@@ -4,8 +4,11 @@ import { Facebook, Instagram } from "lucide-react"
 import Image from "next/image"
 import Link from "next/link"
 
+interface FooterProps {
+  showSocial?: boolean
+}
 
-export default function Footer() {
+export default function Footer({ showSocial = true }: FooterProps) {
   return (
     <footer className="bg-[url('/Footer.jpg')] bg-cover bg-center bg-no-repeat text-white relative">
       <div className="absolute inset-0" />
@@ -36,40 +39,42 @@ export default function Footer() {
       </div>
 
       <div className="max-w-[1110px] mx-auto px-4 py-12 relative z-10">
-        {/* Tagline */}
-        <div className="text-center mb-6">
-          <p className="text-sm text-white/80">
-            Sabores Auténticos, Momentos Inolvidables.
-          </p>
-        </div>
+        <div className={showSocial ? "" : "invisible"}>
+          {/* Tagline */}
+          <div className="text-center mb-6">
+            <p className="text-sm text-white/80">
+              Sabores Auténticos, Momentos Inolvidables.
+            </p>
+          </div>
 
-        {/* Social Media */}
-        <div className="flex justify-center space-x-6 mb-3">
-          <a
-            href="https://www.facebook.com/BarraArenaPeru/?locale=es_LA"
-            target="_blank"
-            rel="noopener noreferrer"
-            className="w-10 h-10 bg-white/10 rounded-full flex items-center justify-center hover:bg-white/20 transition-colors"
-            aria-label="Facebook"
-          >
-            <Facebook className="w-5 h-5" />
-          </a>
-          <a
-            href="https://www.instagram.com/barraarenaperu/"
-            target="_blank"
-            rel="noopener noreferrer"
-            className="w-10 h-10 bg-white/10 rounded-full flex items-center justify-center hover:bg-white/20 transition-colors"
-            aria-label="Instagram"
-          >
-            <Instagram className="w-5 h-5" />
-          </a>
-        </div>
+          {/* Social Media */}
+          <div className="flex justify-center space-x-6 mb-3">
+            <a
+              href="https://www.facebook.com/BarraArenaPeru/?locale=es_LA"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="w-10 h-10 bg-white/10 rounded-full flex items-center justify-center hover:bg-white/20 transition-colors"
+              aria-label="Facebook"
+            >
+              <Facebook className="w-5 h-5" />
+            </a>
+            <a
+              href="https://www.instagram.com/barraarenaperu/"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="w-10 h-10 bg-white/10 rounded-full flex items-center justify-center hover:bg-white/20 transition-colors"
+              aria-label="Instagram"
+            >
+              <Instagram className="w-5 h-5" />
+            </a>
+          </div>
 
-        {/* Social Media Text */}
-        <div className="text-center">
-          <p className="text-xs text-white/60">
-            Síguenos En Nuestras Redes Sociales
-          </p>
+          {/* Social Media Text */}
+          <div className="text-center">
+            <p className="text-xs text-white/60">
+              Síguenos En Nuestras Redes Sociales
+            </p>
+          </div>
         </div>
       </div>
     </footer>

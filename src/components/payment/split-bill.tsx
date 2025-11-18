@@ -2,8 +2,11 @@
 
 import { Button } from "@/components/ui/button"
 import { SplitBillProps } from "@/types/orders"
+import { useAforo } from "@/context/aforo-context"
 
 export function SplitBill({ totalAmount, peopleCount, onPeopleCountChange }: SplitBillProps) {
+  const { aforoTotal } = useAforo()
+
   // Método de redondeo progresivo: la mayoría paga redondeado hacia abajo,
   // la última persona paga la diferencia para que el total sea exacto
   const calculateSplitAmounts = () => {
@@ -32,7 +35,9 @@ export function SplitBill({ totalAmount, peopleCount, onPeopleCountChange }: Spl
   }
 
   const handleIncrement = () => {
-    onPeopleCountChange(peopleCount + 1)
+    if (peopleCount < aforoTotal) {
+      onPeopleCountChange(peopleCount + 1)
+    }
   }
 
   return (
@@ -87,7 +92,7 @@ export function SplitBill({ totalAmount, peopleCount, onPeopleCountChange }: Spl
               <span className="text-sm text-gray-600">{peopleCount - 1} personas pagan:</span>
               <span className="font-bold text-[#004166]">S/ {baseAmount.toFixed(2)}</span>
             </div>
-            <div className="flex justify-between items-center bg-white p-3 rounded border border-blue-200 bg-blue-50">
+            <div className="flex justify-between items-center bg-white p-3 rounded border border-blue-200 ">
               <span className="text-sm text-gray-600">Última persona paga:</span>
               <span className="font-bold text-[#0B4F6C]">S/ {lastPersonAmount.toFixed(2)}</span>
             </div>

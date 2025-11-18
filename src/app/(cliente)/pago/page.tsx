@@ -13,6 +13,7 @@ import { SplitBill } from "@/components/payment/split-bill"
 import { Button } from "@/components/ui/button"
 import { useOrderHistory } from "@/context/order-history-context"
 import { OrderHistoryItem, PaymentGroup } from "@/types/orders"
+import { toast } from "sonner"
 
 const POLLING_INTERVAL = 10000 // 10 segundos
 
@@ -24,15 +25,49 @@ export default function PagoPage() {
   const [groups, setGroups] = useState<PaymentGroup[]>([])
   const [productImages, setProductImages] = useState<Record<string, string>>({})
 
-  // Cargar mapeo de imágenes desde localStorage
+  // Cargar mapeo de imágenes y estado persistente desde localStorage
   useEffect(() => {
     if (typeof window !== 'undefined') {
+      // Cargar imágenes
       const savedImages = localStorage.getItem('productImages')
       if (savedImages) {
         try {
           setProductImages(JSON.parse(savedImages) as Record<string, string>)
         } catch (error) {
-          //console.error('Error al cargar imágenes:', error)
+          console.error('Error:', error)
+          toast.error('Error al cargar imágenes de productos')
+        }
+      }
+
+      // Cargar modo de pago
+      const savedPaymentMode = localStorage.getItem('paymentMode')
+      if (savedPaymentMode) {
+        setPaymentMode(savedPaymentMode)
+      }
+
+      // Cargar configuración de partes iguales
+      const savedPeopleCount = localStorage.getItem('paymentConfig_peopleCount')
+      if (savedPeopleCount) {
+        setPeopleCount(parseInt(savedPeopleCount, 10))
+      }
+
+      // Cargar configuración de grupos de pago
+      const savedGroups = localStorage.getItem('paymentConfig_groups')
+      const savedPaidGroupIds = localStorage.getItem('paymentConfig_paidGroupIds')
+      if (savedGroups) {
+        try {
+          setGroups(JSON.parse(savedGroups) as PaymentGroup[])
+        } catch (error) {
+          toast.error('Error al cargar grupos de pago')
+          console.error('Error al cargar grupos:', error)
+        }
+      }
+      if (savedPaidGroupIds) {
+        try {
+          setPaidGroupIds(JSON.parse(savedPaidGroupIds) as string[])
+        } catch (error) {
+          toast.error('Error al cargar')
+          console.error('Error al cargar IDs pagados:', error)
         }
       }
     }
@@ -63,6 +98,51 @@ export default function PagoPage() {
       }
     })
   )
+
+  // Guardar modo de pago en localStorage
+  useEffect(() => {
+    if (typeof window !== 'undefined' && paymentMode) {
+      try {
+        localStorage.setItem('paymentMode', paymentMode)
+      } catch (error) {
+        toast.error('Error en el pago')
+        console.error('Error al guardar modo de pago:', error)
+      }
+    }
+  }, [paymentMode])
+
+  // Guardar configuración de partes iguales con debounce
+  useEffect(() => {
+    if (typeof window !== 'undefined' && peopleCount > 0) {
+      const timer = setTimeout(() => {
+        try {
+          localStorage.setItem('paymentConfig_peopleCount', String(peopleCount))
+        } catch (error) {
+          toast.error('Error en la forma de pago')
+          console.error('Error al guardar peopleCount:', error)
+        }
+      }, 100)
+
+      return () => clearTimeout(timer)
+    }
+  }, [peopleCount])
+
+  // Guardar configuración de grupos de pago con debounce para evitar guardados excesivos
+  useEffect(() => {
+    if (typeof window !== 'undefined' && groups.length > 0) {
+      const timer = setTimeout(() => {
+        try {
+          localStorage.setItem('paymentConfig_groups', JSON.stringify(groups))
+          localStorage.setItem('paymentConfig_paidGroupIds', JSON.stringify(paidGroupIds))
+        } catch (error) {
+          toast.error('Error al guadar grupos')
+          console.error('Error al guardar grupos:', error)
+        }
+      }, 100)
+
+      return () => clearTimeout(timer)
+    }
+  }, [groups, paidGroupIds])
 
   // Cargar historial al montar y configurar polling
   useEffect(() => {
@@ -128,6 +208,8 @@ export default function PagoPage() {
                 <>
                   <PaymentGroups
                     orderHistory={orderHistory}
+                    initialGroups={groups}
+                    initialPaidGroupIds={paidGroupIds}
                     onGroupsChange={(updatedGroups, updatedPaidGroupIds) => {
                       setGroups(updatedGroups)
                       setPaidGroupIds(updatedPaidGroupIds)

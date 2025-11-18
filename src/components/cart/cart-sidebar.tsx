@@ -165,7 +165,7 @@ export default function CartSidebar({ isOpen, onClose }: CartSidebarProps) {
         }`}>
         <div className="flex flex-col h-full">
           {/* Header - título centrado */}
-          <div className="bg-[#004166] text-white p-4 flex items-center justify-between relative">
+          <div className="bg-[#004166] text-white p-4 flex items-center justify-between relative h-16">
             <div className="flex-1"></div>
             <h2 className="text-xl font-bold flex-1 text-center">Mi orden</h2>
             <div className="flex-1 flex justify-end">

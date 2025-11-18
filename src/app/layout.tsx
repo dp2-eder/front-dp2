@@ -3,6 +3,7 @@ import { Inter } from 'next/font/google'
 
 import './globals.css'
 import { OrderHistoryProvider } from '@/context/order-history-context'
+import { AforoProvider } from '@/context/aforo-context'
 
 const inter = Inter({ subsets: ['latin'] })
 
@@ -28,9 +29,11 @@ export default function RootLayout({
         */}
       </head>
       <body className={inter.className}>
-        <OrderHistoryProvider>
-          {children}
-        </OrderHistoryProvider>
+        <AforoProvider>
+          <OrderHistoryProvider>
+            {children}
+          </OrderHistoryProvider>
+        </AforoProvider>
       </body>
     </html>
   )
