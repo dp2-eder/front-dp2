@@ -54,7 +54,7 @@ export default function MenuPage() {
     dishesByCategory,
     expandedCategories,
     setExpandedCategories,
-    toggleCategory: baseToggleCategory
+    toggleCategory
   } = useMenuFiltering(productos)
 
   // Manejar categoría desde URL params
@@ -85,6 +85,7 @@ export default function MenuPage() {
   }, [router])
 
   // Extender la funcionalidad de toggleCategory con optimización de imágenes
+  /*
   const toggleCategory = (category: string) => {
     const isExpanding = !expandedCategories[category]
 
@@ -106,6 +107,7 @@ export default function MenuPage() {
       }, 150) // Reducido de 300ms a 150ms para ser más instantáneo
     }
   }
+  */
 
   // OPTIMIZACIÓN: Precargar automáticamente las primeras 2 categorías SOLO si no están en caché
   useEffect(() => {
@@ -262,7 +264,7 @@ export default function MenuPage() {
                 onCategorySelect={setSelectedCategory}
               />
             )}
-            renderCategorySkeleton={(category) => loadingCategories.has(category) ? <DishGridSkeleton count={6} /> : null}
+            renderCategorySkeleton={() => null}
             searchPlaceholder="Buscar platos..."
             showSearch={false}
           />
