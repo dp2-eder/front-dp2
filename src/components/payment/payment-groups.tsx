@@ -1,6 +1,6 @@
 "use client"
 
-import { Check, Trash2 } from "lucide-react"
+import { Check, Trash2, Minus } from "lucide-react"
 import Image from "next/image"
 import { useState } from "react"
 
@@ -197,6 +197,46 @@ export function PaymentGroups({
     onGroupsChange?.(updatedGroups, Array.from(newPaidGroupIds))
   }
 
+  const handleDecreaseItemQuantity = (groupId: string, itemName: string) => {
+    const updatedGroups = groups.map(group => {
+      if (group.id === groupId) {
+        // Restar 1 a la cantidad del primer item con ese nombre
+        const updatedItems = group.items.map(item => {
+          if (item.name === itemName) {
+            return {
+              ...item,
+              selectedQuantity: Math.max(0, item.selectedQuantity - 1)
+            }
+          }
+          return item
+        })
+
+        // Filtrar items con selectedQuantity = 0
+        const filteredItems = updatedItems.filter(item => item.selectedQuantity > 0)
+
+        // Si el grupo queda vacío, no lo incluyas
+        if (filteredItems.length === 0) {
+          return null
+        }
+
+        // Recalcular subtotal
+        const newSubtotal = filteredItems.reduce((sum, item) => {
+          return sum + (item.subtotal * item.selectedQuantity / item.quantity)
+        }, 0)
+
+        return {
+          ...group,
+          items: filteredItems,
+          subtotal: newSubtotal
+        }
+      }
+      return group
+    }).filter((group): group is PaymentGroup => group !== null)
+
+    setGroups(updatedGroups)
+    onGroupsChange?.(updatedGroups, Array.from(paidGroupIds))
+  }
+
   const handleTogglePaid = (groupId: string) => {
     const newPaidGroupIds = new Set(paidGroupIds)
     if (newPaidGroupIds.has(groupId)) {
@@ -351,20 +391,51 @@ export function PaymentGroups({
 
                   <div className="space-y-2 mb-3">
                     {(() => {
-                      // Agrupar items por nombre y sumar cantidades
-                      const groupedByName: Record<string, number> = {}
+                      // Agrupar items por nombre
+                      const groupedByName: Record<string, { items: typeof group.items; totalQty: number; totalPrice: number }> = {}
+
                       group.items.forEach(item => {
-                        groupedByName[item.name] = (groupedByName[item.name] || 0) + item.selectedQuantity
+                        if (!groupedByName[item.name]) {
+                          groupedByName[item.name] = {
+                            items: [],
+                            totalQty: 0,
+                            totalPrice: 0
+                          }
+                        }
+                        groupedByName[item.name].items.push(item)
+                        groupedByName[item.name].totalQty += item.selectedQuantity
+                        groupedByName[item.name].totalPrice += (item.subtotal / item.quantity) * item.selectedQuantity
                       })
 
-                      return Object.entries(groupedByName).map(([name, totalQty]) => (
-                        <p
-                          key={`${group.id}-${name}`}
-                          className={`text-xs ${isPaid ? "text-gray-500" : "text-gray-700"}`}
-                        >
-                          {name} <span className="font-semibold">(x{totalQty})</span>
-                        </p>
-                      ))
+                      return Object.entries(groupedByName).map(([itemName, { items, totalQty, totalPrice }]) => {
+                        const unitPrice = items.length > 0 ? (items[0].subtotal / items[0].quantity) : 0
+                        return (
+                          <div
+                            key={`${group.id}-${itemName}`}
+                            className={`flex justify-between items-center p-2 rounded bg-gray-50 ${isPaid ? "opacity-60" : ""}`}
+                          >
+                            <div className="flex-1">
+                              <p className={`text-xs ${isPaid ? "text-gray-500" : "text-gray-700"}`}>
+                                {itemName} <span className="font-semibold">(x{totalQty})</span>
+                              </p>
+                              <p className={`text-xs ${isPaid ? "text-gray-400" : "text-gray-500"}`}>
+                                S/ {unitPrice.toFixed(2)} c/u
+                              </p>
+                            </div>
+                            {!isPaid && (
+                              <Button
+                                size="sm"
+                                variant="ghost"
+                                onClick={() => handleDecreaseItemQuantity(group.id, itemName)}
+                                className="ml-2 w-6 h-6 p-0 text-orange-600 hover:bg-orange-50"
+                                title="Restar 1 cantidad"
+                              >
+                                <Minus className="w-4 h-4" />
+                              </Button>
+                            )}
+                          </div>
+                        )
+                      })
                     })()}
                   </div>
 
