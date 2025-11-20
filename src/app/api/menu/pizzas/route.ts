@@ -1,10 +1,11 @@
 import { NextResponse } from 'next/server'
+import { PIZZAS_URL } from '@/lib/api-config'
 
 export async function GET() {
   try {
-    //console.log('Calling menu API...')
-    
-    const menuUrl = process.env.NEXT_PUBLIC_MENU_URL || 'https://scrapper-dp2-fork.onrender.com/PizzasLitleCesar'
+    //console.log('Calling pizzas API...')
+
+    const menuUrl = PIZZAS_URL
     
     const response = await fetch(menuUrl, {
       method: 'GET',

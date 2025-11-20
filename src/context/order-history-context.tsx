@@ -2,6 +2,7 @@
 
 import { createContext, useContext, useState, useCallback, ReactNode } from "react"
 
+import { API_BASE_URL } from "@/lib/api-config"
 import { Pedido, HistorialResponse } from "@/types/orders"
 
 // Re-export los tipos para compatibilidad
@@ -45,18 +46,20 @@ export function OrderHistoryProvider({ children }: { children: ReactNode }) {
     }
 
     try {
-      const res = await fetch(`/api/pedidos/historial/${tokenSesion}`, {
+      const res = await fetch(`${API_BASE_URL}/api/v1/pedidos/historial/${tokenSesion}`, {
         method: "GET",
         headers: { "Content-Type": "application/json" },
       })
 
+      const data = await res.json() as unknown
+
       if (!res.ok) {
-        const errorData = await res.json() as Record<string, unknown>
-        throw new Error((errorData.error as string) || `HTTP ${res.status}`)
+        const errorMsg = (data as Record<string, unknown>)?.error || `HTTP ${res.status}`
+        throw new Error(String(errorMsg))
       }
 
-      const data = await res.json() as HistorialResponse
-      setHistorial(data.pedidos || [])
+      const historialData = data as HistorialResponse
+      setHistorial(historialData.pedidos || [])
     } catch (err) {
       const errorMsg = err instanceof Error ? err.message : "Error desconocido"
       // Solo actualizar error si no es polling (para no mostrar errores de polling al usuario)

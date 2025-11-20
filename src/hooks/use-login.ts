@@ -33,9 +33,8 @@ export async function loginUser(
       throw new Error("ID de mesa no encontrado. Por favor, selecciona una mesa primero.");
     }
 
-    // Construir URL de la ruta proxy con query parameter
-    // La ruta proxy /api/auth/login llamará a /api/v1/login del backend
-    const url = new URL("/api/auth/login", window.location.origin);
+    // Construir URL directa al backend (sin proxy)
+    const url = new URL(`${API_BASE_URL}/api/v1/login`);
     url.searchParams.append("id_mesa", mesas);
 
     const response = await fetch(url.toString(), {
@@ -91,7 +90,7 @@ export async function registerUser(data: RegisterRequest): Promise<RegisterRespo
     "registerUser() está deprecado. Usa loginUser() en su lugar, que maneja creación y actualización de usuarios."
   );
   try {
-    const response = await fetch("/api/auth/register", {
+    const response = await fetch(`${API_BASE_URL}/api/v1/auth/register`, {
       method: "POST",
       headers: {
         "Content-Type": "application/json",

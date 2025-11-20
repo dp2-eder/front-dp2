@@ -1,10 +1,11 @@
 import { NextResponse } from 'next/server'
+import { SELENIUM_URL } from '@/lib/api-config'
 
 export async function GET() {
   try {
     //console.log('Calling test-selenium API...')
-    
-    const response = await fetch('https://scrapper-dp2-fork.onrender.com/test-selenium', {
+
+    const response = await fetch(SELENIUM_URL, {
       method: 'GET',
       headers: {
         'Content-Type': 'application/json',

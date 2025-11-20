@@ -1,6 +1,7 @@
 import { useState, useEffect, useCallback, useRef } from 'react'
 
-import { CategoriasResponse } from '@/types/categorias'
+import { API_BASE_URL } from '@/lib/api-config'
+import { CategoriasResponse, Categoria } from '@/types/categorias'
 
 // Cache global para las categorías
 let cachedCategorias: CategoriasResponse['items'] | null = null
@@ -56,14 +57,25 @@ export function useCategorias(limit = 100) { // Aumentado a 100 para cargar toda
       setLoading(true)
       setError(null)
 
-      const response = await fetch(`/api/categorias?limit=${limit}`, {
+      const response = await fetch(`${API_BASE_URL}/api/v1/categorias?limit=${limit}`, {
         next: { revalidate: 300 } // Cache en el cliente también
       })
-      const result = await response.json() as { success: boolean; data: CategoriasResponse; error?: string }
 
-      if (result.success) {
-        // Convertir URLs de Google Drive a URLs directas usando el proxy
-        const categoriasConImagenes = result.data.items.map(categoria => {
+      if (!response.ok) throw new Error(`Error ${response.status} al cargar las categorías`)
+
+      const rawData = await response.json() as unknown
+
+      // Manejar tanto el formato de array como { items, total }
+      let items: Categoria[] = []
+      if (Array.isArray(rawData)) {
+        items = (rawData as unknown[]).map(item => item as Categoria)
+      } else {
+        const result = rawData as CategoriasResponse
+        items = result.items || []
+      }
+
+      // Convertir URLs de Google Drive a URLs directas usando el proxy
+      const categoriasConImagenes = items.map((categoria) => {
           const originalUrl = convertGoogleDriveUrl(categoria.imagen_path)
 
           // Solo usar el proxy para URLs externas (Google Drive, http/https)
@@ -82,14 +94,12 @@ export function useCategorias(limit = 100) { // Aumentado a 100 para cargar toda
           }
         })
 
-        // Actualizar cache global
-        cachedCategorias = categoriasConImagenes
-        cacheTimestamp = Date.now()
+      // Actualizar cache global
+      cachedCategorias = categoriasConImagenes
+      cacheTimestamp = Date.now()
 
-        setCategorias(categoriasConImagenes)
-      } else {
-        setError(result.error || 'Error al cargar las categorías')
-      }
+      setCategorias(categoriasConImagenes)
+      setError(null)
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Error desconocido')
     } finally {
