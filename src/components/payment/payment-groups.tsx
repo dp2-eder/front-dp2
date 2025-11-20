@@ -407,7 +407,7 @@ export function PaymentGroups({
                         groupedByName[item.name].totalPrice += (item.subtotal / item.quantity) * item.selectedQuantity
                       })
 
-                      return Object.entries(groupedByName).map(([itemName, { items, totalQty, totalPrice }]) => {
+                      return Object.entries(groupedByName).map(([itemName, { items, totalQty, totalPrice: _totalPrice }]) => {
                         const unitPrice = items.length > 0 ? (items[0].subtotal / items[0].quantity) : 0
                         return (
                           <div

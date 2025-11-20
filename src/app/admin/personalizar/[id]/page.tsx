@@ -1,6 +1,7 @@
 "use client";
 
-import { LogIn, RefreshCw, Plus } from "lucide-react";
+import { LogIn, Plus } from "lucide-react";
+import Link from "next/link";
 import { useParams, useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 
@@ -8,15 +9,6 @@ import { PlatoSkeleton } from "@/components/custom/plato-skeleton";
 import Footer from "@/components/layout/footer";
 import Header from "@/components/layout/header";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import SafeImage from "@/components/ui/safe-image";
-import { useAlergenos } from "@/hooks/use-alergenos";
-import { useAdminProducto } from "@/hooks/use-admin-producto";
-import { markImageAsCached } from "@/lib/image-cache";
-import { useOpcionesProducto } from "@/hooks/use-opciones-producto";
-
-
-// Si usas shadcn dialog
 import {
   Dialog,
   DialogContent,
@@ -24,7 +16,15 @@ import {
   DialogTitle,
   DialogFooter,
 } from "@/components/ui/dialog";
-import Link from "next/link";
+import { Input } from "@/components/ui/input";
+import SafeImage from "@/components/ui/safe-image";
+import { useAdminProducto } from "@/hooks/use-admin-producto";
+import { useAlergenos } from "@/hooks/use-alergenos";
+import { useOpcionesProducto } from "@/hooks/use-opciones-producto";
+import { markImageAsCached } from "@/lib/image-cache";
+
+
+// Si usas shadcn dialog
 
 type ComplementoForm = {
   nombre: string;
@@ -44,10 +44,13 @@ export default function AdminPersonalizarPage() {
   const { producto, loading, error } = useAdminProducto(id);
   const { alergenos, loading: alergenosLoading } = useAlergenos(id);
   // Traer opciones (misma API que en el cliente)
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const {
     producto: productoConOpciones,
-    loading: loadingOpciones,
-    error: errorOpciones,
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+    loading: _loadingOpciones,
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+    error: _errorOpciones,
   } = useOpcionesProducto(id);
 
 
@@ -151,11 +154,13 @@ export default function AdminPersonalizarPage() {
     setIsModalOpen(false);
   };
 
-  const handleBack = () => {
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  const _handleBack = () => {
     router.push("/admin/menu");
   };
 
-  const handleRefresh = () => {
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  const _handleRefresh = () => {
     // Por ahora recarga la página, luego puedes cambiarlo a un refetch
     router.refresh();
   };

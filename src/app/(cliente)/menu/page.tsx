@@ -10,7 +10,7 @@ import React, { useState, useEffect } from "react"
 
 import Loading from "@/app/loading"
 import DishCard from '@/components/custom/dish-card'
-import { DishGridSkeleton } from '@/components/custom/dish-card-skeleton'
+// import { DishGridSkeleton } from '@/components/custom/dish-card-skeleton'
 import Footer from "@/components/layout/footer"
 import Header from "@/components/layout/header"
 import { ClientDishCard } from '@/components/menu/client-dish-card'
@@ -35,8 +35,6 @@ export default function MenuPage() {
   //const [favorites, setFavorites] = useState<number[]>([])
   // Track de categorías que ya se expandieron al menos una vez (para optimizar carga de imágenes)
   const [loadedCategories, setLoadedCategories] = useState<Set<string>>(new Set())
-  // Track de categorías que están cargando actualmente
-  const [loadingCategories, setLoadingCategories] = useState<Set<string>>(new Set())
   //const [isCategoryModalOpen, setIsCategoryModalOpen] = useState(false)
   //const [categorySearch, setCategorySearch] = useState("")
 

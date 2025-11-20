@@ -1,4 +1,5 @@
 import { NextResponse } from 'next/server'
+
 import { PIZZAS_URL } from '@/lib/api-config'
 
 export async function GET() {

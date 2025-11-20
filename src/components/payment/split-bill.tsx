@@ -1,8 +1,8 @@
 "use client"
 
 import { Button } from "@/components/ui/button"
-import { SplitBillProps } from "@/types/orders"
 import { useAforo } from "@/context/aforo-context"
+import { SplitBillProps } from "@/types/orders"
 
 export function SplitBill({ totalAmount, peopleCount, onPeopleCountChange }: SplitBillProps) {
   const { aforoTotal } = useAforo()

@@ -3,6 +3,7 @@
 import { LogIn } from "lucide-react"
 import Link from "next/link"
 import { useEffect, useState } from "react"
+import { toast } from "sonner"
 
 import Footer from "@/components/layout/footer"
 import Header from "@/components/layout/header"
@@ -13,7 +14,6 @@ import { SplitBill } from "@/components/payment/split-bill"
 import { Button } from "@/components/ui/button"
 import { useOrderHistory } from "@/context/order-history-context"
 import { OrderHistoryItem, PaymentGroup } from "@/types/orders"
-import { toast } from "sonner"
 
 const POLLING_INTERVAL = 10000 // 10 segundos
 
