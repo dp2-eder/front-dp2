@@ -1,5 +1,6 @@
 import { useState, useEffect } from "react"
 
+import { API_BASE_URL } from "@/lib/api-config"
 import { ProductosResponse } from "@/types/productos"
 
 // Cache global compartido entre montajes
@@ -46,16 +47,13 @@ export function useProductos() {
         setLoading(true)
       }
 
-      const response = await fetch("/api/productos", { next: { revalidate: 300 } })
-      const result = (await response.json()) as {
-        success: boolean
-        data: ProductosResponse
-        error?: string
-      }
+      const response = await fetch(`${API_BASE_URL}/api/v1/productos/cards?skip=0&limit=300`, { next: { revalidate: 300 } })
 
-      if (!result.success) throw new Error(result.error || "Error al cargar los productos")
+      if (!response.ok) throw new Error(`Error ${response.status} al cargar los productos`)
 
-      const productosConImagenes = result.data.items.map((producto) => {
+      const result = (await response.json()) as ProductosResponse
+
+      const productosConImagenes = result.items.map((producto) => {
         const productoImagenUrl = convertGoogleDriveUrl(producto.imagen_path)
         const categoriaImagenUrl = convertGoogleDriveUrl(producto.categoria.imagen_path)
 

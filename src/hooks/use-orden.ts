@@ -1,6 +1,6 @@
 /* eslint-disable @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-unsafe-argument, @typescript-eslint/no-unsafe-return */
 
-// Importar tipos desde el archivo centralizado
+import { API_BASE_URL } from "@/lib/api-config"
 import {
   CartItem,
   SendOrderParams,
@@ -40,8 +40,8 @@ export async function sendOrderToKitchen({
     notas_cocina: notasCocina,
   };
 
-  console.log("📤 POST a /api/pedidos/enviar con payload:", payload);
-  const res = await fetch("/api/pedidos/enviar", {
+  console.log("📤 POST a backend con payload:", payload);
+  const res = await fetch(`${API_BASE_URL}/api/v1/pedidos/enviar`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify(payload),

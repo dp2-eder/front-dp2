@@ -1,10 +1,12 @@
 import { NextResponse } from 'next/server'
 
+import { MENU_URL } from '@/lib/api-config'
+
 export async function GET() {
   try {
     //console.log('Calling external menu API...')
-    
-    const menuUrl = process.env.NEXT_PUBLIC_MENU_URL || 'https://backend-mockup.onrender.com/api/menu/items'
+
+    const menuUrl = MENU_URL
     
     const response = await fetch(menuUrl, {
       method: 'GET',
