@@ -1,5 +1,6 @@
 import { useState, useEffect, useCallback, useRef } from 'react'
 
+import { API_BASE_URL } from '@/lib/api-config'
 import { markImageAsCached } from '@/lib/image-cache'
 import { Producto } from '@/types/productos'
 
@@ -39,21 +40,16 @@ export async function prefetchProducto(id: string): Promise<void> {
   }
 
   // Crear nuevo request y guardarlo
-  const requestPromise = fetch(`/api/productos/${id}`)
+  const requestPromise = fetch(`${API_BASE_URL}/api/v1/productos/${id}`)
     .then(async (response) => {
       if (!response.ok) {
         throw new Error(`Error ${response.status}`)
       }
-      const result = await response.json() as {
-        success: boolean
-        data: unknown
-        error?: string
-      }
-      if (result.success && result.data) {
-        const productoData = result.data as Record<string, unknown>
-        if (productoData.nombre && productoData.descripcion !== undefined) {
-          const productoFinal = result.data as Producto
-          cache.set(id, { data: productoFinal, timestamp: Date.now() })
+      const result = await response.json() as unknown
+      const resultData = result as Record<string, unknown>
+      if (resultData.nombre && resultData.descripcion !== undefined) {
+        const productoFinal = result as Producto
+        cache.set(id, { data: productoFinal, timestamp: Date.now() })
           
           // Precargar imagen inmediatamente después de obtener los datos
           if (productoFinal.imagen_path && typeof window !== 'undefined') {
@@ -85,8 +81,7 @@ export async function prefetchProducto(id: string): Promise<void> {
           
           return productoFinal
         }
-      }
-      throw new Error(result.error || 'Error al cargar')
+      throw new Error('El producto no tiene todos los datos requeridos')
     })
     .finally(() => {
       pendingRequests.delete(id)
@@ -137,32 +132,24 @@ export function useProducto(id: string) {
       abortControllerRef.current = new AbortController()
 
       // Crear el request y guardarlo en el mapa de pendientes
-      const requestPromise = fetch(`/api/productos/${id}`, {
+      const requestPromise = fetch(`${API_BASE_URL}/api/v1/productos/${id}`, {
         signal: abortControllerRef.current.signal
       }).then(async (response) => {
         if (!response.ok) {
           throw new Error(`Error ${response.status} al cargar el producto`)
         }
 
-        const result = await response.json() as {
-          success: boolean
-          data: unknown
-          error?: string
-        }
+        const result = await response.json() as unknown
+        const resultData = result as Record<string, unknown>
 
-        if (result.success && result.data) {
-          // Validar que los campos requeridos existan
-          const productoData = result.data as Record<string, unknown>
-          if (productoData.nombre && productoData.descripcion !== undefined) {
-            const productoFinal = result.data as Producto
-            // Guardar en caché
-            cache.set(id, { data: productoFinal, timestamp: Date.now() })
-            return productoFinal
-          } else {
-            throw new Error('El producto no tiene todos los datos requeridos')
-          }
+        // Validar que los campos requeridos existan
+        if (resultData.nombre && resultData.descripcion !== undefined) {
+          const productoFinal = result as Producto
+          // Guardar en caché
+          cache.set(id, { data: productoFinal, timestamp: Date.now() })
+          return productoFinal
         } else {
-          throw new Error(result.error || 'Error al cargar el producto')
+          throw new Error('El producto no tiene todos los datos requeridos')
         }
       })
 

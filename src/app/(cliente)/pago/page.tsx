@@ -3,6 +3,7 @@
 import { LogIn } from "lucide-react"
 import Link from "next/link"
 import { useEffect, useState } from "react"
+import { toast } from "sonner"
 
 import Footer from "@/components/layout/footer"
 import Header from "@/components/layout/header"

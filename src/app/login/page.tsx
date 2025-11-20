@@ -4,15 +4,18 @@ import { User, Mail } from "lucide-react";
 import Image from "next/image";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useState, useEffect } from "react";
+import { toast } from "sonner"
 
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { useAforo } from "@/context/aforo-context";
 import { loginUser, type LoginResponse } from "@/hooks/use-login";
 import { API_BASE_URL } from "@/lib/api-config";
 import { clearLocalStoragePreservingImageCache } from "@/lib/image-cache";
 import { useAforo } from "@/context/aforo-context";
 
 import { toast } from "sonner"
+
 
 
 export default function LoginPage() {

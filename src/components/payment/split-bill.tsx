@@ -1,6 +1,7 @@
 "use client"
 
 import { Button } from "@/components/ui/button"
+import { useAforo } from "@/context/aforo-context"
 import { SplitBillProps } from "@/types/orders"
 import { useAforo } from "@/context/aforo-context"
 

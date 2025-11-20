@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
+
 import { Producto } from "@/types/productos";
 
 export function useAdminProducto(id: string) {
@@ -23,13 +24,14 @@ export function useAdminProducto(id: string) {
         const res = await fetch(`/api/productos/${id}`);
         if (!res.ok) throw new Error(`Error ${res.status}`);
 
-        const data = await res.json();
+        const data = await res.json() as unknown;
+        const responseData = data as Record<string, unknown>;
 
-        if (!data.success || !data.data) {
-          throw new Error(data.error || "Error al cargar producto");
+        if (!responseData.success || !responseData.data) {
+          throw new Error((responseData.error as string) || "Error al cargar producto");
         }
 
-        setProducto(data.data as Producto);
+        setProducto(responseData.data as Producto);
       } catch (err) {
         const msg = err instanceof Error ? err.message : "Error desconocido";
         setError(msg);
@@ -38,7 +40,7 @@ export function useAdminProducto(id: string) {
       }
     };
 
-    fetchProducto();
+    void fetchProducto();
   }, [id]);
 
   return { producto, loading, error };
