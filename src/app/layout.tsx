@@ -4,6 +4,7 @@ import { Inter } from 'next/font/google'
 import './globals.css'
 import { AforoProvider } from '@/context/aforo-context'
 import { OrderHistoryProvider } from '@/context/order-history-context'
+import { AforoProvider } from '@/context/aforo-context'
 
 const inter = Inter({ subsets: ['latin'] })
 
