@@ -26,9 +26,8 @@ jobs:
 
       - name: Build
         run: npm run build
-        # placeholder para secrets
-        # env:
-        #   REACT_APP_API_URL: ${{ secrets.REACT_APP_API_URL }}
+        env:
+          NEXT_PUBLIC_API_URL: ${{ secrets.NEXT_PUBLIC_API_URL }}
 
       - name: Copy files to VM
         uses: appleboy/scp-action@master
