@@ -12,9 +12,7 @@ import { useAforo } from "@/context/aforo-context";
 import { loginUser, type LoginResponse } from "@/hooks/use-login";
 import { API_BASE_URL } from "@/lib/api-config";
 import { clearLocalStoragePreservingImageCache } from "@/lib/image-cache";
-import { useAforo } from "@/context/aforo-context";
 
-import { toast } from "sonner"
 
 
 
