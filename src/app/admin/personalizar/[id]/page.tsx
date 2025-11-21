@@ -19,9 +19,22 @@ import {
 import { Input } from "@/components/ui/input";
 import SafeImage from "@/components/ui/safe-image";
 import { useAdminProducto } from "@/hooks/use-admin-producto";
-import { useAlergenos } from "@/hooks/use-alergenos";
 import { useOpcionesProducto } from "@/hooks/use-opciones-producto";
 import { markImageAsCached } from "@/lib/image-cache";
+
+// Mapeo de iconos por defecto para cuando la API no devuelve icono
+const defaultIcons: Record<string, string> = {
+  "Nueces": "🥜",
+  "Sésamo": "🌰",
+  "Crustáceo": "🦐",
+  "Mariscos": "🦐",
+  "Huevo": "🥚",
+  "Gluten": "🌾",
+  "Pescado": "🐟",
+  "Cítricos": "🍋",
+  "Moluscos": "🐙",
+  "Aj": "🧄",
+};
 
 
 // Si usas shadcn dialog
@@ -42,7 +55,15 @@ export default function AdminPersonalizarPage() {
   const { id } = useParams<{ id: string }>();
 
   const { producto, loading, error } = useAdminProducto(id);
-  const { alergenos, loading: alergenosLoading } = useAlergenos(id);
+
+  // Extraer alergenos directamente del producto (ya vienen en la respuesta)
+  const alergenos = producto?.alergenos?.map((item: any) => ({
+    nombre: item.nombre,
+    icono: item.icono || defaultIcons[item.nombre] || "⚠️",
+  })) || [];
+
+  const alergenosLoading = loading;
+
   // Traer opciones (misma API que en el cliente)
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const {
@@ -92,27 +113,24 @@ export default function AdminPersonalizarPage() {
   if (error) return <div>Error: {error}</div>;
   if (!producto) return <div>Producto no encontrado</div>;
 
-  // Convertir URL de Drive al proxy
+  // Convertir URL de Google Drive a enlace directo
   const convertGoogleDriveUrl = (url: string | null | undefined): string => {
-    if (
-      !url ||
-      url === "null" ||
-      url === "undefined" ||
-      typeof url !== "string" ||
-      !url.includes("drive.google.com")
-    ) {
+    if (!url || url === "null" || url === "undefined" || typeof url !== "string") {
       return "/placeholder-image.png";
     }
 
-    const match = url.match(/\/file\/d\/([a-zA-Z0-9-_]+)/);
-    if (match) {
-      const fileId = match[1];
-      const googleDriveUrl = `https://drive.google.com/uc?export=view&id=${fileId}`;
-      return `/api/image-proxy?url=${encodeURIComponent(googleDriveUrl)}`;
+    // Si es Google Drive, convertir a enlace directo
+    if (url.includes("drive.google.com")) {
+      const match = url.match(/\/file\/d\/([a-zA-Z0-9-_]+)/);
+      if (match) {
+        const fileId = match[1];
+        return `https://drive.google.com/uc?export=view&id=${fileId}`;
+      }
     }
 
+    // Si ya es una URL válida, devolverla tal cual
     if (url.startsWith("http://") || url.startsWith("https://")) {
-      return `/api/image-proxy?url=${encodeURIComponent(url)}`;
+      return url;
     }
 
     return url;
@@ -174,7 +192,7 @@ export default function AdminPersonalizarPage() {
         <div className="max-w-[1200px] mx-auto px-4 py-8">
           {/* Barra superior: Back + Refresh */}
           <div className="flex items-center justify-between mb-10">
-            <Link href="/menu" className="flex items-center gap-2 mb-6">
+            <Link href="/admin/menu" className="flex items-center gap-2 mb-6">
               <LogIn className="w-7 h-7" style={{ transform: 'scaleX(-1)' }} />
             </Link>
           </div>

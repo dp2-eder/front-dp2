@@ -1,7 +1,9 @@
 {
   "permissions": {
     "allow": [
-      "Bash(head:*)"
+      "Bash(head:*)",
+      "Bash(npm run lint:*)",
+      "Bash(npm run build:*)"
     ],
     "deny": [],
     "ask": []

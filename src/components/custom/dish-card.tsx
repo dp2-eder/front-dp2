@@ -28,14 +28,14 @@ export function DishCard({
 
   // Helper: obtener la imagen correcta del tipo Root2 o Producto
   const getImageUrl = () => {
-    if ('imagen' in dish) return (dish as Root2).imagen
-    if ('imagen_path' in dish) return (dish as Producto).imagen_path
+    if ('imagen' in dish) return (dish).imagen
+    if ('imagen_path' in dish) return (dish).imagen_path
     return null
   }
 
   // Helper: obtener disponibilidad
   const getDisponible = () => {
-    if ('disponible' in dish) return (dish as Root2).disponible
+    if ('disponible' in dish) return (dish).disponible
     return true // Por defecto asumimos disponible si no hay propiedad
   }
 

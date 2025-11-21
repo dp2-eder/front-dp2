@@ -13,7 +13,7 @@ export type { CartItem, SendOrderParams, SendOrderParamsLegacy, ValidationError 
 
 /**
  * Envía un pedido al backend usando el nuevo endpoint con token_sesion
- * POST /api/pedidos/enviar (proxy a /api/v1/pedidos/enviar en el backend)
+ * POST {API_BASE_URL}/api/v1/pedidos/enviar
  */
 export async function sendOrderToKitchen({
   cart,
@@ -114,7 +114,7 @@ export async function sendOrderToKitchenLegacy({
     notas_cocina: notasCocina,
   };
 
-  const res = await fetch("/api/pedidos/completo", {
+  const res = await fetch(`${API_BASE_URL}/api/v1/pedidos/completo`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify(payload),

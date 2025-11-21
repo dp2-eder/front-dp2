@@ -28,28 +28,6 @@ export default function PersonalizarPage() {
   // Usar solo la nueva API
   const { producto, loading, error } = useOpcionesProducto(params.id as string)
 
-  // Función para convertir URL de Google Drive usando el proxy
-  const convertGoogleDriveUrl = (url: string | null): string => {
-    if (!url || url === 'null' || url === 'undefined' || !url.includes('drive.google.com')) {
-      return '/placeholder-image.png'
-    }
-    
-    const match = url.match(/\/file\/d\/([a-zA-Z0-9-_]+)/)
-    if (match) {
-      const fileId = match[1]
-      // Usar el proxy para evitar fallos
-      const googleDriveUrl = `https://drive.google.com/uc?export=view&id=${fileId}`
-      return `/api/image-proxy?url=${encodeURIComponent(googleDriveUrl)}`
-    }
-    
-    // Si ya es una URL externa, usar proxy también
-    if (url.startsWith('http://') || url.startsWith('https://')) {
-      return `/api/image-proxy?url=${encodeURIComponent(url)}`
-    }
-    
-    return url
-  }
-
   if (loading) return <Loading />
   
   if (error) {
@@ -120,7 +98,7 @@ export default function PersonalizarPage() {
         description: producto.descripcion,
         basePrice: parseFloat(producto.precio_base) || 0,
         quantity,
-        image: convertGoogleDriveUrl(producto.imagen_path),
+        image: producto.imagen_path || '/placeholder-image.png',
         selectedOptions: selectedExtras.map(extraId => {
           const opcion = findOpcionById(extraId)
           return {
@@ -176,10 +154,8 @@ export default function PersonalizarPage() {
                     }}
                   >
                     <SafeImage
-                      src={convertGoogleDriveUrl(producto.imagen_path)}
+                      src={producto.imagen_path || ''}
                       alt={producto.nombre}
-                      className=""
-                      showIndicator={true}
                       width={56}
                       height={56}
                       priority={true}
