@@ -74,25 +74,15 @@ export function useCategorias(limit = 100) { // Aumentado a 100 para cargar toda
         items = result.items || []
       }
 
-      // Convertir URLs de Google Drive a URLs directas usando el proxy
+      // Convertir URLs de Google Drive a URLs directas
       const categoriasConImagenes = items.map((categoria) => {
-          const originalUrl = convertGoogleDriveUrl(categoria.imagen_path)
+        const imagenUrl = convertGoogleDriveUrl(categoria.imagen_path)
 
-          // Solo usar el proxy para URLs externas (Google Drive, http/https)
-          // No usar el proxy para URLs locales o placeholders
-          const shouldUseProxy = originalUrl.startsWith('http://') ||
-                                originalUrl.startsWith('https://') ||
-                                originalUrl.includes('drive.google.com')
-
-          const finalUrl = shouldUseProxy
-            ? `/api/image-proxy?url=${encodeURIComponent(originalUrl)}`
-            : originalUrl
-
-          return {
-            ...categoria,
-            imagen_path: finalUrl
-          }
-        })
+        return {
+          ...categoria,
+          imagen_path: imagenUrl
+        }
+      })
 
       // Actualizar cache global
       cachedCategorias = categoriasConImagenes

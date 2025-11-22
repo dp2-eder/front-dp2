@@ -107,6 +107,13 @@ export default function MenuPage() {
   }
   */
 
+  // Validar si una string es una URL válida (relativa o absoluta)
+  const isValidUrl = (url: string | null | undefined): url is string => {
+    if (!url || typeof url !== 'string') return false
+    // Aceptar rutas relativas (/) o URLs absolutas (http://, https://)
+    return url.startsWith('/') || url.startsWith('http://') || url.startsWith('https://')
+  }
+
   // OPTIMIZACIÓN: Precargar automáticamente las primeras 2 categorías SOLO si no están en caché
   useEffect(() => {
     if (Object.keys(dishesByCategory).length > 0 && !loading && typeof window !== 'undefined') {
@@ -116,7 +123,7 @@ export default function MenuPage() {
       // Solo si no están en caché del navegador
       firstCategories.forEach(([_, dishes]) => {
         dishes.slice(0, 6).forEach(dish => {
-          if (dish.imagen_path) {
+          if (isValidUrl(dish.imagen_path)) {
             // Verificar si ya está en caché antes de precargar
             const img = new window.Image()
             img.src = dish.imagen_path

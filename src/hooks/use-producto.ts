@@ -7,6 +7,21 @@ import { Producto } from '@/types/productos'
 // Re-export para compatibilidad hacia atrás
 export type { Producto }
 
+// Convertir Google Drive URLs a directas una sola vez
+function convertGoogleDriveUrl(url: string | null | undefined): string | null | undefined {
+  if (!url || typeof url !== 'string') return url
+
+  if (url.includes('drive.google.com')) {
+    const match = url.match(/\/file\/d\/([a-zA-Z0-9-_]+)/)
+    if (match) {
+      const fileId = match[1]
+      return `https://drive.google.com/uc?export=view&id=${fileId}`
+    }
+  }
+
+  return url
+}
+
 // Caché global compartido para evitar llamadas repetidas
 const cache = new Map<string, { data: Producto; timestamp: number }>()
 const CACHE_DURATION = 3 * 60 * 1000 // 3 minutos
@@ -49,32 +64,31 @@ export async function prefetchProducto(id: string): Promise<void> {
       const resultData = result as Record<string, unknown>
       if (resultData.nombre && resultData.descripcion !== undefined) {
         const productoFinal = result as Producto
+        // Convertir imagen_path de Google Drive a URL directa
+        if (productoFinal.imagen_path) {
+          productoFinal.imagen_path = convertGoogleDriveUrl(productoFinal.imagen_path) || productoFinal.imagen_path
+        }
         cache.set(id, { data: productoFinal, timestamp: Date.now() })
           
           // Precargar imagen inmediatamente después de obtener los datos
           if (productoFinal.imagen_path && typeof window !== 'undefined') {
             const img = new window.Image()
-            // Convertir URL de Google Drive al proxy para evitar fallos
+            // Convertir URL de Google Drive a enlace directo
             let imageUrl = productoFinal.imagen_path
             if (imageUrl.includes('drive.google.com')) {
               const match = imageUrl.match(/\/file\/d\/([a-zA-Z0-9-_]+)/)
               if (match) {
                 const fileId = match[1]
-                const googleDriveUrl = `https://drive.google.com/uc?export=view&id=${fileId}`
-                // Usar el proxy en lugar de Google Drive directo
-                imageUrl = `/api/image-proxy?url=${encodeURIComponent(googleDriveUrl)}`
+                imageUrl = `https://drive.google.com/uc?export=view&id=${fileId}`
               }
-            } else if (imageUrl.startsWith('http://') || imageUrl.startsWith('https://')) {
-              // Si es URL externa, usar proxy también
-              imageUrl = `/api/image-proxy?url=${encodeURIComponent(imageUrl)}`
             }
             img.src = imageUrl
-            
-            // Marcar ambas URLs (original y del proxy) en caché cuando se carga
+
+            // Marcar la URL en caché cuando se carga
             img.onload = () => {
               if (typeof window !== 'undefined' && window.localStorage) {
-                markImageAsCached(imageUrl) // URL del proxy
-                markImageAsCached(productoFinal.imagen_path) // URL original también
+                markImageAsCached(imageUrl)
+                markImageAsCached(productoFinal.imagen_path)
               }
             }
           }
@@ -131,8 +145,10 @@ export function useProducto(id: string) {
       }
       abortControllerRef.current = new AbortController()
 
+      const url = `${API_BASE_URL}/api/v1/productos/${id}`;
+
       // Crear el request y guardarlo en el mapa de pendientes
-      const requestPromise = fetch(`${API_BASE_URL}/api/v1/productos/${id}`, {
+      const requestPromise = fetch(url, {
         signal: abortControllerRef.current.signal
       }).then(async (response) => {
         if (!response.ok) {
@@ -145,6 +161,10 @@ export function useProducto(id: string) {
         // Validar que los campos requeridos existan
         if (resultData.nombre && resultData.descripcion !== undefined) {
           const productoFinal = result as Producto
+          // Convertir imagen_path de Google Drive a URL directa
+          if (productoFinal.imagen_path) {
+            productoFinal.imagen_path = convertGoogleDriveUrl(productoFinal.imagen_path) || productoFinal.imagen_path
+          }
           // Guardar en caché
           cache.set(id, { data: productoFinal, timestamp: Date.now() })
           return productoFinal
@@ -159,21 +179,20 @@ export function useProducto(id: string) {
       const productoFinal = await requestPromise
       setProducto(productoFinal)
       setLoading(false)
-      
+
       // Limpiar el request pendiente
       pendingRequests.delete(id)
     } catch (err) {
       // Limpiar el request pendiente en caso de error
       pendingRequests.delete(id)
-      
+
       // No mostrar error si fue cancelado
       if (err instanceof Error && err.name === 'AbortError') {
         return
       }
-      
+
       const errorMessage = err instanceof Error ? err.message : 'Error desconocido'
       setError(errorMessage)
-      console.error('Error al cargar producto:', errorMessage)
       setLoading(false)
     }
   }, [id])

@@ -4,6 +4,11 @@ export interface CategoriaProducto {
   imagen_path: string
 }
 
+export interface Alergeno {
+  nombre: string
+  icono?: string
+}
+
 export interface Producto {
   id: string
   nombre: string
@@ -11,6 +16,7 @@ export interface Producto {
   imagen_path: string
   precio_base: string
   categoria: CategoriaProducto
+  alergenos?: Alergeno[]
 }
 
 export interface ProductosResponse {

@@ -57,26 +57,19 @@ export function useProductos() {
         const productoImagenUrl = convertGoogleDriveUrl(producto.imagen_path)
         const categoriaImagenUrl = convertGoogleDriveUrl(producto.categoria.imagen_path)
 
-        const shouldUseProxyProducto =
-          productoImagenUrl.startsWith("http://") ||
-          productoImagenUrl.startsWith("https://") ||
-          productoImagenUrl.includes("drive.google.com")
-
-        const shouldUseProxyCategoria =
-          categoriaImagenUrl.startsWith("http://") ||
-          categoriaImagenUrl.startsWith("https://") ||
-          categoriaImagenUrl.includes("drive.google.com")
+        console.log('🖼️ Producto imagen:', {
+          id: producto.id,
+          nombre: producto.nombre,
+          originalUrl: producto.imagen_path,
+          convertedUrl: productoImagenUrl
+        })
 
         return {
           ...producto,
-          imagen_path: shouldUseProxyProducto
-            ? `/api/image-proxy?url=${encodeURIComponent(productoImagenUrl)}`
-            : productoImagenUrl,
+          imagen_path: productoImagenUrl,
           categoria: {
             ...producto.categoria,
-            imagen_path: shouldUseProxyCategoria
-              ? `/api/image-proxy?url=${encodeURIComponent(categoriaImagenUrl)}`
-              : categoriaImagenUrl,
+            imagen_path: categoriaImagenUrl,
           },
         }
       })

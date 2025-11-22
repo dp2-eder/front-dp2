@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from "react";
 
+import { API_BASE_URL } from "@/lib/api-config";
 import { Producto } from "@/types/productos";
 
 export function useAdminProducto(id: string) {
@@ -21,19 +22,19 @@ export function useAdminProducto(id: string) {
         setLoading(true);
         setError(null);
 
-        const res = await fetch(`/api/productos/${id}`);
+        const url = `${API_BASE_URL}/api/v1/productos/${id}`;
+        console.log('📦 useAdminProducto - Haciendo fetch a:', url);
+
+        const res = await fetch(url);
         if (!res.ok) throw new Error(`Error ${res.status}`);
 
         const data = await res.json() as unknown;
-        const responseData = data as Record<string, unknown>;
+        console.log('📦 useAdminProducto - Producto cargado:', data);
 
-        if (!responseData.success || !responseData.data) {
-          throw new Error((responseData.error as string) || "Error al cargar producto");
-        }
-
-        setProducto(responseData.data as Producto);
+        setProducto(data as Producto);
       } catch (err) {
         const msg = err instanceof Error ? err.message : "Error desconocido";
+        console.error('📦 useAdminProducto - ERROR:', msg);
         setError(msg);
       } finally {
         setLoading(false);

@@ -1,9 +1,25 @@
 import { useState, useEffect, useCallback, useRef } from 'react'
 
+import { API_BASE_URL } from '@/lib/api-config'
 import { Opcion, ProductoConOpciones, TipoOpcion } from '@/types/productos'
 
 // Re-export para compatibilidad hacia atrás
 export type { Opcion, ProductoConOpciones, TipoOpcion }
+
+// Convertir Google Drive URLs a directas una sola vez
+function convertGoogleDriveUrl(url: string | null | undefined): string | null | undefined {
+  if (!url || typeof url !== 'string') return url
+
+  if (url.includes('drive.google.com')) {
+    const match = url.match(/\/file\/d\/([a-zA-Z0-9-_]+)/)
+    if (match) {
+      const fileId = match[1]
+      return `https://drive.google.com/uc?export=view&id=${fileId}`
+    }
+  }
+
+  return url
+}
 
 export function useOpcionesProducto(id: string) {
   const [producto, setProducto] = useState<ProductoConOpciones | null>(null)
@@ -16,16 +32,23 @@ export function useOpcionesProducto(id: string) {
       setLoading(true)
       setError(null)
 
-      const response = await fetch(`/api/productos/${id}/opciones`)
-      const result = await response.json() as { success: boolean; data: ProductoConOpciones; error?: string }
+      const response = await fetch(`${API_BASE_URL}/api/v1/productos/${id}`)
 
-      if (result.success && result.data) {
-        setProducto(result.data) // Usar result.data en lugar de result directamente
-      } else {
-        setError(result.error || 'Error al cargar las opciones')
+      if (!response.ok) {
+        throw new Error(`Error ${response.status} al cargar el producto`)
       }
+
+      const result = await response.json() as ProductoConOpciones
+
+      // Convertir imagen_path de Google Drive a URL directa
+      if (result.imagen_path) {
+        result.imagen_path = convertGoogleDriveUrl(result.imagen_path) || result.imagen_path
+      }
+
+      setProducto(result)
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Error desconocido')
+      const errorMessage = err instanceof Error ? err.message : 'Error desconocido'
+      setError(errorMessage)
     } finally {
       setLoading(false)
     }

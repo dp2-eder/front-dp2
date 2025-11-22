@@ -9,15 +9,34 @@ import Footer from "@/components/layout/footer"
 import Header from "@/components/layout/header"
 import { Button } from "@/components/ui/button"
 import SafeImage from "@/components/ui/safe-image"
-import { useAlergenos } from "@/hooks/use-alergenos"
 import { useProducto } from "@/hooks/use-producto"
-import { markImageAsCached } from "@/lib/image-cache"
+
+// Mapeo de iconos por defecto para cuando la API no devuelve icono
+const defaultIcons: Record<string, string> = {
+  "Nueces": "🥜",
+  "Sésamo": "🌰",
+  "Crustáceo": "🦐",
+  "Mariscos": "🦐",
+  "Huevo": "🥚",
+  "Gluten": "🌾",
+  "Pescado": "🐟",
+  "Cítricos": "🍋",
+  "Moluscos": "🐙",
+  "Aj": "🧄",
+};
 
 export default function PlatoDetailPage() {
   const params = useParams()
   const router = useRouter()
   const { producto, loading, error } = useProducto(params.id as string)
-  const { alergenos, loading: alergenosLoading } = useAlergenos(params.id as string);
+
+  // Extraer alergenos directamente del producto (ya vienen en la respuesta)
+  const alergenos = producto?.alergenos?.map((item: any) => ({
+    nombre: item.nombre,
+    icono: item.icono || defaultIcons[item.nombre] || "⚠️",
+  })) || [];
+
+  const alergenosLoading = loading;
 
   // Usar skeleton rápido en lugar de Loading completo
   if (loading && !producto) {
@@ -28,27 +47,6 @@ export default function PlatoDetailPage() {
   if (error) return <div>Error: {error}</div>
   if (!producto) return <div>Producto no encontrado</div>
 
-  // Función para convertir URL de Google Drive usando el proxy
-  const convertGoogleDriveUrl = (url: string | null | undefined): string => {
-    if (!url || url === 'null' || url === 'undefined' || typeof url !== 'string' || !url.includes('drive.google.com')) {
-      return '/placeholder-image.png'
-    }
-
-    const match = url.match(/\/file\/d\/([a-zA-Z0-9-_]+)/)
-    if (match) {
-      const fileId = match[1]
-      // Usar el proxy de Next.js para evitar fallos y mejorar velocidad
-      const googleDriveUrl = `https://drive.google.com/uc?export=view&id=${fileId}`
-      return `/api/image-proxy?url=${encodeURIComponent(googleDriveUrl)}`
-    }
-
-    // Si ya es una URL externa, usar proxy también
-    if (url.startsWith('http://') || url.startsWith('https://')) {
-      return `/api/image-proxy?url=${encodeURIComponent(url)}`
-    }
-
-    return url
-  }
 
 
   return (
@@ -149,7 +147,7 @@ export default function PlatoDetailPage() {
               <div className="relative">
                 <div className="w-full h-64 lg:h-96 rounded-2xl bg-gray-100 overflow-hidden flex items-center justify-center">
                   <SafeImage
-                    src={convertGoogleDriveUrl(producto.imagen_path || '')}
+                    src={producto.imagen_path || ''}
                     alt={producto.nombre || 'Sin nombre'}
                     className="w-full h-full"
                     showIndicator={true}
@@ -158,16 +156,6 @@ export default function PlatoDetailPage() {
                     priority={true}
                     quality={75}
                     objectFit="contain"
-                  onLoad={() => {
-                    // Marcar ambas URLs en caché cuando se carga
-                    if (producto.imagen_path) {
-                      const convertedUrl = convertGoogleDriveUrl(producto.imagen_path)
-                      markImageAsCached(convertedUrl)
-                      if (producto.imagen_path !== convertedUrl) {
-                        markImageAsCached(producto.imagen_path)
-                      }
-                    }
-                  }}
                   />
                 </div>
               </div>

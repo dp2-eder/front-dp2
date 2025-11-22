@@ -7,9 +7,10 @@ import { prefetchAlergenos } from "@/hooks/use-alergenos"
 import { prefetchProducto } from "@/hooks/use-producto"
 import { isImageCached, markImageAsCached } from "@/lib/image-cache"
 import { Root2 } from "@/types/menu"
+import { Producto } from "@/types/productos"
 
 interface DishCardProps {
-  dish: Root2
+  dish: Root2 | Producto
   showPrice?: boolean
   className?: string
   priority?: boolean // Nuevo prop para controlar prioridad de carga
@@ -25,24 +26,39 @@ export function DishCard({
   const [imageLoaded, setImageLoaded] = useState(false)
   const [isCached, setIsCached] = useState(false)
 
+  // Helper: obtener la imagen correcta del tipo Root2 o Producto
+  const getImageUrl = () => {
+    if ('imagen' in dish) return (dish).imagen
+    if ('imagen_path' in dish) return (dish).imagen_path
+    return null
+  }
+
+  // Helper: obtener disponibilidad
+  const getDisponible = () => {
+    if ('disponible' in dish) return (dish).disponible
+    return true // Por defecto asumimos disponible si no hay propiedad
+  }
+
+  const imagenUrl = getImageUrl()
+
   // Verificar si la imagen está en caché
   // Se ejecuta cuando el componente monta O cuando la imagen cambia
   useEffect(() => {
-    if (dish.imagen) {
-      const cached = isImageCached(dish.imagen)
+    if (imagenUrl) {
+      const cached = isImageCached(imagenUrl)
       setIsCached(cached)
       // Si está en caché, no mostrar skeleton
       if (cached) {
         setImageLoaded(true)
       }
     }
-  }, [dish.imagen])
+  }, [imagenUrl])
 
   // Verificar caché nuevamente cuando el componente se hace visible (para navegaciones)
   useEffect(() => {
     const checkCacheOnVisibility = () => {
-      if (dish.imagen) {
-        const cached = isImageCached(dish.imagen)
+      if (imagenUrl) {
+        const cached = isImageCached(imagenUrl)
         if (cached && !imageLoaded) {
           setIsCached(true)
           setImageLoaded(true)
@@ -65,39 +81,16 @@ export function DishCard({
       clearTimeout(timeout1)
       clearTimeout(timeout2)
     }
-  }, [dish.imagen, imageLoaded])
+  }, [imagenUrl, imageLoaded])
   
-  // Array de imágenes locales como fallback
-  const localImages = [
-    "/fresh-ceviche-with-red-onions-and-sweet-potato.jpg",
-    "/mixed-seafood-ceviche-with-shrimp-and-octopus.jpg",
-    "/tiradito-nikkei-with-thin-fish-slices-and-sesame.jpg",
-    "/peruvian-seafood-rice-with-cilantro.jpg",
-    "/causa-limena-with-yellow-potato-and-avocado.jpg",
-    "/leche-de-tigre-with-seafood-and-corn-nuts.jpg",
-    "/chaudfa-de-mariscos-500x450.jpg",
-    "/maxresdefault.jpg",
-    "/6143e231d4bfcf3c4448e32e.jpg",
-    "/4.-Rice-with-black-scallops.jpg",
-    "/maxresdefault (1).jpg",
-    "/HQJJGNr2pPfcKZpbZ-2400-x.jpg"
-  ]
+  // Placeholder genérico cuando no hay imagen
+  const PLACEHOLDER_IMAGE = '/placeholder-image.png'
 
-  // Función para obtener una imagen local basada en el ID del plato
-  const getLocalImage = (dishId: string | number) => {
-    // Si es string (UUID), usar un hash simple
-    if (typeof dishId === 'string') {
-      const hash = dishId.split('').reduce((a, b) => {
-        a = ((a << 5) - a) + b.charCodeAt(0)
-        return a & a
-      }, 0)
-      const imageIndex = Math.abs(hash) % localImages.length
-      return localImages[imageIndex]
-    }
-    
-    // Si es número, usar la lógica original
-    const imageIndex = (dishId - 1) % localImages.length
-    return localImages[imageIndex]
+  // Validar si una string es una URL válida (relativa o absoluta)
+  const isValidUrl = (url: string | null | undefined): url is string => {
+    if (!url || typeof url !== 'string') return false
+    // Aceptar rutas relativas (/) o URLs absolutas (http://, https://)
+    return url.startsWith('/') || url.startsWith('http://') || url.startsWith('https://')
   }
 
   // Prefetch de datos cuando el usuario hace hover (precarga silenciosa)
@@ -109,9 +102,9 @@ export function DishCard({
     void prefetchAlergenos(dish.id)
     
     // Precargar imagen también (usar window.Image para evitar conflicto con Next.js Image)
-    if (dish.imagen && typeof window !== 'undefined') {
+    if (isValidUrl(imagenUrl) && typeof window !== 'undefined') {
       const img = new window.Image()
-      img.src = dish.imagen
+      img.src = imagenUrl
     }
   }
 
@@ -138,7 +131,7 @@ export function DishCard({
           )}
 
           <Image
-            src={dish.imagen || getLocalImage(dish.id)}
+            src={isValidUrl(imagenUrl) ? imagenUrl : PLACEHOLDER_IMAGE}
             alt={dish.nombre || "Imagen no disponible"}
             width={300}
             height={169}
@@ -152,17 +145,17 @@ export function DishCard({
             data-cy="plate-image"
             onLoad={() => {
               setImageLoaded(true)
-              if (dish.imagen) markImageAsCached(dish.imagen)
+              if (imagenUrl) markImageAsCached(imagenUrl)
             }}
             onError={(e) => {
               const target = e.target as HTMLImageElement
-              target.src = getLocalImage(dish.id)
+              target.src = PLACEHOLDER_IMAGE
               setImageLoaded(true)
             }}
           />
 
           {/* Badge de disponibilidad */}
-          {!dish.disponible && (
+          {!getDisponible() && (
             <Badge className="absolute top-2 left-2 bg-red-500 hover:bg-red-600 text-white text-xs">
               Agotado
             </Badge>

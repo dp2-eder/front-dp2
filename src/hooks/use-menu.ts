@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react'
 
+import { MENU_URL } from '@/lib/api-config'
 import { Root2 } from '@/types/menu'
 
 interface UseMenuReturn {
@@ -18,8 +19,8 @@ export function useMenu(): UseMenuReturn {
     try {
       setLoading(true)
       setError(null)
-      
-      const response = await fetch('/api/menu/items')
+
+      const response = await fetch(MENU_URL)
       const result = await response.json() as { success: boolean; data: Root2[]; error?: string }
       
       if (result.success) {
