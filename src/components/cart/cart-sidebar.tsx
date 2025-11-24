@@ -137,18 +137,42 @@ export default function CartSidebar({ isOpen, onClose }: CartSidebarProps) {
     return sum + parseFloat(pedido.total || "0")
   }, 0)
 
-  // Convertir historial de pedidos a items individuales para el display
-  const historyItems = historial.flatMap(pedido =>
-    pedido.productos.map(producto => ({
-      id: producto.id,
-      name: producto.nombre_producto,
-      quantity: producto.cantidad,
-      subtotal: parseFloat(producto.subtotal || "0"),
-      additionals: producto.opciones.map(op => op.nombre_opcion),
-      comments: producto.notas_personalizacion,
-      image: producto.imagen_path || undefined,
-    }))
-  )
+  // Convertir historial de pedidos a items individuales y agrupar por: nombre, precio unitario, opciones y comentarios
+  const historyItems = (() => {
+    const items = historial.flatMap(pedido =>
+      pedido.productos.map(producto => ({
+        id: producto.id,
+        name: producto.nombre_producto,
+        quantity: producto.cantidad,
+        subtotal: parseFloat(producto.subtotal || "0"),
+        additionals: producto.opciones.map(op => op.nombre_opcion),
+        comments: producto.notas_personalizacion,
+        image: producto.imagen_path || undefined,
+        precioUnitario: parseFloat(producto.subtotal || "0") / producto.cantidad,
+      }))
+    )
+
+    // Crear un mapa para agrupar items idénticos
+    const groupedMap = new Map<string, typeof items[0]>()
+
+    items.forEach(item => {
+      // Crear una clave única basada en: nombre + precio unitario + opciones + comentarios
+      const additionalKey = item.additionals.sort().join("|")
+      const uniqueKey = `${item.name}|${item.precioUnitario.toFixed(2)}|${additionalKey}|${item.comments || ""}`
+
+      if (groupedMap.has(uniqueKey)) {
+        // Si ya existe, sumar cantidades
+        const existing = groupedMap.get(uniqueKey)!
+        existing.quantity += item.quantity
+        existing.subtotal += item.subtotal
+      } else {
+        // Si no existe, agregarlo
+        groupedMap.set(uniqueKey, { ...item })
+      }
+    })
+
+    return Array.from(groupedMap.values())
+  })()
 
   return (
     <>
