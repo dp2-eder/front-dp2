@@ -47,20 +47,22 @@ export function PaymentGroups({
     return url
   }
 
-  // Agrupar items por nombre y subtotal
+  // Agrupar items por nombre y precio unitario
   const getGroupedAvailableItems = () => {
-    const grouped: Record<string, OrderItem & { totalQuantity: number; allIds: string[]; image?: string }> = {}
+    const grouped: Record<string, OrderItem & { totalQuantity: number; allIds: string[]; image?: string; precioUnitario: number }> = {}
 
     orderHistory.forEach(item => {
-      // Crear key única basada en nombre y subtotal
-      const key = `${item.name}-${item.subtotal}`
+      // Crear key única basada en nombre y precio unitario
+      const precioUnitario = item.subtotal / item.quantity
+      const key = `${item.name}-${precioUnitario.toFixed(2)}`
 
       if (!grouped[key]) {
         grouped[key] = {
           ...item,
           totalQuantity: 0,
           allIds: [],
-          image: item.image // Preservar explícitamente la imagen
+          image: item.image, // Preservar explícitamente la imagen
+          precioUnitario
         }
       }
 
@@ -88,20 +90,23 @@ export function PaymentGroups({
       .filter(item => item.availableQuantity > 0)
   }
 
-  const getMaxSelectableQuantity = (itemName: string, itemSubtotal: number) => {
+  const getMaxSelectableQuantity = (itemName: string, precioUnitario: number) => {
     const grouped = getGroupedAvailableItems()
-    const item = grouped.find(i => i.name === itemName && i.subtotal === itemSubtotal)
+    const item = grouped.find(i => i.name === itemName && (i.subtotal / i.quantity) === precioUnitario)
     return item?.availableQuantity || 0
   }
 
-  const handleItemQuantityChange = (itemName: string, itemSubtotal: number, quantity: number) => {
+  const handleItemQuantityChange = (itemName: string, precioUnitario: number, quantity: number) => {
     if (quantity < 0) return
 
+    // Calcular subtotal basado en precio unitario
+    const itemSubtotal = precioUnitario
+
     // Obtener la cantidad actualmente seleccionada de este item
-    const currentQuantity = selectedItems.find(si => si.name === itemName && si.subtotal === itemSubtotal)?.quantity || 0
+    const currentQuantity = selectedItems.find(si => si.name === itemName && Math.abs(si.subtotal - itemSubtotal) < 0.01)?.quantity || 0
 
     // Obtener el máximo disponible
-    const maxSelectable = getMaxSelectableQuantity(itemName, itemSubtotal)
+    const maxSelectable = getMaxSelectableQuantity(itemName, precioUnitario)
 
     // Si es un item que ya estoy modificando, permitir cambiar hasta maxSelectable + currentQuantity
     // Si es un item nuevo, permitir seleccionar hasta maxSelectable
@@ -110,7 +115,7 @@ export function PaymentGroups({
     if (quantity > maxAllowed) return
 
     setSelectedItems(prev => {
-      const index = prev.findIndex(item => item.name === itemName && item.subtotal === itemSubtotal)
+      const index = prev.findIndex(item => item.name === itemName && Math.abs(item.subtotal - itemSubtotal) < 0.01)
 
       if (index >= 0) {
         // Update existing item
@@ -270,9 +275,10 @@ export function PaymentGroups({
         ) : (
           <div className="space-y-4 mb-6">
             {availableItems.map((item) => {
-              const itemKey = `${item.name}-${item.subtotal}`
-              const selectedQty = selectedItems.find(si => si.name === item.name && si.subtotal === item.subtotal)?.quantity || 0
-              const maxSelectable = getMaxSelectableQuantity(item.name, item.subtotal)
+              const precioUnitario = item.subtotal / item.quantity
+              const itemKey = `${item.name}-${precioUnitario.toFixed(2)}`
+              const selectedQty = selectedItems.find(si => si.name === item.name && Math.abs(si.subtotal - precioUnitario) < 0.01)?.quantity || 0
+              const maxSelectable = getMaxSelectableQuantity(item.name, precioUnitario)
 
               return (
                 <div key={itemKey} className="border-b pb-4 last:border-b-0">
@@ -305,7 +311,7 @@ export function PaymentGroups({
                         <Button
                           size="sm"
                           variant="ghost"
-                          onClick={() => handleItemQuantityChange(item.name, item.subtotal, selectedQty - 1)}
+                          onClick={() => handleItemQuantityChange(item.name, precioUnitario, selectedQty - 1)}
                           className="w-6 h-6 p-0 text-sm font-bold hover:bg-gray-300 rounded"
                         >
                           -
@@ -316,7 +322,7 @@ export function PaymentGroups({
                         <Button
                           size="sm"
                           variant="ghost"
-                          onClick={() => handleItemQuantityChange(item.name, item.subtotal, selectedQty + 1)}
+                          onClick={() => handleItemQuantityChange(item.name, precioUnitario, selectedQty + 1)}
                           disabled={selectedQty >= maxSelectable}
                           className="w-6 h-6 p-0 text-sm font-bold rounded disabled:opacity-50"
                         >
