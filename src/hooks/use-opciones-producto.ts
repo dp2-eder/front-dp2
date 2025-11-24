@@ -32,10 +32,10 @@ export function useOpcionesProducto(id: string) {
       setLoading(true)
       setError(null)
 
-      const response = await fetch(`${API_BASE_URL}/api/v1/productos/${id}`)
+      const response = await fetch(`${API_BASE_URL}/api/v1/productos/${id}/opciones`)
 
       if (!response.ok) {
-        throw new Error(`Error ${response.status} al cargar el producto`)
+        throw new Error(`Error ${response.status} al cargar las opciones del producto`)
       }
 
       const result = await response.json() as ProductoConOpciones
