@@ -10,6 +10,11 @@ import { API_BASE_URL } from './api-config'
 export const getProductImageUrl = (imagePath: string | null | undefined): string | null => {
   if (!imagePath) return null
 
+  // Si es una imagen placeholder, no transformar (es un asset estático)
+  if (imagePath === '/placeholder-image.png' || imagePath.includes('placeholder')) {
+    return imagePath
+  }
+
   // Si es Google Drive
   if (imagePath.includes('drive.google.com')) {
     // Si ya está convertida, retornarla tal cual
