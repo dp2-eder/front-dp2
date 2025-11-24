@@ -12,6 +12,7 @@ import {
   CarouselNext,
   CarouselPrevious,
 } from "@/components/ui/carousel"
+import { getProductImageUrl } from "@/lib/image-url"
 import { isImageCached, markImageAsCached } from "@/lib/image-cache"
 
 interface Category {
@@ -90,7 +91,7 @@ export function CategoryCarousel({ categories }: CategoryCarouselProps) {
                   <div className="relative h-64 lg:h-72 bg-gradient-to-br from-gray-200 to-gray-300">
                     {loadedImages.has(index) || cachedImages.has(index) ? (
                       <Image
-                        src={category.imagen_path}
+                        src={getProductImageUrl(category.imagen_path) || '/placeholder-image.png'}
                         alt={category.nombre}
                         fill
                         priority={index < 3}
@@ -99,7 +100,8 @@ export function CategoryCarousel({ categories }: CategoryCarouselProps) {
                         className="object-cover group-hover:scale-110 transition-transform duration-500"
                         onLoad={() => {
                           // Marcar imagen como cacheada cuando se carga
-                          markImageAsCached(category.imagen_path)
+                          const imageUrl = getProductImageUrl(category.imagen_path)
+                          if (imageUrl) markImageAsCached(imageUrl)
                         }}
                         onError={(e) => {
                           const target = e.target as HTMLImageElement

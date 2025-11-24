@@ -18,6 +18,7 @@ import {
 } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import SafeImage from "@/components/ui/safe-image";
+import { getProductImageUrl } from "@/lib/image-url";
 import { useAdminProducto } from "@/hooks/use-admin-producto";
 import { useOpcionesProducto } from "@/hooks/use-opciones-producto";
 import { markImageAsCached } from "@/lib/image-cache";
@@ -113,29 +114,6 @@ export default function AdminPersonalizarPage() {
   if (error) return <div>Error: {error}</div>;
   if (!producto) return <div>Producto no encontrado</div>;
 
-  // Convertir URL de Google Drive a enlace directo
-  const convertGoogleDriveUrl = (url: string | null | undefined): string => {
-    if (!url || url === "null" || url === "undefined" || typeof url !== "string") {
-      return "/placeholder-image.png";
-    }
-
-    // Si es Google Drive, convertir a enlace directo
-    if (url.includes("drive.google.com")) {
-      const match = url.match(/\/file\/d\/([a-zA-Z0-9-_]+)/);
-      if (match) {
-        const fileId = match[1];
-        return `https://drive.google.com/uc?export=view&id=${fileId}`;
-      }
-    }
-
-    // Si ya es una URL válida, devolverla tal cual
-    if (url.startsWith("http://") || url.startsWith("https://")) {
-      return url;
-    }
-
-    return url;
-  };
-
   // Handlers para secciones / modal
   const handleOpenModal = () => {
     setSectionName("");
@@ -213,21 +191,17 @@ export default function AdminPersonalizarPage() {
                   {/* Contenedor de la imagen con borde, como en Figma */}
                   <div className="w-[260px] h-[260px] rounded-2xl overflow-hidden border border-gray-200 bg-gray-50 flex items-center justify-center">
                     <SafeImage
-                      src={convertGoogleDriveUrl(producto.imagen_path || "")}
+                      src={getProductImageUrl(producto.imagen_path) || ''}
                       alt={producto.nombre || "Sin nombre"}
                       className="w-full h-full object-cover"
-                      showIndicator={true}
                       width={400}
                       height={400}
                       priority={true}
                       quality={70}
                       onLoad={() => {
                         if (producto.imagen_path) {
-                          const convertedUrl = convertGoogleDriveUrl(producto.imagen_path)
-                          markImageAsCached(convertedUrl)
-                          if (producto.imagen_path !== convertedUrl) {
-                            markImageAsCached(producto.imagen_path)
-                          }
+                          const imageUrl = getProductImageUrl(producto.imagen_path)
+                          if (imageUrl) markImageAsCached(imageUrl)
                         }
                       }}
                     />
