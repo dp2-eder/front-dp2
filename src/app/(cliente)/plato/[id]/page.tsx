@@ -10,6 +10,7 @@ import Header from "@/components/layout/header"
 import { Button } from "@/components/ui/button"
 import SafeImage from "@/components/ui/safe-image"
 import { useProducto } from "@/hooks/use-producto"
+import { getProductImageUrl } from "@/lib/image-url"
 
 // Mapeo de iconos por defecto para cuando la API no devuelve icono
 const defaultIcons: Record<string, string> = {
@@ -147,7 +148,7 @@ export default function PlatoDetailPage() {
               <div className="relative">
                 <div className="w-full h-64 lg:h-96 rounded-2xl bg-gray-100 overflow-hidden flex items-center justify-center">
                   <SafeImage
-                    src={producto.imagen_path || ''}
+                    src={getProductImageUrl(producto.imagen_path) || '/placeholder-image.png'}
                     alt={producto.nombre || 'Sin nombre'}
                     className="w-full h-full"
                     showIndicator={true}

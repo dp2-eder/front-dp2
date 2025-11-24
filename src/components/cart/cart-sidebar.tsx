@@ -6,10 +6,10 @@ import Link from "next/link"
 import { useState, useEffect } from "react"
 
 import { Button } from "@/components/ui/button"
-import { getProductImageUrl } from "@/lib/image-url"
 import { useOrderHistory } from "@/context/order-history-context"
 import { useCart } from "@/hooks/use-cart"
 import { sendOrderToKitchen } from "@/hooks/use-orden"
+import { getProductImageUrl } from "@/lib/image-url"
 
 interface CartSidebarProps {
   isOpen: boolean

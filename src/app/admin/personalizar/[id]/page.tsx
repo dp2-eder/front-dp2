@@ -18,10 +18,10 @@ import {
 } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import SafeImage from "@/components/ui/safe-image";
-import { getProductImageUrl } from "@/lib/image-url";
 import { useAdminProducto } from "@/hooks/use-admin-producto";
 import { useOpcionesProducto } from "@/hooks/use-opciones-producto";
 import { markImageAsCached } from "@/lib/image-cache";
+import { getProductImageUrl } from "@/lib/image-url";
 
 // Mapeo de iconos por defecto para cuando la API no devuelve icono
 const defaultIcons: Record<string, string> = {
@@ -191,7 +191,7 @@ export default function AdminPersonalizarPage() {
                   {/* Contenedor de la imagen con borde, como en Figma */}
                   <div className="w-[260px] h-[260px] rounded-2xl overflow-hidden border border-gray-200 bg-gray-50 flex items-center justify-center">
                     <SafeImage
-                      src={getProductImageUrl(producto.imagen_path) || ''}
+                      src={getProductImageUrl(producto.imagen_path) || '/placeholder-image.png'}
                       alt={producto.nombre || "Sin nombre"}
                       className="w-full h-full object-cover"
                       width={400}

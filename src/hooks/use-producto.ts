@@ -1,8 +1,8 @@
 import { useState, useEffect, useCallback, useRef } from 'react'
 
 import { API_BASE_URL } from '@/lib/api-config'
-import { getProductImageUrl } from '@/lib/image-url'
 import { markImageAsCached } from '@/lib/image-cache'
+import { getProductImageUrl } from '@/lib/image-url'
 import { Producto } from '@/types/productos'
 
 // Re-export para compatibilidad hacia atrás

@@ -12,8 +12,8 @@ import {
   CarouselNext,
   CarouselPrevious,
 } from "@/components/ui/carousel"
-import { getProductImageUrl } from "@/lib/image-url"
 import { isImageCached, markImageAsCached } from "@/lib/image-cache"
+import { getProductImageUrl } from "@/lib/image-url"
 
 interface Category {
   nombre: string

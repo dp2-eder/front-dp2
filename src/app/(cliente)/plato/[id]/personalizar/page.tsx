@@ -14,6 +14,7 @@ import SafeImage from "@/components/ui/safe-image"
 import { Textarea } from "@/components/ui/textarea"
 import { useCart, type CartItem } from "@/hooks/use-cart"
 import { useOpcionesProducto } from "@/hooks/use-opciones-producto"
+import { getProductImageUrl } from "@/lib/image-url"
 
 export default function PersonalizarPage() {
   const params = useParams()
@@ -135,10 +136,10 @@ export default function PersonalizarPage() {
               {/* Product Summary Card - Cuadrito pequeño */}
               <Card className="p-3 bg-white border border-[#99A1AF] rounded-lg shadow-sm">
                 <div className="flex items-center space-x-3">
-                  <div 
+                  <div
                     className="flex-shrink-0 overflow-hidden"
-                    style={{ 
-                      width: '56px', 
+                    style={{
+                      width: '56px',
                       height: '56px',
                       minWidth: '56px',
                       minHeight: '56px',
@@ -154,7 +155,7 @@ export default function PersonalizarPage() {
                     }}
                   >
                     <SafeImage
-                      src={producto.imagen_path || ''}
+                      src={getProductImageUrl(producto.imagen_path) || '/placeholder-image.png'}
                       alt={producto.nombre}
                       width={56}
                       height={56}
