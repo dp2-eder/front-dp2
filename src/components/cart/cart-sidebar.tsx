@@ -6,6 +6,7 @@ import Link from "next/link"
 import { useState, useEffect } from "react"
 
 import { Button } from "@/components/ui/button"
+import { getProductImageUrl } from "@/lib/image-url"
 import { useOrderHistory } from "@/context/order-history-context"
 import { useCart } from "@/hooks/use-cart"
 import { sendOrderToKitchen } from "@/hooks/use-orden"
@@ -117,20 +118,6 @@ export default function CartSidebar({ isOpen, onClose }: CartSidebarProps) {
     return item ? item.quantity < 50 : true
   }
 
-  // Función para convertir URL de Google Drive
-  const convertGoogleDriveUrl = (url: string): string => {
-    if (!url || url === 'null' || url === 'undefined' || !url.includes('drive.google.com')) {
-      return '/placeholder-image.png'
-    }
-
-    const match = url.match(/\/file\/d\/([a-zA-Z0-9-_]+)/)
-    if (match) {
-      const fileId = match[1]
-      return `https://drive.google.com/uc?export=view&id=${fileId}`
-    }
-
-    return url
-  }
 
   // Calcular total acumulado del historial
   const totalAccumulated = historial.reduce((sum, pedido) => {
@@ -226,7 +213,7 @@ export default function CartSidebar({ isOpen, onClose }: CartSidebarProps) {
                         {/* Imagen del plato - tamaño fijo */}
                         <div className="relative w-16 h-16 rounded-2xl overflow-hidden flex-shrink-0 bg-gray-100 border-2 border-gray-300/50">
                           <Image
-                            src={convertGoogleDriveUrl(item.image)}
+                            src={getProductImageUrl(item.image) || '/placeholder-image.png'}
                             alt={item.name}
                             fill
                             className="object-cover"

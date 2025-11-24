@@ -6,6 +6,7 @@ import { useState } from "react"
 
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
+import { getProductImageUrl } from "@/lib/image-url"
 import {
   OrderHistoryItem,
   PaymentGroup,
@@ -32,20 +33,6 @@ export function PaymentGroups({
   const [selectedItems, setSelectedItems] = useState<SelectedItem[]>([])
   const [paidGroupIds, setPaidGroupIds] = useState<Set<string>>(new Set(initialPaidGroupIds))
 
-  // Función para convertir URL de Google Drive
-  const convertGoogleDriveUrl = (url?: string): string => {
-    if (!url || url === 'null' || url === 'undefined' || !url.includes('drive.google.com')) {
-      return '/placeholder-image.png'
-    }
-
-    const match = url.match(/\/file\/d\/([a-zA-Z0-9-_]+)/)
-    if (match) {
-      const fileId = match[1]
-      return `https://drive.google.com/uc?export=view&id=${fileId}`
-    }
-
-    return url
-  }
 
   // Agrupar items por nombre y precio unitario
   const getGroupedAvailableItems = () => {
@@ -286,7 +273,7 @@ export function PaymentGroups({
                     {/* Imagen del plato */}
                     <div className="relative w-16 h-16 rounded-lg overflow-hidden flex-shrink-0 bg-gray-100">
                       <Image
-                        src={convertGoogleDriveUrl(item.image)}
+                        src={getProductImageUrl(item.image) || '/placeholder-image.png'}
                         alt={item.name}
                         width={64}
                         height={64}

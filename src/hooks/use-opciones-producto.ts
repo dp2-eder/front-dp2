@@ -1,25 +1,11 @@
 import { useState, useEffect, useCallback, useRef } from 'react'
 
 import { API_BASE_URL } from '@/lib/api-config'
+import { getProductImageUrl } from '@/lib/image-url'
 import { Opcion, ProductoConOpciones, TipoOpcion } from '@/types/productos'
 
 // Re-export para compatibilidad hacia atrás
 export type { Opcion, ProductoConOpciones, TipoOpcion }
-
-// Convertir Google Drive URLs a directas una sola vez
-function convertGoogleDriveUrl(url: string | null | undefined): string | null | undefined {
-  if (!url || typeof url !== 'string') return url
-
-  if (url.includes('drive.google.com')) {
-    const match = url.match(/\/file\/d\/([a-zA-Z0-9-_]+)/)
-    if (match) {
-      const fileId = match[1]
-      return `https://drive.google.com/uc?export=view&id=${fileId}`
-    }
-  }
-
-  return url
-}
 
 export function useOpcionesProducto(id: string) {
   const [producto, setProducto] = useState<ProductoConOpciones | null>(null)
@@ -40,9 +26,9 @@ export function useOpcionesProducto(id: string) {
 
       const result = await response.json() as ProductoConOpciones
 
-      // Convertir imagen_path de Google Drive a URL directa
+      // Transformar imagen_path para renderizado
       if (result.imagen_path) {
-        result.imagen_path = convertGoogleDriveUrl(result.imagen_path) || result.imagen_path
+        result.imagen_path = getProductImageUrl(result.imagen_path) || result.imagen_path
       }
 
       setProducto(result)
