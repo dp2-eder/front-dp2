@@ -1,4 +1,19 @@
 /** @type {import('next').NextConfig} */
+
+// Extraer hostname de la URL del backend desde variables de entorno
+const apiUrl = process.env.NEXT_PUBLIC_API_URL || ''
+const getBackendHostname = () => {
+  if (!apiUrl) return null
+  try {
+    const url = new URL(apiUrl)
+    return url.hostname
+  } catch {
+    return null
+  }
+}
+
+const backendHostname = getBackendHostname()
+
 const nextConfig = {
   images: {
     remotePatterns: [
@@ -8,15 +23,15 @@ const nextConfig = {
         port: '',
         pathname: '/**',
       },
+      ...(backendHostname ? [{
+        protocol: 'https',
+        hostname: backendHostname,
+        port: '',
+        pathname: '/**',
+      }] : []),
       {
         protocol: 'https',
         hostname: 'example.com',
-        port: '',
-        pathname: '/**',
-      },
-      {
-        protocol: 'https',
-        hostname: 'backend-mockup.onrender.com',
         port: '',
         pathname: '/**',
       },
