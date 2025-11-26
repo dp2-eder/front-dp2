@@ -22,6 +22,7 @@ import { useAdminProducto } from "@/hooks/use-admin-producto";
 import { useOpcionesProducto } from "@/hooks/use-opciones-producto";
 import { markImageAsCached } from "@/lib/image-cache";
 import { getProductImageUrl } from "@/lib/image-url";
+import type { Alergeno } from "@/types/productos";
 
 // Mapeo de iconos por defecto para cuando la API no devuelve icono
 const defaultIcons: Record<string, string> = {
@@ -58,7 +59,7 @@ export default function AdminPersonalizarPage() {
   const { producto, loading, error } = useAdminProducto(id);
 
   // Extraer alergenos directamente del producto (ya vienen en la respuesta)
-  const alergenos = producto?.alergenos?.map((item: any) => ({
+  const alergenos = producto?.alergenos?.map((item: Alergeno) => ({
     nombre: item.nombre,
     icono: item.icono || defaultIcons[item.nombre] || "⚠️",
   })) || [];

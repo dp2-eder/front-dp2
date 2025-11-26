@@ -11,6 +11,7 @@ import { Button } from "@/components/ui/button"
 import SafeImage from "@/components/ui/safe-image"
 import { useProducto } from "@/hooks/use-producto"
 import { getProductImageUrl } from "@/lib/image-url"
+import type { Alergeno } from "@/types/productos"
 
 // Mapeo de iconos por defecto para cuando la API no devuelve icono
 const defaultIcons: Record<string, string> = {
@@ -32,7 +33,7 @@ export default function PlatoDetailPage() {
   const { producto, loading, error } = useProducto(params.id as string)
 
   // Extraer alergenos directamente del producto (ya vienen en la respuesta)
-  const alergenos = producto?.alergenos?.map((item: any) => ({
+  const alergenos = producto?.alergenos?.map((item: Alergeno) => ({
     nombre: item.nombre,
     icono: item.icono || defaultIcons[item.nombre] || "⚠️",
   })) || [];
