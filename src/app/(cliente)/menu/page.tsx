@@ -2,10 +2,9 @@
 import {
   RefreshCw,
   Info,
-  Loader2,
   Search
 } from 'lucide-react'
-import { useRouter, useSearchParams } from "next/navigation"
+import { useSearchParams } from "next/navigation"
 import React, { useState, useEffect } from "react"
 
 import Loading from "@/app/loading"
@@ -20,17 +19,19 @@ import { Button } from '@/components/ui/button'
 import { Card, CardContent } from '@/components/ui/card'
 import { useMenuFiltering } from '@/hooks/use-menu-filtering'
 import { useProductos } from '@/hooks/use-productos'
+import { useTokenValidation } from '@/hooks/use-token-validation'
 
 // Categorías basadas en tu API
 
 export default function MenuPage() {
-  const router = useRouter()
   const searchParams = useSearchParams()
   const categoria = searchParams.get("categoria")
   //console.log("Categoría recibida por query param:", categoria)
 
+  // Validar que el token sigue siendo válido
+  useTokenValidation({ intervalMs: 30000 })
+
   //const [isLoading, setIsLoading] = useState(false)
-  const [isAuthenticated, setIsAuthenticated] = useState(true)
   //const [cart, setCart] = useState<number[]>([])
   //const [favorites, setFavorites] = useState<number[]>([])
   // Track de categorías que ya se expandieron al menos una vez (para optimizar carga de imágenes)
@@ -73,14 +74,6 @@ export default function MenuPage() {
       }
     }
   }, [categoria, categories, setSelectedCategory, setExpandedCategories])
-
-  useEffect(() => {
-    // Verificar autenticación
-    const authStatus = localStorage.getItem("isAuthenticated")
-    if (authStatus === "true") {
-      setIsAuthenticated(true)
-    }
-  }, [router])
 
   // Extender la funcionalidad de toggleCategory con optimización de imágenes
   /*
@@ -134,17 +127,6 @@ export default function MenuPage() {
       })
     }
   }, [dishesByCategory, loading])
-
-  if (!isAuthenticated) {
-    return (
-      <div className="min-h-screen bg-gradient-to-br from-cyan-400 to-teal-600 flex items-center justify-center">
-        <div className="text-white text-xl flex items-center space-x-2">
-          <Loader2 className="w-6 h-6 animate-spin" />
-          <span>Verificando autenticación...</span>
-        </div>
-      </div>
-    )
-  }
 
   // En lugar de mostrar <Loading />, solo hacerlo si no hay data previa
   if (loading && productos.length === 0) {

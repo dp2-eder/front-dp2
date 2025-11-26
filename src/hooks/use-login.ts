@@ -1,4 +1,6 @@
 /* eslint-disable @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-unsafe-argument */
+import { setCookie } from "cookies-next";
+
 import { API_BASE_URL } from "@/lib/api-config";
 import {
   LoginRequest,
@@ -65,12 +67,18 @@ export async function loginUser(
       throw new Error(errorMessage);
     }
 
-    // Guardar token_sesion en localStorage si existe
+    // Guardar token_sesion en cookies si existe
     if ((result as LoginResponse)?.token_sesion) {
-      localStorage.setItem("token_sesion", (result as LoginResponse).token_sesion);
-      localStorage.setItem("id_usuario", (result as LoginResponse).id_usuario);
-      localStorage.setItem("id_sesion_mesa", (result as LoginResponse).id_sesion_mesa);
-      localStorage.setItem("fecha_expiracion", (result as LoginResponse).fecha_expiracion);
+      const oneWeekInDays = 7;
+      void setCookie("token_sesion", (result as LoginResponse).token_sesion, { maxAge: 60 * 60 * 24 * oneWeekInDays });
+      void setCookie("id_usuario", (result as LoginResponse).id_usuario, { maxAge: 60 * 60 * 24 * oneWeekInDays });
+      void setCookie("id_sesion_mesa", (result as LoginResponse).id_sesion_mesa, { maxAge: 60 * 60 * 24 * oneWeekInDays });
+      void setCookie("fecha_expiracion", (result as LoginResponse).fecha_expiracion, { maxAge: 60 * 60 * 24 * oneWeekInDays });
+
+      // Mantener mesaId en localStorage para redireccionamientos
+      if (idMesa) {
+        localStorage.setItem("mesaId", idMesa);
+      }
     }
 
     return result;

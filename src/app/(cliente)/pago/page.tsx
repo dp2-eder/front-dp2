@@ -1,5 +1,6 @@
 "use client"
 
+import { getCookie } from "cookies-next"
 import { LogIn } from "lucide-react"
 import Link from "next/link"
 import { useEffect, useState } from "react"
@@ -13,6 +14,7 @@ import { PaymentModeSelector } from "@/components/payment/payment-mode-selector"
 import { SplitBill } from "@/components/payment/split-bill"
 import { Button } from "@/components/ui/button"
 import { useOrderHistory } from "@/context/order-history-context"
+import { useTokenValidation } from "@/hooks/use-token-validation"
 import { OrderHistoryItem, PaymentGroup } from "@/types/orders"
 
 const POLLING_INTERVAL = 10000 // 10 segundos
@@ -24,6 +26,9 @@ export default function PagoPage() {
   const [paidGroupIds, setPaidGroupIds] = useState<string[]>([])
   const [groups, setGroups] = useState<PaymentGroup[]>([])
   const [productImages, setProductImages] = useState<Record<string, string>>({})
+
+  // Validar que el token sigue siendo válido
+  useTokenValidation({ intervalMs: 30000 })
 
   // Cargar mapeo de imágenes y estado persistente desde localStorage
   useEffect(() => {
@@ -146,8 +151,8 @@ export default function PagoPage() {
 
   // Cargar historial al montar y configurar polling
   useEffect(() => {
-    const tokenSesion = localStorage.getItem("token_sesion")
-    if (!tokenSesion) return
+    const tokenSesion = getCookie("token_sesion") as string | undefined
+    if (!tokenSesion || typeof tokenSesion !== "string") return
 
     // Cargar historial inicial (fetch manual, no polling)
     void fetchHistorial(tokenSesion, false)

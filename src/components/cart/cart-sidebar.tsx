@@ -1,5 +1,6 @@
 "use client"
 
+import { getCookie } from "cookies-next"
 import { ShoppingCart, AlertTriangle } from "lucide-react"
 import Image from "next/image"
 import Link from "next/link"
@@ -9,6 +10,7 @@ import { Button } from "@/components/ui/button"
 import { useOrderHistory } from "@/context/order-history-context"
 import { useCart } from "@/hooks/use-cart"
 import { sendOrderToKitchen } from "@/hooks/use-orden"
+import { useTokenValidation } from "@/hooks/use-token-validation"
 import { getProductImageUrl } from "@/lib/image-url"
 
 interface CartSidebarProps {
@@ -21,11 +23,14 @@ export default function CartSidebar({ isOpen, onClose }: CartSidebarProps) {
   const { historial, isLoading, fetchHistorial } = useOrderHistory()
   const [sending, setSending] = useState(false)
 
+  // Validar que el token sigue siendo válido
+  useTokenValidation({ intervalMs: 30000 })
+
   // Cargar historial del backend cuando el sidebar se abre
   useEffect(() => {
     if (isOpen) {
-      const tokenSesion = localStorage.getItem("token_sesion")
-      if (tokenSesion) {
+      const tokenSesion = getCookie("token_sesion") as string | undefined
+      if (tokenSesion && typeof tokenSesion === "string") {
         void fetchHistorial(tokenSesion)
       }
     }
@@ -67,8 +72,8 @@ export default function CartSidebar({ isOpen, onClose }: CartSidebarProps) {
     if (cart.length === 0 || sending) return
     setSending(true)
     try {
-      const tokenSesion = localStorage.getItem("token_sesion")
-      if (!tokenSesion) {
+      const tokenSesion = getCookie("token_sesion") as string | undefined
+      if (!tokenSesion || typeof tokenSesion !== "string") {
         alert("Error: Token de sesión no disponible")
         return
       }

@@ -1,4 +1,5 @@
 /* eslint-disable @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-unsafe-argument */
+import { setCookie } from "cookies-next";
 
 export interface AdminLoginRequest {
   usuario: string;
@@ -55,13 +56,14 @@ export async function loginAdmin(
       throw new Error(errorMessage);
     }
 
-    // Guardar token_sesion en localStorage si existe
+    // Guardar token_sesion en cookies si existe
     if ((result)?.token_sesion) {
-      localStorage.setItem("token_sesion", (result).token_sesion);
-      localStorage.setItem("id_usuario", (result).id_usuario || "");
-      localStorage.setItem("fecha_expiracion", (result).fecha_expiracion || "");
-      localStorage.setItem("usuario", (result).usuario || "");
-      localStorage.setItem("userRole", "admin");
+      const oneWeekInDays = 7;
+      void setCookie("token_sesion", (result).token_sesion, { maxAge: 60 * 60 * 24 * oneWeekInDays });
+      void setCookie("id_usuario", (result).id_usuario || "", { maxAge: 60 * 60 * 24 * oneWeekInDays });
+      void setCookie("fecha_expiracion", (result).fecha_expiracion || "", { maxAge: 60 * 60 * 24 * oneWeekInDays });
+      void setCookie("usuario", (result).usuario || "", { maxAge: 60 * 60 * 24 * oneWeekInDays });
+      void setCookie("userRole", "admin", { maxAge: 60 * 60 * 24 * oneWeekInDays });
     }
 
     return result;
