@@ -6,6 +6,7 @@ import { Badge } from "@/components/ui/badge"
 import { prefetchAlergenos } from "@/hooks/use-alergenos"
 import { prefetchProducto } from "@/hooks/use-producto"
 import { isImageCached, markImageAsCached } from "@/lib/image-cache"
+import { getProductImageUrl } from "@/lib/image-url"
 import { Root2 } from "@/types/menu"
 import { Producto } from "@/types/productos"
 
@@ -39,7 +40,8 @@ export function DishCard({
     return true // Por defecto asumimos disponible si no hay propiedad
   }
 
-  const imagenUrl = getImageUrl()
+  const rawImagenUrl = getImageUrl()
+  const imagenUrl = getProductImageUrl(rawImagenUrl) || rawImagenUrl
 
   // Verificar si la imagen está en caché
   // Se ejecuta cuando el componente monta O cuando la imagen cambia

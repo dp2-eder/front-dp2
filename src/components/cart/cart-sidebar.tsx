@@ -9,6 +9,7 @@ import { Button } from "@/components/ui/button"
 import { useOrderHistory } from "@/context/order-history-context"
 import { useCart } from "@/hooks/use-cart"
 import { sendOrderToKitchen } from "@/hooks/use-orden"
+import { getProductImageUrl } from "@/lib/image-url"
 
 interface CartSidebarProps {
   isOpen: boolean
@@ -117,38 +118,48 @@ export default function CartSidebar({ isOpen, onClose }: CartSidebarProps) {
     return item ? item.quantity < 50 : true
   }
 
-  // Función para convertir URL de Google Drive
-  const convertGoogleDriveUrl = (url: string): string => {
-    if (!url || url === 'null' || url === 'undefined' || !url.includes('drive.google.com')) {
-      return '/placeholder-image.png'
-    }
-
-    const match = url.match(/\/file\/d\/([a-zA-Z0-9-_]+)/)
-    if (match) {
-      const fileId = match[1]
-      return `https://drive.google.com/uc?export=view&id=${fileId}`
-    }
-
-    return url
-  }
 
   // Calcular total acumulado del historial
   const totalAccumulated = historial.reduce((sum, pedido) => {
     return sum + parseFloat(pedido.total || "0")
   }, 0)
 
-  // Convertir historial de pedidos a items individuales para el display
-  const historyItems = historial.flatMap(pedido =>
-    pedido.productos.map(producto => ({
-      id: producto.id,
-      name: producto.nombre_producto,
-      quantity: producto.cantidad,
-      subtotal: parseFloat(producto.subtotal || "0"),
-      additionals: producto.opciones.map(op => op.nombre_opcion),
-      comments: producto.notas_personalizacion,
-      image: producto.imagen_path || undefined,
-    }))
-  )
+  // Convertir historial de pedidos a items individuales y agrupar por: nombre, precio unitario, opciones y comentarios
+  const historyItems = (() => {
+    const items = historial.flatMap(pedido =>
+      pedido.productos.map(producto => ({
+        id: producto.id,
+        name: producto.nombre_producto,
+        quantity: producto.cantidad,
+        subtotal: parseFloat(producto.subtotal || "0"),
+        additionals: producto.opciones.map(op => op.nombre_opcion),
+        comments: producto.notas_personalizacion,
+        image: producto.imagen_path || undefined,
+        precioUnitario: parseFloat(producto.subtotal || "0") / producto.cantidad,
+      }))
+    )
+
+    // Crear un mapa para agrupar items idénticos
+    const groupedMap = new Map<string, typeof items[0]>()
+
+    items.forEach(item => {
+      // Crear una clave única basada en: nombre + precio unitario + opciones + comentarios
+      const additionalKey = item.additionals.sort().join("|")
+      const uniqueKey = `${item.name}|${item.precioUnitario.toFixed(2)}|${additionalKey}|${item.comments || ""}`
+
+      if (groupedMap.has(uniqueKey)) {
+        // Si ya existe, sumar cantidades
+        const existing = groupedMap.get(uniqueKey)!
+        existing.quantity += item.quantity
+        existing.subtotal += item.subtotal
+      } else {
+        // Si no existe, agregarlo
+        groupedMap.set(uniqueKey, { ...item })
+      }
+    })
+
+    return Array.from(groupedMap.values())
+  })()
 
   return (
     <>
@@ -202,7 +213,7 @@ export default function CartSidebar({ isOpen, onClose }: CartSidebarProps) {
                         {/* Imagen del plato - tamaño fijo */}
                         <div className="relative w-16 h-16 rounded-2xl overflow-hidden flex-shrink-0 bg-gray-100 border-2 border-gray-300/50">
                           <Image
-                            src={convertGoogleDriveUrl(item.image)}
+                            src={getProductImageUrl(item.image) || '/placeholder-image.png'}
                             alt={item.name}
                             fill
                             className="object-cover"

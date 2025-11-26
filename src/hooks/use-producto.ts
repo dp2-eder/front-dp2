@@ -2,25 +2,11 @@ import { useState, useEffect, useCallback, useRef } from 'react'
 
 import { API_BASE_URL } from '@/lib/api-config'
 import { markImageAsCached } from '@/lib/image-cache'
+import { getProductImageUrl } from '@/lib/image-url'
 import { Producto } from '@/types/productos'
 
 // Re-export para compatibilidad hacia atrás
 export type { Producto }
-
-// Convertir Google Drive URLs a directas una sola vez
-function convertGoogleDriveUrl(url: string | null | undefined): string | null | undefined {
-  if (!url || typeof url !== 'string') return url
-
-  if (url.includes('drive.google.com')) {
-    const match = url.match(/\/file\/d\/([a-zA-Z0-9-_]+)/)
-    if (match) {
-      const fileId = match[1]
-      return `https://drive.google.com/uc?export=view&id=${fileId}`
-    }
-  }
-
-  return url
-}
 
 // Caché global compartido para evitar llamadas repetidas
 const cache = new Map<string, { data: Producto; timestamp: number }>()
@@ -64,9 +50,9 @@ export async function prefetchProducto(id: string): Promise<void> {
       const resultData = result as Record<string, unknown>
       if (resultData.nombre && resultData.descripcion !== undefined) {
         const productoFinal = result as Producto
-        // Convertir imagen_path de Google Drive a URL directa
+        // Transformar imagen_path para renderizado
         if (productoFinal.imagen_path) {
-          productoFinal.imagen_path = convertGoogleDriveUrl(productoFinal.imagen_path) || productoFinal.imagen_path
+          productoFinal.imagen_path = getProductImageUrl(productoFinal.imagen_path) || productoFinal.imagen_path
         }
         cache.set(id, { data: productoFinal, timestamp: Date.now() })
           
@@ -161,9 +147,9 @@ export function useProducto(id: string) {
         // Validar que los campos requeridos existan
         if (resultData.nombre && resultData.descripcion !== undefined) {
           const productoFinal = result as Producto
-          // Convertir imagen_path de Google Drive a URL directa
+          // Transformar imagen_path para renderizado
           if (productoFinal.imagen_path) {
-            productoFinal.imagen_path = convertGoogleDriveUrl(productoFinal.imagen_path) || productoFinal.imagen_path
+            productoFinal.imagen_path = getProductImageUrl(productoFinal.imagen_path) || productoFinal.imagen_path
           }
           // Guardar en caché
           cache.set(id, { data: productoFinal, timestamp: Date.now() })
