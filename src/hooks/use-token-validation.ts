@@ -38,9 +38,11 @@ export function useTokenValidation(options: UseTokenValidationOptions = {}) {
     try {
       const tokenCookie = getCookie("token_sesion");
       const token = typeof tokenCookie === "string" ? tokenCookie : null;
+      const sesionMesaIdCookie = getCookie("id_sesion_mesa");
+      const sesionMesaId = typeof sesionMesaIdCookie === "string" ? sesionMesaIdCookie : null;
 
-      if (!token) {
-        // Si no hay token, redirigir a login
+      if (!token || !sesionMesaId) {
+        // Si no hay token o id_sesion_mesa, redirigir a login
         const mesaIdCookie = getCookie("mesaId");
         const mesaId =
           typeof mesaIdCookie === "string"
@@ -50,17 +52,20 @@ export function useTokenValidation(options: UseTokenValidationOptions = {}) {
         return;
       }
 
-      // Hacer una solicitud simple al backend para validar el token
-      const response = await fetch(`${API_BASE_URL}/api/v1/usuarios/perfil`, {
-        method: "GET",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${token}`,
-        },
-      });
+      // Validar que la sesión de mesa sigue activa
+      const response = await fetch(
+        `${API_BASE_URL}/api/v1/sesiones-mesas/${sesionMesaId}`,
+        {
+          method: "GET",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${token}`,
+          },
+        }
+      );
 
-      if (response.status === 401) {
-        // Token inválido o expirado
+      if (!response.ok) {
+        // Sesión no encontrada o error al validar
         const mesaIdCookie = getCookie("mesaId");
         const mesaId =
           typeof mesaIdCookie === "string"
@@ -75,10 +80,22 @@ export function useTokenValidation(options: UseTokenValidationOptions = {}) {
         return;
       }
 
-      if (!response.ok) {
-        // Otros errores no son tan críticos, solo loguear
-        // eslint-disable-next-line no-console
-        console.warn(`Token validation returned status ${response.status}`);
+      // Verificar que la sesión está activa
+      const sesion = (await response.json()) as { estado?: string };
+      if (sesion.estado !== "activa") {
+        // Sesión no está activa
+        const mesaIdCookie = getCookie("mesaId");
+        const mesaId =
+          typeof mesaIdCookie === "string"
+            ? mesaIdCookie
+            : localStorage.getItem("mesaId") || "sin-mesa";
+        toast.error("Tu sesión ha sido finalizada. Por favor inicia sesión nuevamente.");
+        router.push(`/login/${mesaId}`);
+
+        if (onUnauthorized) {
+          onUnauthorized();
+        }
+        return;
       }
     } catch (error) {
       // Errores de red no son críticos - el usuario podría estar sin conexión
