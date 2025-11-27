@@ -40,12 +40,6 @@ export default function MainHeader() {
             >
               Mi Orden
             </Link>
-            <Link 
-              href="/contacto" 
-              className="text-primary-foreground hover:text-primary-foreground/80 transition-colors text-sm md:text-base font-medium"
-            >
-              Contáctanos
-            </Link>
           </div>
         </nav>
       </div>

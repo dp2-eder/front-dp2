@@ -95,16 +95,6 @@ export default function Header({
                       </span>
                     )}
                   </button>
-                  <Link
-                    href="/contact"
-                    className={`text-base font-medium hover:text-[#5CEFFA] ${
-                      pathname?.startsWith('/contact')
-                        ? 'text-white underline underline-offset-4 decoration-2'
-                        : 'text-white'
-                    }`}
-                  >
-                    Contáctanos
-                  </Link>
 
                   {/* Acciones opcionales */}
                   {showFavorite && (
